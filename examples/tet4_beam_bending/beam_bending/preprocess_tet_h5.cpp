@@ -211,18 +211,20 @@ int main( int argc, char * argv[] )
   vnbclist.clear();
   vnbclist.push_back(1);
   NBC_list[3] = new NodalBC_3D( vnbclist, bcpt_2D, nFunc );
-  
+
+  NBC_list[3] -> print_info();
   //std::vector<int> vnbclist; vnbclist.clear();
   //vnbclist.push_back(0); vnbclist.push_back(1); vnbclist.push_back(2);
   //NBC_list[3] = new NodalBC_3D( vnbclist, bcpt_2D, nFunc );
 
   // Element BC
   std::vector<int> ebclist; ebclist.clear();
-  ebclist.push_back( 0 );
+  ebclist.push_back( 2 );
 
   ElemBC * ebc = new ElemBC_3D( ebclist, nElem_2D, nFunc_2D,
       nLocBas_2D, pt_coor_2D, IEN_loc_2D, bcpt_2D, face2elem, IEN, ctrlPts );
-
+  ebc -> print_info();
+  
   // ----------------------------------------------------------------
   // Partition the mesh & BC
   const bool isPrintPartInfo = true;
