@@ -10,7 +10,7 @@
 
 int main( int argc, char * argv[] )
 {
-  std::string gmshFile = "cube.msh";
+  std::string gmshFile = "beam.msh";
 
   PetscInitialize(&argc, &argv, (char *)0, PETSC_NULL);
   SYS_T::GetOptionString("-gmsh_file", gmshFile);

@@ -193,6 +193,11 @@ void PLocAssem_VMS_Seg_Hyperelastic_3D_FEM_GenAlpha::Assem_Residual(
       vz   += disp[ii7+6] * R[ii];
 
       ux_x += disp[ii7+0] * dR_dx[ii];
+      std::cout<< "ux_x:" << ux_x
+	       << "disp[ii7+0]" << disp[ii7+0]
+	       << "dR_dx[ii]:" << dR_dx[ii]
+	       << std::endl;
+	  
       uy_x += disp[ii7+1] * dR_dx[ii];
       uz_x += disp[ii7+2] * dR_dx[ii];
 
@@ -253,6 +258,8 @@ void PLocAssem_VMS_Seg_Hyperelastic_3D_FEM_GenAlpha::Assem_Residual(
     F(3) = uy_x; F(4) = uy_y + 1.0; F(5) = uy_z;
     F(6) = uz_x; F(7) = uz_y; F(8) = uz_z + 1.0;
 
+
+    
     invF.copy(F);
     invF.inverse();
 
