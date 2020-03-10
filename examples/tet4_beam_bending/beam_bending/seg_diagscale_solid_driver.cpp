@@ -16,6 +16,7 @@
 #include "FEAElement_Triangle6_3D_der0.hpp"
 #include "FEAElement_Tet10.hpp"
 #include "Matrix_PETSc.hpp"
+#include "MaterialModel_Guccione_Incompressible_Mixed.hpp"
 #include "MaterialModel_NeoHookean_ST91_Mixed.hpp"
 #include "MaterialModel_NeoHookean_Incompressible_Mixed.hpp"
 #include "PLocAssem_VMS_Seg_Hyperelastic_3D_FEM_GenAlpha.hpp"
@@ -200,17 +201,43 @@ int main(int argc, char *argv[])
       genA_spectrium, genA_is2ndSystem);
   tm_galpha_ptr->print_info();
 
-  SYS_T::commPrint("===> Setup the Material model.\n");
-  const double mat_in_r = 1.0e-3;
-  const double mat_in_E = 2.40582e8;
-  const double mat_in_nu = 0.4999999;
+  //SYS_T::commPrint("===> Setup the Material model.\n");
+  //const double mat_in_r = 1.0e-3;
+  //const double mat_in_E = 2.40582e8;
+  //const double mat_in_nu = 0.4999999;
   
-  IMaterialModel * matmodel = new MaterialModel_NeoHookean_ST91_Mixed(
-      mat_in_r, mat_in_E, mat_in_nu );
+  //IMaterialModel * matmodel = new MaterialModel_NeoHookean_ST91_Mixed(
+  //    mat_in_r, mat_in_E, mat_in_nu );
 
   //IMaterialModel * matmodel = new MaterialModel_NeoHookean_Incompressible_Mixed(
   //    mat_in_r, mat_in_E );
 
+  SYS_T::commPrint("===> Setup the Material model.\n");
+  const double mat_in_rho = 1.0e-3;
+  const double mat_in_C   = 2.0e-3;
+  const double mat_in_bf  = 8.0;
+  const double mat_in_bt  = 2.0;
+  const double mat_in_bft = 4.0;
+  const double mat_in_fx  = 1.0;
+  const double mat_in_fy  = 0.0;
+  const double mat_in_fz  = 0.0;
+  const double mat_in_sx  = 0.0;
+  const double mat_in_sy  = 1.0;
+  const double mat_in_sz  = 0.0;
+  
+  IMaterialModel * matmodel =
+    new MaterialModel_Guccione_Incompressible_Mixed(mat_in_rho ,
+						      mat_in_C   ,
+						      mat_in_bf  ,
+						      mat_in_bt  ,
+						      mat_in_bft ,
+						      mat_in_fx  ,
+						      mat_in_fy  ,
+						      mat_in_fz  ,
+						      mat_in_sx  ,
+						      mat_in_sy  ,
+						      mat_in_sz  );
+  
   IPLocAssem * locAssem_ptr 
     = new PLocAssem_VMS_Seg_Hyperelastic_3D_FEM_GenAlpha(
       matmodel, tm_galpha_ptr, GMIptr->get_nLocBas(), 

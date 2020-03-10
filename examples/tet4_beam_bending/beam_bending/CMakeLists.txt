@@ -97,6 +97,7 @@ SET( perigee_analysis_lib_src
   ${perigee_source}/Element/FEAElement_Triangle6_3D_der0.cpp
   ${perigee_source}/Element/FEAElement_Tet4.cpp
   ${perigee_source}/Element/FEAElement_Tet10.cpp
+  ${perigee_source}/Model/MaterialModel_Guccione_Incompressible_Mixed.cpp
   ${perigee_source}/Model/MaterialModel_NeoHookean_ST91.cpp
   ${perigee_source}/Model/MaterialModel_NeoHookean_ST91_Mixed.cpp
   ${perigee_source}/Model/MaterialModel_NeoHookean_Quad_Mixed.cpp
