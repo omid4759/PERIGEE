@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   double initial_time = 0.0;
   double initial_step = 0.1;
   int initial_index = 0;
-  double final_time = 1.0;
+  double final_time = 0.1;
   std::string sol_bName("SOL_");
   int ttan_renew_freq = 1;
   int sol_record_freq = 1;
@@ -201,13 +201,13 @@ int main(int argc, char *argv[])
       genA_spectrium, genA_is2ndSystem);
   tm_galpha_ptr->print_info();
 
-  //SYS_T::commPrint("===> Setup the Material model.\n");
-  //const double mat_in_r = 1.0e-3;
-  //const double mat_in_E = 2.40582e8;
-  //const double mat_in_nu = 0.4999999;
-  
-  //IMaterialModel * matmodel = new MaterialModel_NeoHookean_ST91_Mixed(
-  //    mat_in_r, mat_in_E, mat_in_nu );
+//  SYS_T::commPrint("===> Setup the Material model.\n");
+//  const double mat_in_r = 1.0e-3;
+//  const double mat_in_E = 2.40582e8;
+//  const double mat_in_nu = 0.4999999;
+//  
+//  IMaterialModel * matmodel = new MaterialModel_NeoHookean_ST91_Mixed(
+//      mat_in_r, mat_in_E, mat_in_nu );
 
   //IMaterialModel * matmodel = new MaterialModel_NeoHookean_Incompressible_Mixed(
   //    mat_in_r, mat_in_E );
@@ -238,14 +238,14 @@ int main(int argc, char *argv[])
 						      mat_in_sy  ,
 						      mat_in_sz  );
   
-  IPLocAssem * locAssem_ptr 
-    = new PLocAssem_VMS_Seg_Hyperelastic_3D_FEM_GenAlpha(
-      matmodel, tm_galpha_ptr, GMIptr->get_nLocBas(), 
-      quadv->get_num_quadPts(), elements->get_nLocBas() );  
-
-  //IPLocAssem * locAssem_ptr = new PLocAssem_Tet4_VMS_Seg_Incompressible(
+  //IPLocAssem * locAssem_ptr 
+  //  = new PLocAssem_VMS_Seg_Hyperelastic_3D_FEM_GenAlpha(
   //    matmodel, tm_galpha_ptr, GMIptr->get_nLocBas(), 
   //    quadv->get_num_quadPts(), elements->get_nLocBas() );  
+
+  IPLocAssem * locAssem_ptr = new PLocAssem_Tet4_VMS_Seg_Incompressible(
+      matmodel, tm_galpha_ptr, GMIptr->get_nLocBas(), 
+      quadv->get_num_quadPts(), elements->get_nLocBas() );  
 
   
   // FEA.3 Initial Condition
@@ -311,7 +311,8 @@ int main(int argc, char *argv[])
   lsolver_acce->Solve( gloAssem_ptr->K, gloAssem_ptr->G, dot_pres_velo);
 
   lsolver_acce->Info();
-  
+
+
   // Note: dot_sol is initialized as a zero vector. So here += equals an
   //       assignment operation. We always initialize dot_sol as a zero vector.
   // [dot_p, dot_v] = - M^-1 [Res_p, Res_v]
@@ -320,6 +321,7 @@ int main(int argc, char *argv[])
   // dot_u = v
   SEG_SOL_T::PlusAiVPV(1.0, 0.0, 0.0, sol, dot_sol);
 
+  
   delete lsolver_acce; delete dot_pres_velo;
   SYS_T::commPrint("\n===> Consistent initial acceleration is obtained.");
   SYS_T::commPrint("\n===> The mass matrix lsolver is destroyed. \n\n");
@@ -355,7 +357,7 @@ int main(int argc, char *argv[])
     MatConvert(block_gloAssem_ptr->K_00, MATSAME, MAT_INITIAL_MATRIX, &Mp);
 
     // Scale with a factor 1/elastic modulus mu
-    MatScale( Mp, 1.0 / matmodel->get_elastic_mu() );
+    MatScale( Mp, 1.0/ matmodel->get_elastic_mu() );
 
     delete block_gloAssem_ptr; delete block_locAssem_ptr;
     delete block_disp; delete block_pres; delete block_velo;

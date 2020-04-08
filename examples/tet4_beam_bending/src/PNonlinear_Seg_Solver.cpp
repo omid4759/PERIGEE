@@ -430,6 +430,7 @@ void PNonlinear_Seg_Solver::GenAlpha_Seg_solve_DiagScale(
   PetscLogEventRegister("lin_solve", classid_assembly, &lin_solve_event);
 #endif
 
+
   // Initialize the counter and error
   nl_counter = 0;
   double residual_norm = 0.0, initial_norm = 0.0, relative_error = 0.0;
@@ -475,10 +476,15 @@ void PNonlinear_Seg_Solver::GenAlpha_Seg_solve_DiagScale(
 
   // If new_tangent_flag == TRUE, update the tangent matrix;
   // otherwise, use the matrix from the previous time step
+
+
   if( new_tangent_flag )
   {
     gassem_ptr->Clear_KG();
-
+    //output G
+    std::cout << "pnonlinear seg_solver output G track2"<< std::endl;
+    gassem_ptr->Print_G();
+    
 #ifdef PETSC_USE_LOG
     PetscLogEventBegin(mat_assem_0_event, 0,0,0,0);
 #endif
@@ -489,7 +495,11 @@ void PNonlinear_Seg_Solver::GenAlpha_Seg_solve_DiagScale(
 #ifdef PETSC_USE_LOG
     PetscLogEventEnd(mat_assem_0_event,0,0,0,0);
 #endif
-    
+
+    //output G
+    std::cout << "pnonlinear seg_solver output G track2"<< std::endl;
+    gassem_ptr->Print_G();
+
     // Symmetric scaling
     lsolver_ptr->SymmJacobi_MatVec_Scale( gassem_ptr );
     
@@ -516,8 +526,9 @@ void PNonlinear_Seg_Solver::GenAlpha_Seg_solve_DiagScale(
     lsolver_ptr -> SymmJacobi_Vec_Scale( gassem_ptr );
   }
 
+  
   VecNorm(gassem_ptr->G, NORM_2, &initial_norm);
-  PetscPrintf(PETSC_COMM_WORLD, "  Init res 2-norm: %e \n", initial_norm);
+  PetscPrintf(PETSC_COMM_WORLD, "  Init res 2-norm-track2: %e \n", initial_norm);
 
   // Now do consistent Newton-Raphson iteration
   do

@@ -131,13 +131,13 @@ class IMaterialModel
 
     virtual double get_elastic_mu() const
     {
-      SYS_T::commPrint("Warning: IMaterialModel::get_elastic_mu() is not implemented. \n");
+      //SYS_T::commPrint("Warning: IMaterialModel::get_elastic_mu() is not implemented. \n");
       return 0.0;
     } 
     
     virtual double get_elastic_kappa() const
     {
-      SYS_T::commPrint("Warning: IMaterialModel::get_elastic_kappa() is not implemented. \n");
+      //SYS_T::commPrint("Warning: IMaterialModel::get_elastic_kappa() is not implemented. \n");
       return 0.0;
     } 
 

@@ -79,6 +79,11 @@ void PLocAssem_Tet4_VMS_Seg_Incompressible::get_tau(
 
   const double dt_ka = dx / c_max;
 
+  std::cout << "mu:"      << mu
+	    << "cmax:"    << c_max
+	    << "dt_ka:"   << dt_ka
+	    << std::endl ;
+  
   tau_m_qua = 1.0e-3 * dt_ka * Jin / rho0;
   tau_c_qua = 0.000 * dx * c_max * rho0 / Jin;
 }
@@ -440,7 +445,7 @@ void PLocAssem_Tet4_VMS_Seg_Incompressible::Assem_Tangent_Residual(
         + GradNA_invF[1] * (vy_t - fy) + GradNA_invF[2] * (vz_t - fz);
 
       Residual[4*A  ] += gwts * ( NA * Res_Mas + GradNA_invF_ResMom );
-
+      
       Residual[4*A+1] += gwts * ( NA * rho * detF * (vx_t - fx)
           + NA_x * P_iso(0) + NA_y * P_iso(1) + NA_z * P_iso(2) 
           - GradNA_invF[0] * detF * p );
@@ -452,6 +457,13 @@ void PLocAssem_Tet4_VMS_Seg_Incompressible::Assem_Tangent_Residual(
       Residual[4*A+3] += gwts * ( NA * rho * detF * (vz_t - fz)
           + NA_x * P_iso(6) + NA_y * P_iso(7) + NA_z * P_iso(8) 
           - GradNA_invF[2] * detF * p );
+
+      std::cout << "for quadrature:" << qua << " locbas: " << A
+		<< "GradNA_invF" << GradNA_invF[2]
+		<< "Res_Mom" << Res_Mom[2]
+		<< "tau_m" << tau_m
+		<< std::endl;
+      
 
       for(B=0; B<nLocBas; ++B)
       {

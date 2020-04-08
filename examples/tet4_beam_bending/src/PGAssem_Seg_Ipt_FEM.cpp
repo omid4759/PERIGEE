@@ -332,12 +332,17 @@ void PGAssem_Seg_Ipt_FEM::Assem_mass_residual(
   const int nElem = alelem_ptr->get_nlocalele();
   const int loc_dof = dof_mat * nLocBas;
   int loc_index, lrow_index, offset1;
-
+  std::cout<<"local_elem info : " <<std::endl;
+  alelem_ptr->print_info();
   sol_a->GetLocalArray( array_a, node_ptr );
+//  std::cout<<"array_a : " <<std::endl;
+//  sol_a->PrintWithGhost();
   
   // array_b will be used in NatBC_G function call
   sol_a->GetLocalArray( array_b, node_ptr );
-
+//  std::cout<<"array_b : " << std::endl;
+//  sol_a->PrintWithGhost();
+  
   for(int ee=0; ee<nElem; ++ee)
   {
     lien_ptr->get_LIEN_e(ee, IEN_e);
@@ -433,10 +438,15 @@ void PGAssem_Seg_Ipt_FEM::Assem_residual(
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
 
+  //gives nan entries in residual 
+  //std::cout<<"assem  res G : " << std::endl;
+  //this->Print_G();
+  
   for(int fie = 0; fie<dof_mat; ++fie) EssBC_G( nbc_part, fie );
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
+
 }
 
 
@@ -464,6 +474,7 @@ void PGAssem_Seg_Ipt_FEM::Assem_tangent_residual(
   sol_a->GetLocalArray( array_a, node_ptr );
   sol_b->GetLocalArray( array_b, node_ptr );
 
+  
   for(int ee=0; ee<nElem; ++ee)
   {
     lien_ptr->get_LIEN_e(ee, IEN_e);
@@ -475,6 +486,23 @@ void PGAssem_Seg_Ipt_FEM::Assem_tangent_residual(
     lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
         elementv, ectrl_x, ectrl_y, ectrl_z, quad_v);
 
+    
+    std::cout << "local residual for element " << ee  << ", track3" << std::endl;
+    std::cout << lassem_ptr->Residual [0] << ", "
+	      << lassem_ptr->Residual [1] << ", "
+	      << lassem_ptr->Residual [2] << ", "
+	      << lassem_ptr->Residual [4] << ", "
+	      << lassem_ptr->Residual [5] << ", "
+	      << lassem_ptr->Residual [6] << ", "
+	      << lassem_ptr->Residual [7] << ", "
+	      << lassem_ptr->Residual [8] << ", "
+	      << lassem_ptr->Residual [9] << ", "
+	      << lassem_ptr->Residual [10] <<", "
+	      << lassem_ptr->Residual [11] <<", "
+	      << lassem_ptr->Residual [12] <<", "
+	      << lassem_ptr->Residual [14] <<", "
+	      << lassem_ptr->Residual [15] << std::endl;
+      
     for(int ii=0; ii<nLocBas; ++ii)
     {
       loc_index = IEN_e[ii];
@@ -505,6 +533,9 @@ void PGAssem_Seg_Ipt_FEM::Assem_tangent_residual(
   MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
+
+  std::cout<<"PGassem seg ipt  print G track3: " << std::endl;
+  this->Print_G();
 }
 
 
