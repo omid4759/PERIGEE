@@ -66,12 +66,12 @@ class BoundaryCond2D
   private:
     // -------------- DATA ------------------
     // Dirichlet nodes
-    std::vector<int> dir_nodes;
-    unsigned int num_dir_nodes;
+  std::vector<int> dir_nodes;// should be empty vector
+  unsigned int num_dir_nodes;//should be zero 
 
     // Periodic master - slave nodes
-    std::vector<int> per_slave_nodes, per_master_nodes;
-    unsigned int num_per_nodes;
+  std::vector<int> per_slave_nodes, per_master_nodes; //empty vec
+  unsigned int num_per_nodes; // zero
 
     // ID array vector
     std::vector<int> ID;
