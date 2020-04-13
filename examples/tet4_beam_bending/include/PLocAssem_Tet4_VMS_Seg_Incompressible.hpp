@@ -165,8 +165,8 @@ class PLocAssem_Tet4_VMS_Seg_Incompressible : public IPLocAssem
       gx = 0.0; gy = 0.0; gz = 0.0;
 
       double val;
-      if( t<= 1.0 ) val = 1e4 * t;
-      else val = 1e4;
+      if( t<= 1.0 ) val = 1e-4 * t;
+      else val = 1e-4;
       gz = val;
     }
 

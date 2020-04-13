@@ -482,8 +482,8 @@ void PNonlinear_Seg_Solver::GenAlpha_Seg_solve_DiagScale(
   {
     gassem_ptr->Clear_KG();
     //output G
-    std::cout << "pnonlinear seg_solver output G track2"<< std::endl;
-    gassem_ptr->Print_G();
+//    std::cout << "pnonlinear seg_solver output G track2"<< std::endl;
+//    gassem_ptr->Print_G();
     
 #ifdef PETSC_USE_LOG
     PetscLogEventBegin(mat_assem_0_event, 0,0,0,0);
@@ -497,8 +497,8 @@ void PNonlinear_Seg_Solver::GenAlpha_Seg_solve_DiagScale(
 #endif
 
     //output G
-    std::cout << "pnonlinear seg_solver output G track2"<< std::endl;
-    gassem_ptr->Print_G();
+//    std::cout << "pnonlinear seg_solver output G track2"<< std::endl;
+//    gassem_ptr->Print_G();
 
     // Symmetric scaling
     lsolver_ptr->SymmJacobi_MatVec_Scale( gassem_ptr );

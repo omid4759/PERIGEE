@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   double initial_time = 0.0;
   double initial_step = 0.1;
   int initial_index = 0;
-  double final_time = 0.1;
+  double final_time = 1.0;
   std::string sol_bName("SOL_");
   int ttan_renew_freq = 1;
   int sol_record_freq = 1;
@@ -201,14 +201,14 @@ int main(int argc, char *argv[])
       genA_spectrium, genA_is2ndSystem);
   tm_galpha_ptr->print_info();
 
-//  SYS_T::commPrint("===> Setup the Material model.\n");
-//  const double mat_in_r = 1.0e-3;
-//  const double mat_in_E = 2.40582e8;
-//  const double mat_in_nu = 0.4999999;
-//  
-//  IMaterialModel * matmodel = new MaterialModel_NeoHookean_ST91_Mixed(
-//      mat_in_r, mat_in_E, mat_in_nu );
-
+  //SYS_T::commPrint("===> Setup the Material model.\n");
+  //const double mat_in_r = 1.0e-3;
+  //const double mat_in_E = 2.40582e8;
+  //const double mat_in_nu = 0.4999999;
+  //
+  ////IMaterialModel * matmodel = new MaterialModel_NeoHookean_ST91_Mixed(
+  ////    mat_in_r, mat_in_E, mat_in_nu );
+  //
   //IMaterialModel * matmodel = new MaterialModel_NeoHookean_Incompressible_Mixed(
   //    mat_in_r, mat_in_E );
 
@@ -227,16 +227,16 @@ int main(int argc, char *argv[])
   
   IMaterialModel * matmodel =
     new MaterialModel_Guccione_Incompressible_Mixed(mat_in_rho ,
-						      mat_in_C   ,
-						      mat_in_bf  ,
-						      mat_in_bt  ,
-						      mat_in_bft ,
-						      mat_in_fx  ,
-						      mat_in_fy  ,
-						      mat_in_fz  ,
-						      mat_in_sx  ,
-						      mat_in_sy  ,
-						      mat_in_sz  );
+  						    mat_in_C   ,
+  						    mat_in_bf  ,
+  						    mat_in_bt  ,
+  						    mat_in_bft ,
+  						    mat_in_fx  ,
+  						    mat_in_fy  ,
+  						    mat_in_fz  ,
+  						    mat_in_sx  ,
+  						    mat_in_sy  ,
+  						    mat_in_sz  );
   
   //IPLocAssem * locAssem_ptr 
   //  = new PLocAssem_VMS_Seg_Hyperelastic_3D_FEM_GenAlpha(

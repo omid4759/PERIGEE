@@ -21,7 +21,7 @@ PLocAssem_Tet4_VMS_Seg_Incompressible::PLocAssem_Tet4_VMS_Seg_Incompressible(
   if( num_ebc_fun == 0 ) flist = NULL;
   else flist = new locassem_vms_seg_ela_fem_funs [num_ebc_fun];
 
-  flist[0] = &PLocAssem_Tet4_VMS_Seg_Incompressible::get_top_H;
+  flist[0] = &PLocAssem_Tet4_VMS_Seg_Incompressible::get_lef_H;
   //flist[1] = &PLocAssem_Tet4_VMS_Seg_Incompressible::get_bot_H;
 
   print_info();
@@ -72,6 +72,8 @@ void PLocAssem_Tet4_VMS_Seg_Incompressible::get_tau(
     const double &dx ) const
 {
   const double mu = matmodel->get_elastic_mu();
+  //mu=8e7;
+
   //const double ka = matmodel->get_elastic_kappa();
   //const double c_max = std::pow( rho0 / (ka + 4*mu/3.0), -0.5);
 
@@ -79,12 +81,13 @@ void PLocAssem_Tet4_VMS_Seg_Incompressible::get_tau(
 
   const double dt_ka = dx / c_max;
 
-  std::cout << "mu:"      << mu
-	    << "cmax:"    << c_max
-	    << "dt_ka:"   << dt_ka
-	    << std::endl ;
+//std::cout << "mu:"      << mu
+//	    << "cmax:"    << c_max
+//	    << "dt_ka:"   << dt_ka
+//	    << std::endl ;
   
-  tau_m_qua = 1.0e-3 * dt_ka * Jin / rho0; //10^-3
+  //tau_m_qua = 1.0e-3 * dt_ka * Jin / rho0;
+  tau_m_qua = 1e-6;
   tau_c_qua = 0.000 * dx * c_max * rho0 / Jin;
 }
 
@@ -458,11 +461,11 @@ void PLocAssem_Tet4_VMS_Seg_Incompressible::Assem_Tangent_Residual(
           + NA_x * P_iso(6) + NA_y * P_iso(7) + NA_z * P_iso(8) 
           - GradNA_invF[2] * detF * p );
 
-      std::cout << "for quadrature:" << qua << " locbas: " << A
-		<< "GradNA_invF" << GradNA_invF[2]
-		<< "Res_Mom" << Res_Mom[2]
-		<< "tau_m" << tau_m
-		<< std::endl;
+//      std::cout << "for quadrature:" << qua << " locbas: " << A
+//		<< "GradNA_invF" << GradNA_invF[2]
+//		<< "Res_Mom" << Res_Mom[2]
+//		<< "tau_m" << tau_m
+//		<< std::endl;
       
 
       for(B=0; B<nLocBas; ++B)
