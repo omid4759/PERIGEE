@@ -37,6 +37,9 @@ BoundaryCond2D::BoundaryCond2D( const IMesh * const &mesh, const int &bc_type )
     case 9:
       BC_type_9(mesh);
       break;
+    case 10:
+      BC_type_10(mesh);
+      break;
     default:
       std::cerr<<"Error: BoundaryCond2D the bc_type "<<bc_type<<" is not implemented!"<<std::endl;
       exit(1);
@@ -502,6 +505,19 @@ void BoundaryCond2D::BC_type_9(const IMesh * const &mesh)
 
   std::cout<<"-----> C0 Dirichlet BC on Bottom with corner; ";
   std::cout<<"No BC on Top / Left /Right. \n ";
+}
+
+void BoundaryCond2D::BC_type_10(const IMesh * const &mesh)
+{
+  std::vector<int> lef, rig, top, bot, cor;
+  Generate_BCNodes_A(mesh, lef, rig, top, bot, cor);
+  dir_nodes.clear();
+  num_dir_nodes = 0;
+  
+  num_per_nodes = 0;
+
+  std::cout<<"-----> zero flux on the boundary; ";
+  std::cout<<"No Dirichlet BC on the boundary ";
 }
 
 //EOF

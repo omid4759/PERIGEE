@@ -164,9 +164,10 @@ class PLocAssem_Tet4_VMS_Seg_Incompressible : public IPLocAssem
     {
       gx = 0.0; gy = 0.0; gz = 0.0;
 
+      //0.004 kPa=40 barye because we use cgs units 
       double val;
-      if( t<= 1.0 ) val = 1e-4 * t;
-      else val = 1e-4;
+      if( t<= 1.0 ) val = 40.0*t;
+      else val = 40.0;
       gz = val;
     }
 

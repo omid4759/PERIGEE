@@ -213,8 +213,9 @@ int main(int argc, char *argv[])
   //    mat_in_r, mat_in_E );
 
   SYS_T::commPrint("===> Setup the Material model.\n");
-  const double mat_in_rho = 1.0e-3;
-  const double mat_in_C   = 2.0e-3;
+  //sytem of units : cgs
+  const double mat_in_rho = 1.0; //rho = 1g/cm^3
+  const double mat_in_C   = 2.0e4;//2kPa = 20000 barye
   const double mat_in_bf  = 8.0;
   const double mat_in_bt  = 2.0;
   const double mat_in_bft = 4.0;

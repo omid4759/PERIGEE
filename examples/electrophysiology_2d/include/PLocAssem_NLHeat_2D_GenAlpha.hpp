@@ -88,8 +88,9 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
     void get_k( const double &u, const double &x, const double &y,
         double &k11, double &k12, double &k21, double &k22 ) const
     {
-      k11 = 1.0;    k12 = 0.0;
-      k21 = 0.0;    k22 = 1.0;
+      const double cond_coeff = 1e-1;
+      k11 = cond_coeff*1.0;    k12 = cond_coeff*0.0;
+      k21 = cond_coeff*0.0;    k22 = cond_coeff*1.0;
     }
 
     // ! define the derivative the conductivity tensor w.r.t. u
@@ -108,8 +109,16 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
       const double a = sin(pi*x);
       const double b = sin(pi*y);
       const double pi2 = pi * pi;
+      double val;
 
-      return ( pi * cos(pi*t) + 2.0*pi2*sin(pi*t) )*a*b;
+      if (t<=0.5) {
+	val = ( pi * cos(pi*t) + 2.0*pi2*sin(pi*t) )*a*b ;
+      }
+      else {
+	val = 0;
+      }
+	  
+      return val;
     } 
 };
 

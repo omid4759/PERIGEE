@@ -202,6 +202,12 @@ class BoundaryCond2D
     // --------------------------------------------------------------
     void BC_type_9( const IMesh * const &mesh );
 
+    // --------------------------------------------------------------
+    // BC_type_10:no dirichlet bc and zero flux on the boundary.
+    //            suitable for electrophysiology problem 
+    // --------------------------------------------------------------
+    void BC_type_10( const IMesh * const &mesh );
+
     // 4. Generate ID array according to the dir and per nodes for strong
     //    imposition: ID[dir_nodes] = -1, ID[slave_nodes] = master_nodes
     //    else, ID[ii] = ii;

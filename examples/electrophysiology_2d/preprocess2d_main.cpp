@@ -209,7 +209,7 @@ int main(int argc, char * argv[])
 
 
   // Boundary conditions
-  BoundaryCond2D * bc_1 = new BoundaryCond2D(Mesh, 1);
+  BoundaryCond2D * bc_1 = new BoundaryCond2D(Mesh, 10);
 
   vector<BoundaryCond2D *> BC_list;
 
