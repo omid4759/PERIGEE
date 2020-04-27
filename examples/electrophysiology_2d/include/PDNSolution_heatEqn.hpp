@@ -10,12 +10,16 @@
 #include "PDNSolution.hpp"
 #include "APart_Node.hpp"
 #include "IALocal_BC.hpp"
+#include "FEANode.hpp"
 
 class PDNSolution_heatEqn : public PDNSolution
 {
   public:
     PDNSolution_heatEqn( const class APart_Node * const &pNode,
-       const class IALocal_BC * const &lbc, int type );
+			 const FEANode * const &fNode,
+			 const class IALocal_BC * const &lbc,
+			 int type );
+  
     virtual ~PDNSolution_heatEqn();
 
     // Initial solution setting
@@ -24,5 +28,10 @@ class PDNSolution_heatEqn : public PDNSolution
 
     // case 1: interior values 1.0, boundary values 0.0
     void Init_OneTemp( const class IALocal_BC * const &LBC );
+  
+    // case 2: values -80.0 and 0, partially
+    void Init_Partial( const class APart_Node * const &pNode,
+		       const FEANode * const &fNode,
+		       const class IALocal_BC * const &LBC);
 };
 #endif

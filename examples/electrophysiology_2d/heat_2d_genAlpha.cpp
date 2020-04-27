@@ -174,8 +174,8 @@ int main(int argc, char *argv[])
 
   // ======= Finite Element Analysis =======
   // FEA.1 Initial solution
-  PDNSolution * disp = new PDNSolution_heatEqn(pNode, locBC, 0);
-  PDNSolution * velo = new PDNSolution_heatEqn(pNode, locBC, 0);
+  PDNSolution * disp = new PDNSolution_heatEqn(pNode, fNode, locBC, 2);
+  PDNSolution * velo = new PDNSolution_heatEqn(pNode, fNode, locBC, 0);
 
   PDNTimeStep * timeinfo = new PDNTimeStep(initial_index, initial_time, initial_step);
 
