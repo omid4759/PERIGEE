@@ -143,48 +143,48 @@ TARGET_LINK_LIBRARIES( perigee_postprocess ${EXTRA_LINK_LIBS} perigee_analysis )
 # 1. Make executable
 # 1.1 Preprocess
 ADD_EXECUTABLE( preprocess2d preprocess2d_main.cpp)
-ADD_EXECUTABLE( preprocess3d preprocess3d_main.cpp)
+#ADD_EXECUTABLE( preprocess3d preprocess366d_main.cpp)
 
 # 1.2 Analysis and tests
 ADD_EXECUTABLE( analysis_2d_heat heat_2d_genAlpha.cpp)
-ADD_EXECUTABLE( analysis_3d_heat heat_3d_genAlpha.cpp)
+#ADD_EXECUTABLE( analysis_3d_heat heat_3d_genAlpha.cpp)
 
 # 1.3 Post-process
 ADD_EXECUTABLE( prepostproc2d Pre_postprocess2d.cpp)
 ADD_EXECUTABLE( post_compare_manu_2d post_compare_manu_2d.cpp)
 ADD_EXECUTABLE( vis_2d_nlheat vis_2DNLHeat.cpp)
 
-ADD_EXECUTABLE( prepostproc3d Pre_postprocess3d.cpp)
-ADD_EXECUTABLE( post_compare_manu_3d post_compare_manu_3d.cpp)
-ADD_EXECUTABLE( vis_3d_nlheat vis_3DNLHeat.cpp)
+#ADD_EXECUTABLE( prepostproc3d Pre_postprocess3d.cpp)
+#ADD_EXECUTABLE( post_compare_manu_3d post_compare_manu_3d.cpp)
+#ADD_EXECUTABLE( vis_3d_nlheat vis_3DNLHeat.cpp)
 
 # -------------------------------------------------------------------
 # 2. Link libraries
 # 2.1 Preprocess
 TARGET_LINK_LIBRARIES( preprocess2d ${EXTRA_LINK_LIBS} perigee_preprocess )
-TARGET_LINK_LIBRARIES( preprocess3d ${EXTRA_LINK_LIBS} perigee_preprocess )
+#TARGET_LINK_LIBRARIES( preprocess3d ${EXTRA_LINK_LIBS} perigee_preprocess )
 
 # 2.2 Analysis and tests
 TARGET_LINK_LIBRARIES( analysis_2d_heat ${EXTRA_LINK_LIBS} perigee_analysis )
-TARGET_LINK_LIBRARIES( analysis_3d_heat ${EXTRA_LINK_LIBS} perigee_analysis )
+#TARGET_LINK_LIBRARIES( analysis_3d_heat ${EXTRA_LINK_LIBS} perigee_analysis )
 
 # 2.3 Postprocess
 TARGET_LINK_LIBRARIES( prepostproc2d ${EXTRA_LINK_LIBS} perigee_preprocess
   perigee_analysis )
-TARGET_LINK_LIBRARIES( prepostproc3d ${EXTRA_LINK_LIBS} perigee_preprocess
-  perigee_analysis )
+#TARGET_LINK_LIBRARIES( prepostproc3d ${EXTRA_LINK_LIBS} perigee_preprocess
+#  perigee_analysis )
 
 TARGET_LINK_LIBRARIES( post_compare_manu_2d ${EXTRA_LINK_LIBS} 
   perigee_preprocess perigee_analysis perigee_postprocess )
 
-TARGET_LINK_LIBRARIES( post_compare_manu_3d ${EXTRA_LINK_LIBS} 
-  perigee_preprocess perigee_analysis perigee_postprocess )
+#TARGET_LINK_LIBRARIES( post_compare_manu_3d ${EXTRA_LINK_LIBS} 
+#  perigee_preprocess perigee_analysis perigee_postprocess )
 
 TARGET_LINK_LIBRARIES( vis_2d_nlheat ${EXTRA_LINK_LIBS}
   perigee_preprocess perigee_analysis perigee_postprocess )
 
-TARGET_LINK_LIBRARIES( vis_3d_nlheat ${EXTRA_LINK_LIBS}
-  perigee_preprocess perigee_analysis perigee_postprocess )
+#TARGET_LINK_LIBRARIES( vis_3d_nlheat ${EXTRA_LINK_LIBS}
+#  perigee_preprocess perigee_analysis perigee_postprocess )
 
 
 #EOF
