@@ -76,6 +76,33 @@ class PNonlinear_Solver
         bool &conv_flag,
         int &nl_counter ) const;
 
+    //generalized alpha solver when history variables exist.
+    void Gen_alpha_solve(
+        const bool &new_tangent_flag,
+        const double &curr_time,
+        const double &dt,
+        const PDNSolution * const &pre_velo,
+        const PDNSolution * const &pre_disp,
+	//const PDNSolution * const &pre_hist_dot,
+	const PDNSolution * const &pre_hist,	
+        const TimeMethod_GenAlpha * const &tmga_ptr,
+        const ALocal_Elem * const &alelem_ptr,
+        const ALocal_IEN * const &lien_ptr,
+        const APart_Node * const &anode_ptr,
+        const FEANode * const &feanode_ptr,
+        const IALocal_BC * const &bc_part,
+        const AInt_Weight * const &wei_ptr,
+        const std::vector<FEAElement *> &ele_ptr,
+        IPLocAssem * const &lassem_ptr,
+        PGAssem * const &gassem_ptr,
+        PLinear_Solver_PETSc * const &lsolver_ptr,
+        PDNSolution * const &velo,
+        PDNSolution * const &disp,
+	//PDNSolution * const &hist_dot,	
+	PDNSolution * const &hist,
+        bool &conv_flag,
+        int &nl_counter ) const;
+
 
     // ! NewtonRaphson_solve
     //   The Newton-Raphson nonlinear solver, given the PDNSolution

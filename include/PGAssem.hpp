@@ -143,6 +143,31 @@ class PGAssem
         const std::vector<FEAElement*> &eptr_array,
         const IALocal_BC * const &bc_part );
 
+    // ------------------------------------------------------------------------
+    // ! Assembly tangent matrix and residual vector,
+    //   if history variables exist.
+    //       Needs the basis function quadrature info
+    //       sol_a : disp /or sol_n+1
+    //       sol_b : velo /or sol_n
+    //       sol_c : hist
+    //       sol_d : hist_dot
+    // ------------------------------------------------------------------------
+    void Assem_tangent_residual(
+        const PDNSolution * const &sol_a,
+        const PDNSolution * const &sol_b,
+	const PDNSolution * const &sol_c,//ionic_current
+	const PDNSolution * const &sol_d,//dphi_ionic
+        const double &curr_time,
+        const double &dt,
+        const ALocal_Elem * const &alelem_ptr,
+        IPLocAssem * const &lassem_ptr, 
+        const ALocal_IEN * const &lien_ptr,
+        const APart_Node * const &node_ptr,
+        const FEANode * const &fnode_ptr,
+        const AInt_Weight * const &wei_ptr,
+        const std::vector<FEAElement*> &eptr_array,
+        const IALocal_BC * const &bc_part );
+
     
     // ------------------------------------------------------------------------
     // ! Assembly tangent matrix and residual vector together.
@@ -182,6 +207,26 @@ class PGAssem
     void Assem_residual(
         const PDNSolution * const &sol_a,
         const PDNSolution * const &sol_b,
+        const double &curr_time,
+        const double &dt,
+        const ALocal_Elem * const &alelem_ptr,
+        IPLocAssem * const &lassem_ptr, 
+        const ALocal_IEN * const &lien_ptr,
+        const APart_Node * const &node_ptr,
+        const FEANode * const &fnode_ptr,
+        const AInt_Weight * const &wei_ptr,
+        const std::vector<FEAElement*> &eptr_array,
+        const IALocal_BC * const &bc_part );
+
+    // ------------------------------------------------------------------------
+    // ! Assembly residual vector when history variables are present
+    //  sol_c is hist_dot, sol_d is hist
+    // ------------------------------------------------------------------------
+    void Assem_residual(
+        const PDNSolution * const &sol_a,
+        const PDNSolution * const &sol_b,
+        const PDNSolution * const &sol_c,//ionic_current
+        const PDNSolution * const &sol_d,//dphi_ionic   	
         const double &curr_time,
         const double &dt,
         const ALocal_Elem * const &alelem_ptr,

@@ -40,6 +40,28 @@ class PTime_Solver
         PLinear_Solver_PETSc * const &lsolver_ptr,
         PNonlinear_Solver * const &nsolver_ptr
         ) const;
+
+   // ! Perform generalized-alpha time marching
+   //with history variables
+    void TM_generalized_alpha(
+        const PDNSolution * const &init_velo,
+        const PDNSolution * const &init_disp,
+	//const PDNSolution * const &init_hist_dot,
+	const PDNSolution * const &init_hist,
+        PDNTimeStep * const &time_info,
+        const TimeMethod_GenAlpha * const &tmga_ptr,
+        const ALocal_Elem * const &alelem_ptr,
+        const ALocal_IEN * const &lien_ptr,
+        const APart_Node * const &anode_ptr,
+        const FEANode * const &feanode_ptr,
+        const IALocal_BC * const &bc_part,
+        const AInt_Weight * const &wei_ptr,
+        const std::vector<FEAElement *> &ele_ptr,
+        IPLocAssem * const &lassem_ptr,
+        PGAssem * const &gassem_ptr,
+        PLinear_Solver_PETSc * const &lsolver_ptr,
+        PNonlinear_Solver * const &nsolver_ptr
+        ) const;
     
     
     // ! Perform time marching using Newton-Raphson nonlinear solver

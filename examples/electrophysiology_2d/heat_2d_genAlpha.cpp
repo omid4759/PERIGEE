@@ -173,9 +173,11 @@ int main(int argc, char *argv[])
       (double)elem_timer/(double)CLOCKS_PER_SEC, rank);
 
   // ======= Finite Element Analysis =======
-  // FEA.1 Initial solution
+  // FEA.1 Initial solution and history variables (1 per node)
   PDNSolution * disp = new PDNSolution_heatEqn(pNode, fNode, locBC, 2);
   PDNSolution * velo = new PDNSolution_heatEqn(pNode, fNode, locBC, 0);
+  PDNSolution * hist = new PDNSolution_heatEqn(pNode, fNode, locBC, 0);
+  //PDNSolution * hist_dot = new PDNSolution_heatEqn(pNode, fNode, locBC, 0);
 
   PDNTimeStep * timeinfo = new PDNTimeStep(initial_index, initial_time, initial_step);
 
@@ -226,7 +228,7 @@ int main(int argc, char *argv[])
 
   SYS_T::commPrint("===> Start Finite Element Analysis:\n");
   tsolver->TM_generalized_alpha(
-      velo, disp, timeinfo, tm_galpha_ptr, locElem, locIEN, pNode,
+      velo, disp, hist, timeinfo, tm_galpha_ptr, locElem, locIEN, pNode,
       fNode, locBC, Int_w, elemArray, locAssem_ptr, gloAssem_ptr,
       lsolver, nsolver );
 

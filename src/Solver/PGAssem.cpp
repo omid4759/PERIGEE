@@ -579,6 +579,77 @@ void PGAssem::Assem_tangent_residual(
   VecAssemblyEnd(G);
 }
 
+//assemble when history variables exist
+void PGAssem::Assem_tangent_residual(
+    const PDNSolution * const &sol_a,
+    const PDNSolution * const &sol_b,
+    const PDNSolution * const &sol_c, //ionic current
+    const PDNSolution * const &sol_d, //dphi_ionic
+    const double &curr_time,
+    const double &dt,
+    const ALocal_Elem * const &alelem_ptr,
+    IPLocAssem * const &lassem_ptr, 
+    const ALocal_IEN * const &lien_ptr,
+    const APart_Node * const &node_ptr,
+    const FEANode * const &fnode_ptr,
+    const AInt_Weight * const &wei_ptr,
+    const std::vector<FEAElement*> &eptr_array,
+    const IALocal_BC * const &bc_part )
+{
+  std::cout << "NEW PGAssem tangent!!!!!!!!!!!!!!!!!!"<<std::endl;
+  int nElem = alelem_ptr->get_nlocalele();
+  int loc_dof = dof * nLocBas;
+  int loc_index, lrow_index; // lcol_index;
+
+  sol_a->GetLocalArray( array_a, node_ptr );
+  sol_b->GetLocalArray( array_b, node_ptr );
+
+  for( int ee=0; ee<nElem; ++ee )
+  {
+    if( eptr_array[ee]->is_sizeNonzero() )
+    {
+      lien_ptr->get_LIEN_e(ee, IEN_e);
+      GetLocal(array_a, IEN_e, local_a); 
+      GetLocal(array_b, IEN_e, local_b);
+
+      fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
+
+      lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
+          eptr_array[ee], ectrl_x, ectrl_y, ectrl_z, wei_ptr);
+
+      for(int i=0; i<nLocBas; ++i)
+      {
+        loc_index = IEN_e[i];
+        //lcol_index = node_ptr->get_local_to_global( loc_index );
+
+        for(int m=0; m<dof; ++m)
+        {
+          lrow_index = bc_part->get_LID(m, loc_index);
+
+          row_index[dof * i + m] = dof * lrow_index + m;
+          col_index[dof * i + m] = dof * lrow_index + m;
+        }
+      }
+
+      MatSetValues(K, loc_dof, row_index, loc_dof, col_index,
+          lassem_ptr->Tangent, ADD_VALUES);
+
+      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+    }
+  }
+
+  VecAssemblyBegin(G);
+  VecAssemblyEnd(G);
+
+  for(int fie = 0; fie<dof; ++fie)
+    EssBC_KG( bc_part, fie);
+
+  MatAssemblyBegin(K, MAT_FINAL_ASSEMBLY);
+  MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
+  VecAssemblyBegin(G);
+  VecAssemblyEnd(G);
+}
+
 void PGAssem::Assem_tangent_residual(
     const PDNSolution * const &sol_a,
     const PDNSolution * const &sol_b,
@@ -783,6 +854,64 @@ void PGAssem::Assem_residual(
 
   sol_a->GetLocalArray( array_a, node_ptr );
   sol_b->GetLocalArray( array_b, node_ptr );
+
+  for( int ee=0; ee<nElem; ++ee )
+  {
+    if( eptr_array[ee]->is_sizeNonzero() )
+    {
+      lien_ptr->get_LIEN_e(ee, IEN_e);
+      GetLocal(array_a, IEN_e, local_a); 
+      GetLocal(array_b, IEN_e, local_b);
+
+      fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
+
+      lassem_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
+          eptr_array[ee], ectrl_x, ectrl_y, ectrl_z, wei_ptr);
+
+      for(int i=0; i<nLocBas; ++i)
+      {
+        loc_index = IEN_e[i];
+
+        for(int m=0; m<dof; ++m)
+        {
+          lrow_index = bc_part->get_LID(m, loc_index);
+          row_index[dof * i + m] = dof * lrow_index + m;
+        }
+      }
+      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+    }
+  }
+
+  VecAssemblyBegin(G);
+  VecAssemblyEnd(G);
+}
+
+//assemble when history variables exist
+void PGAssem::Assem_residual(
+    const PDNSolution * const &sol_a,
+    const PDNSolution * const &sol_b,
+    const PDNSolution * const &sol_c,//ionic current
+    const PDNSolution * const &sol_d,//dphi_ionic       
+    const double &curr_time,
+    const double &dt,
+    const ALocal_Elem * const &alelem_ptr,
+    IPLocAssem * const &lassem_ptr, 
+    const ALocal_IEN * const &lien_ptr,
+    const APart_Node * const &node_ptr,
+    const FEANode * const &fnode_ptr,
+    const AInt_Weight * const &wei_ptr,
+    const std::vector<FEAElement*> &eptr_array,
+    const IALocal_BC * const &bc_part )
+{
+  std::cout << "NEW PGAssem residual!!!!!!!!!!!!!!!!!!"<<std::endl;
+  int nElem = alelem_ptr->get_nlocalele();
+  int loc_dof = dof * nLocBas;
+  int loc_index, lrow_index;
+
+  sol_a->GetLocalArray( array_a, node_ptr );
+  sol_b->GetLocalArray( array_b, node_ptr );
+  //sol_c->GetLocalArray( array_c, node_ptr );
+  //sol_d->GetLocalArray( array_d, node_ptr );
 
   for( int ee=0; ee<nElem; ++ee )
   {

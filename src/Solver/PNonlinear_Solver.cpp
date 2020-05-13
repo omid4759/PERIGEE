@@ -162,6 +162,205 @@ void PNonlinear_Solver::Gen_alpha_solve(
     conv_flag = false;
 }
 
+void PNonlinear_Solver::Gen_alpha_solve(
+    const bool &new_tangent_flag,
+    const double &curr_time,
+    const double &dt,
+    const PDNSolution * const &pre_velo,
+    const PDNSolution * const &pre_disp,
+    //const PDNSolution * const &pre_hist_dot,
+    const PDNSolution * const &pre_hist,    
+    const TimeMethod_GenAlpha * const &tmga_ptr,
+    const ALocal_Elem * const &alelem_ptr,
+    const ALocal_IEN * const &lien_ptr,
+    const APart_Node * const &anode_ptr,
+    const FEANode * const &feanode_ptr,
+    const IALocal_BC * const &bc_part,
+    const AInt_Weight * const &wei_ptr,
+    const std::vector<FEAElement *> &ele_ptr,
+    IPLocAssem * const &lassem_ptr,
+    PGAssem * const &gassem_ptr,
+    PLinear_Solver_PETSc * const &lsolver_ptr,
+    PDNSolution * const &velo,
+    PDNSolution * const &disp,
+    //PDNSolution * const &hist_dot,
+    PDNSolution * const &hist,
+    bool &conv_flag,
+    int &nl_counter ) const
+{
+  std::cout << "NEW gen_alpha_solve!!!!!!!!!!!!!!!!!!"<<std::endl;
+  std::cout << "cur time" << curr_time <<std::endl;
+  nl_counter = 0;
+  double ksp_its_num;
+  double ksp_max_its_num = (double) lsolver_ptr->get_ksp_maxits();
+  double ksp_its_check = 0.3 * ksp_max_its_num;
+  double residual_norm = 0.0;
+  double initial_norm = 0.0;
+  double relative_error = 0.0;
+
+  const double gamma   = tmga_ptr->get_gamma();
+  const double alpha_m = tmga_ptr->get_alpha_m();
+  const double alpha_f = tmga_ptr->get_alpha_f();
+
+  // predictor
+  disp->ScaleValue(0.0);
+  velo->ScaleValue(0.0);
+  //hist_dot->ScaleValue(0.0); //hist=0?
+  //hist->ScaleValue(0.0); //hist=0?   -- do not need to predict hist_new
+  
+  PDNSolution velo_step(*velo);
+  
+  disp->PlusAX(*pre_disp, 1.0); //iga book p/205 eq7.40 
+  //hist->PlusAX(*pre_hist, 1.0); 
+  velo->PlusAX(*pre_velo, (gamma-1.0)/gamma);
+  //hist_dot->PlusAX(*pre_hist_dot, (gamma-1.0)/gamma);  
+
+  // define displacement and history at alpha_f and velocity at alpha_m
+  PDNSolution disp_alpha(*pre_disp);
+  PDNSolution velo_alpha(*pre_velo);
+  PDNSolution Iion_alpha(*pre_hist); 
+  PDNSolution tangent_Iion_alpha(*pre_hist); 
+  
+  disp_alpha.ScaleValue((1.0 - alpha_f));
+  //hist_alpha.ScaleValue((1.0 - alpha_f));  
+  velo_alpha.ScaleValue((1.0 - alpha_m));
+  //hist_dot_alpha.ScaleValue((1.0 - alpha_m));
+  
+  disp_alpha.PlusAX(*disp, alpha_f);
+  //hist_alpha.PlusAX(*hist, alpha_f);  
+  velo_alpha.PlusAX(*velo, alpha_m);
+  //hist_dot_alpha.PlusAX(*hist_dot, alpha_m);
+  
+  //find new hist variables and ionic currents, and derivatives
+  // for each node. (At time t_{n+alpha_f})
+
+  std::cout<< "print pre hist " << std::endl;
+  pre_hist->PrintWithGhost();
+  //velo_alpha.PrintWithGhost();
+  std::cout<< "dof num " << pre_hist.get_dof_num() <<std::endl;
+  
+  
+  // for node:
+  //     r_old = pre_hist (node);
+   //     new_soln = disp_alpha (node);
+  //     dt = alpha_f ; 
+  //     Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
+  //              = material_routine(r_old, new_soln, dt)
+  
+  // if new tanget flag is true, update the tangent matrix,
+  // otherwise, keep using the tangent matrix from the previous
+  // time step
+  if( new_tangent_flag )
+  {
+    gassem_ptr->Clear_KG();
+    gassem_ptr->Assem_tangent_residual( &velo_alpha, &disp_alpha,
+     curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+     feanode_ptr, wei_ptr, ele_ptr, bc_part );
+    //gassem_ptr->Assem_tangent_residual( &velo_alpha, &disp_alpha, &Iion_alpha, &dphi_Iion_alpha,
+    // curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+    // feanode_ptr, wei_ptr, ele_ptr, bc_part );
+    lsolver_ptr->SetOperator(gassem_ptr->K);
+  }
+  else
+  {
+    gassem_ptr->Clear_G();
+    gassem_ptr->Assem_residual( &velo_alpha, &disp_alpha,
+     curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+     feanode_ptr, wei_ptr, ele_ptr, bc_part );
+    //gassem_ptr->Assem_residual( &velo_alpha, &disp_alpha, &Iion_alpha, &dphi_Iion_alpha,
+    // curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+    // feanode_ptr, wei_ptr, ele_ptr, bc_part );
+  }
+
+  VecNorm(gassem_ptr->G, NORM_2, &initial_norm);
+  PetscPrintf(PETSC_COMM_WORLD, "  Initial residual 2-norm: %e \n", initial_norm);
+  
+  do
+  {
+    lsolver_ptr->Solve( gassem_ptr->G, &velo_step );
+    
+    nl_counter += 1;
+
+    ksp_its_num = (double) lsolver_ptr->get_ksp_it_num();
+   
+    if(ksp_its_num > ksp_its_check)
+    {
+      PetscPrintf(PETSC_COMM_WORLD, "Warning: linear solver converges slowly! \n");
+      break;
+    }
+
+    // corrector
+    disp->PlusAX( velo_step, -1.0 * gamma * dt );
+    velo->PlusAX( velo_step, -1.0 );
+
+    disp_alpha.PlusAX(velo_step, -1.0 * alpha_f * gamma * dt);
+    velo_alpha.PlusAX(velo_step, -1.0 * alpha_m);
+
+    //find new hist variables and ionic currents, and derivatives
+    // for each node. (At time t_{n+alpha_f})
+    // for node:
+    //     r_old = pre_hist (node);
+    //     new_soln = disp_alpha (node);
+    //     dt = alpha_f ; 
+    //     Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
+    //              = material_routine(r_old, new_soln, dt)
+    
+    if(nl_counter % nrenew_freq == 0)
+    {
+      gassem_ptr->Clear_KG();
+      gassem_ptr->Assem_tangent_residual( &velo_alpha, &disp_alpha,
+          curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+          feanode_ptr, wei_ptr, ele_ptr, bc_part );
+      //gassem_ptr->Assem_tangent_residual( &velo_alpha, &disp_alpha, &Iion_alpha, &dphi_Iion_alpha,
+      // curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+      // feanode_ptr, wei_ptr, ele_ptr, bc_part );
+      lsolver_ptr->SetOperator(gassem_ptr->K);
+    }
+    else
+    {
+      gassem_ptr->Clear_G();
+      gassem_ptr->Assem_residual( &velo_alpha, &disp_alpha,
+          curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+          feanode_ptr, wei_ptr, ele_ptr, bc_part );
+      //gassem_ptr->Assem_residual( &velo_alpha, &disp_alpha, &Iion_alpha, &dphi_Iion_alpha,
+      // curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+      // feanode_ptr, wei_ptr, ele_ptr, bc_part );      
+    }
+
+    VecNorm(gassem_ptr->G, NORM_2, &residual_norm);
+    PetscPrintf(PETSC_COMM_WORLD, "  --- residual norm: %e \n",
+                residual_norm);
+
+    relative_error = residual_norm / initial_norm;
+
+    if( relative_error >= nd_tol )
+    {
+      PetscPrintf(PETSC_COMM_WORLD, "Warning: nonlinear solver is diverging with error %e \n",
+          relative_error);
+      break;
+    }
+
+  }while(nl_counter < nmaxits && relative_error > nr_tol && 
+	 residual_norm > na_tol );
+
+  // calculate hist_new again at t_n+1, at new time step
+  //find new hist variables and ionic currents, and derivatives
+  // for each node. (At time t_{n+1})
+  // for node:
+  //     r_old = pre_hist (node);
+  //     new_soln = disp (node);
+  //     dt = dt ; 
+  //     Iion(node), dphi_Iion(node), r_new(node)
+  //              = material_routine(r_old, new_soln, dt)
+  
+  Print_convergence_info(nl_counter, relative_error, residual_norm);
+
+  if(relative_error <= nr_tol || residual_norm <= na_tol)
+    conv_flag = true;
+  else
+    conv_flag = false;
+}
+
 
 void PNonlinear_Solver::NewtonRaphson_solve(
     const bool &new_tangent_flag,
