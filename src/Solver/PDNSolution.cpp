@@ -339,4 +339,34 @@ void PDNSolution::PlusAiX( const PDNSolution &xx, const std::vector<double> &aa 
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
 }
 
+int PDNSolution::GetSize() const
+{
+  SYS_T::commPrint("GetSize from PDNSolution . \n");
+  int size;
+  VecGetSize(solution, &size);
+  
+  return size;
+}
+
+double PDNSolution::GetValue( const int &location) const
+{
+  //SYS_T::commPrint("getvalue from PDNSolution . \n");
+  double value;
+  VecGetValues(solution, 1, &location, &value);
+  
+  return value;
+}
+
+double PDNSolution::SetValue(const int &location,
+			     const double &value) const
+{
+  //SYS_T::commPrint("setvalue from PDNSolution . \n");
+
+  VecSetValues(solution, 1, &location, &value, INSERT_VALUES);
+
+  VecAssemblyBegin(solution);
+  VecAssemblyEnd(solution);
+
+  return value;
+}  
 // EOF

@@ -33,5 +33,7 @@ class PDNSolution_heatEqn : public PDNSolution
     void Init_Partial( const class APart_Node * const &pNode,
 		       const FEANode * const &fNode,
 		       const class IALocal_BC * const &LBC);
+    // get the global size of solution vector
+    virtual int GetSize() const;
 };
 #endif

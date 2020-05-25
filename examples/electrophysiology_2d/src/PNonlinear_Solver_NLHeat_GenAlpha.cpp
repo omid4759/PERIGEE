@@ -1,6 +1,6 @@
-#include "PNonlinear_Solver.hpp"
+#include "PNonlinear_Solver_NLHeat_GenAlpha.hpp"
 
-PNonlinear_Solver::PNonlinear_Solver(
+PNonlinear_Solver_NLHeat_GenAlpha::PNonlinear_Solver_NLHeat_GenAlpha(
     const double &input_nrtol, const double &input_natol,
     const double &input_ndtol,
     const int &input_max_iteration, const int &input_renew_freq )
@@ -10,11 +10,11 @@ PNonlinear_Solver::PNonlinear_Solver(
 }
 
 
-PNonlinear_Solver::~PNonlinear_Solver()
+PNonlinear_Solver_NLHeat_GenAlpha::~PNonlinear_Solver_NLHeat_GenAlpha()
 {}
 
 
-void PNonlinear_Solver::Info() const
+void PNonlinear_Solver_NLHeat_GenAlpha::Info() const
 {
   PetscPrintf(PETSC_COMM_WORLD, "----------------------------------------------------------- \n");
   PetscPrintf(PETSC_COMM_WORLD, "relative tolerance: %e \n", nr_tol);
@@ -26,7 +26,7 @@ void PNonlinear_Solver::Info() const
 }
 
 
-void PNonlinear_Solver::Gen_alpha_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -41,7 +41,7 @@ void PNonlinear_Solver::Gen_alpha_solve(
     const AInt_Weight * const &wei_ptr,
     const std::vector<FEAElement *> &ele_ptr,
     IPLocAssem * const &lassem_ptr,
-    PGAssem * const &gassem_ptr,
+    PGAssem_NLHeat_GenAlpha * const &gassem_ptr,
     PLinear_Solver_PETSc * const &lsolver_ptr,
     PDNSolution * const &velo,
     PDNSolution * const &disp,
@@ -162,7 +162,7 @@ void PNonlinear_Solver::Gen_alpha_solve(
     conv_flag = false;
 }
 
-void PNonlinear_Solver::Gen_alpha_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -179,7 +179,7 @@ void PNonlinear_Solver::Gen_alpha_solve(
     const AInt_Weight * const &wei_ptr,
     const std::vector<FEAElement *> &ele_ptr,
     IPLocAssem * const &lassem_ptr,
-    PGAssem * const &gassem_ptr,
+    PGAssem_NLHeat_GenAlpha * const &gassem_ptr,
     PLinear_Solver_PETSc * const &lsolver_ptr,
     PDNSolution * const &velo,
     PDNSolution * const &disp,
@@ -188,7 +188,7 @@ void PNonlinear_Solver::Gen_alpha_solve(
     bool &conv_flag,
     int &nl_counter ) const
 {
-  std::cout << "NEW gen_alpha_solve!!!!!!!!!!!!!!!!!!"<<std::endl;
+  std::cout << "Using Pnonlinear_solver_NLHeat_GenAlpha"<<std::endl;
   std::cout << "cur time" << curr_time <<std::endl;
   nl_counter = 0;
   double ksp_its_num;
@@ -205,8 +205,9 @@ void PNonlinear_Solver::Gen_alpha_solve(
   // predictor
   disp->ScaleValue(0.0);
   velo->ScaleValue(0.0);
-  //hist_dot->ScaleValue(0.0); //hist=0?
-  //hist->ScaleValue(0.0); //hist=0?   -- do not need to predict hist_new
+  // do not need to predict hist_new,
+  // that's going to be predicted and calculated in ionic model
+  // no need: hist->ScaleValue(0.0);
   
   PDNSolution velo_step(*velo);
   
@@ -218,8 +219,9 @@ void PNonlinear_Solver::Gen_alpha_solve(
   // define displacement and history at alpha_f and velocity at alpha_m
   PDNSolution disp_alpha(*pre_disp);
   PDNSolution velo_alpha(*pre_velo);
+  PDNSolution hist_alpha(*pre_hist); 
   PDNSolution Iion_alpha(*pre_hist); 
-  PDNSolution tangent_Iion_alpha(*pre_hist); 
+  PDNSolution dPhi_Iion_alpha(*pre_hist); 
   
   disp_alpha.ScaleValue((1.0 - alpha_f));
   //hist_alpha.ScaleValue((1.0 - alpha_f));  
@@ -230,46 +232,60 @@ void PNonlinear_Solver::Gen_alpha_solve(
   //hist_alpha.PlusAX(*hist, alpha_f);  
   velo_alpha.PlusAX(*velo, alpha_m);
   //hist_dot_alpha.PlusAX(*hist_dot, alpha_m);
-  
-  //find new hist variables and ionic currents, and derivatives
-  // for each node. (At time t_{n+alpha_f})
 
-  //std::cout<< "print pre hist " << std::endl;
-  //pre_hist->PrintWithGhost();
-  ////velo_alpha.PrintWithGhost();
-  //std::cout<< "dof num " << pre_hist -> get_dof_num() <<std::endl;
+
+  //========================================================
+  //find new hist variables and ionic currents, and derivatives
+  // for each node. (At time t_{n+alpha_f}, using disp_alpha)
+  int node_num; 
+  node_num =pre_hist -> GetSize();
+  double r_new_alpha, r_old, dt_alpha;
   
+  for (int count{ 0 }; count < node_num; ++count)
+    {
+      r_old = pre_hist->GetValue(count);
+      //new_soln = disp_alpha.GetValue (count);
+      dt_alpha = alpha_f*dt ;
+
+      r_new_alpha = curr_time+dt_alpha;
+      
+      //r_new_alpha.at(count) = curr_time+alpha_f*dt;
+      //std::cout << "r_new_alpha " <<count<< ":"
+      //		<<  r_new_alpha.at(count) << std::endl;
+      hist_alpha.SetValue(count, r_new_alpha);
+      //Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
+      //            = material_routine(r_old, new_soln, dt)
+    }
+
+  //hist_alpha.PrintWithGhost();
+  //========================================================
   
-  // for node:
-  //     r_old = pre_hist (node);
-   //     new_soln = disp_alpha (node);
-  //     dt = alpha_f ; 
-  //     Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
-  //              = material_routine(r_old, new_soln, dt)
-  
+    
   // if new tanget flag is true, update the tangent matrix,
   // otherwise, keep using the tangent matrix from the previous
   // time step
   if( new_tangent_flag )
   {
     gassem_ptr->Clear_KG();
-    gassem_ptr->Assem_tangent_residual( &velo_alpha, &disp_alpha,
-     curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
-     feanode_ptr, wei_ptr, ele_ptr, bc_part );
-    //gassem_ptr->Assem_tangent_residual( &velo_alpha, &disp_alpha, &Iion_alpha, &dphi_Iion_alpha,
+    //gassem_ptr->Assem_tangent_residual( &velo_alpha, &disp_alpha,
     // curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
     // feanode_ptr, wei_ptr, ele_ptr, bc_part );
+    gassem_ptr->Assem_tangent_residual
+      ( &velo_alpha, &disp_alpha, &Iion_alpha, &dPhi_Iion_alpha,
+	curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+	feanode_ptr, wei_ptr, ele_ptr, bc_part );
     lsolver_ptr->SetOperator(gassem_ptr->K);
   }
   else
   {
     gassem_ptr->Clear_G();
-    gassem_ptr->Assem_residual( &velo_alpha, &disp_alpha,
-     curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
-     feanode_ptr, wei_ptr, ele_ptr, bc_part );
-    //gassem_ptr->Assem_residual( &velo_alpha, &disp_alpha, &Iion_alpha, &dphi_Iion_alpha,
+    //gassem_ptr->Assem_residual( &velo_alpha, &disp_alpha,
     // curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
     // feanode_ptr, wei_ptr, ele_ptr, bc_part );
+    gassem_ptr->Assem_residual
+      ( &velo_alpha, &disp_alpha, &Iion_alpha, &dPhi_Iion_alpha,
+	curr_time, dt, alelem_ptr, lassem_ptr, lien_ptr, anode_ptr,
+	feanode_ptr, wei_ptr, ele_ptr, bc_part );
   }
 
   VecNorm(gassem_ptr->G, NORM_2, &initial_norm);
@@ -296,15 +312,33 @@ void PNonlinear_Solver::Gen_alpha_solve(
     disp_alpha.PlusAX(velo_step, -1.0 * alpha_f * gamma * dt);
     velo_alpha.PlusAX(velo_step, -1.0 * alpha_m);
 
+    //========================================================
     //find new hist variables and ionic currents, and derivatives
-    // for each node. (At time t_{n+alpha_f})
-    // for node:
-    //     r_old = pre_hist (node);
-    //     new_soln = disp_alpha (node);
-    //     dt = alpha_f ; 
-    //     Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
-    //              = material_routine(r_old, new_soln, dt)
-    
+    // for each node. (At time t_{n+alpha_f}, using disp_alpha)
+    int node_num; 
+    node_num =pre_hist -> GetSize();
+    double r_new, r_old;
+  
+    for (int count{ 0 }; count < node_num; ++count)
+      {
+	r_old = pre_hist->GetValue(count);
+	//new_soln = disp_alpha.GetValue (count);
+
+	r_new = curr_time+dt;
+      
+	//r_new_alpha.at(count) = curr_time+alpha_f*dt;
+	//std::cout << "r_new_alpha " <<count<< ":"
+	//		<<  r_new_alpha.at(count) << std::endl;
+	hist->SetValue(count, r_new);
+	//Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
+	//            = material_routine(r_old, new_soln, dt)
+      }
+    std::cout << "pre hist " << std::endl;
+    pre_hist->PrintWithGhost();
+    std::cout << "hist " << std::endl;
+    hist->PrintWithGhost();
+    //========================================================
+
     if(nl_counter % nrenew_freq == 0)
     {
       gassem_ptr->Clear_KG();
@@ -362,7 +396,7 @@ void PNonlinear_Solver::Gen_alpha_solve(
 }
 
 
-void PNonlinear_Solver::NewtonRaphson_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::NewtonRaphson_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -376,7 +410,7 @@ void PNonlinear_Solver::NewtonRaphson_solve(
     const AInt_Weight * const &wei_ptr,
     const std::vector<FEAElement *> &ele_ptr,
     IPLocAssem * const &lassem_ptr,
-    PGAssem * const &gassem_ptr,
+    PGAssem_NLHeat_GenAlpha * const &gassem_ptr,
     PLinear_Solver_PETSc * const &lsolver_ptr,
     PDNSolution * const &next,
     bool &conv_flag, 
@@ -479,7 +513,7 @@ void PNonlinear_Solver::NewtonRaphson_solve(
 }
 
 
-void PNonlinear_Solver::Gen_alpha_VMS_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_VMS_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -494,7 +528,7 @@ void PNonlinear_Solver::Gen_alpha_VMS_solve(
     const AInt_Weight * const &wei_ptr,
     const std::vector<FEAElement *> &ele_ptr,
     IPLocAssem * const &lassem_ptr,
-    PGAssem * const &gassem_ptr,
+    PGAssem_NLHeat_GenAlpha * const &gassem_ptr,
     PLinear_Solver_PETSc * const &lsolver_ptr,
     PDNSolution * const &velo,
     PDNSolution * const &disp,
@@ -616,7 +650,7 @@ void PNonlinear_Solver::Gen_alpha_VMS_solve(
 }
 
 
-void PNonlinear_Solver::Gen_alpha_VMS_noCache_3D_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_VMS_noCache_3D_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -759,7 +793,7 @@ void PNonlinear_Solver::Gen_alpha_VMS_noCache_3D_solve(
 
 
 
-void PNonlinear_Solver::NewtonRaphson_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::NewtonRaphson_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -869,7 +903,7 @@ void PNonlinear_Solver::NewtonRaphson_solve(
 
 
 
-void PNonlinear_Solver::NewtonRaphson_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::NewtonRaphson_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -977,7 +1011,7 @@ void PNonlinear_Solver::NewtonRaphson_solve(
 
 
 
-void PNonlinear_Solver::GenAlpha_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::GenAlpha_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -1132,7 +1166,7 @@ void PNonlinear_Solver::GenAlpha_solve(
 
 
 
-void PNonlinear_Solver::GenAlpha_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::GenAlpha_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,
@@ -1266,7 +1300,7 @@ void PNonlinear_Solver::GenAlpha_solve(
 }
 
 
-void PNonlinear_Solver::GenAlpha_solve(
+void PNonlinear_Solver_NLHeat_GenAlpha::GenAlpha_solve(
     const bool &new_tangent_flag,
     const double &curr_time,
     const double &dt,

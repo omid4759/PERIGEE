@@ -103,4 +103,13 @@ void PDNSolution_heatEqn::Init_Partial( const class APart_Node * const &pNode,
   delete [] index; delete [] value_bc;
 }
 
+int PDNSolution_heatEqn::GetSize() const
+{
+  SYS_T::commPrint("GetSize implemented. \n");
+  int size;
+  VecGetSize(solution, &size);
+  
+  return size;
+}
+
 // EOF

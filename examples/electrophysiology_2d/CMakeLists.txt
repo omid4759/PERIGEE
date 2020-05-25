@@ -100,6 +100,9 @@ SET( perigee_analysis_lib_src
   ${perigee_SOURCE_DIR}/src/PLocAssem_NLHeat_2D_GenAlpha.cpp
   ${perigee_SOURCE_DIR}/src/PLocAssem_NLHeat_3D_GenAlpha.cpp
   ${perigee_SOURCE_DIR}/src/PDNSolution_heatEqn.cpp
+  ${perigee_SOURCE_DIR}/src/PTime_Solver_NLHeat_GenAlpha.cpp
+  ${perigee_SOURCE_DIR}/src/PNonlinear_Solver_NLHeat_GenAlpha.cpp
+  ${perigee_SOURCE_DIR}/src/PGAssem_NLHeat_GenAlpha.cpp
   )
 
 # 3. Postprocess cpp

@@ -28,7 +28,7 @@
 #include "FEAElement_NURBS_2D_der2.hpp"
 #include "PDNSolution_heatEqn.hpp"
 #include "PLocAssem_NLHeat_2D_GenAlpha.hpp"
-#include "PTime_Solver.hpp"
+#include "PTime_Solver_NLHeat_GenAlpha.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
   SYS_T::synPrintElementInfo(locElem->get_nlocalele(), feaelement_memsize,
       (double)elem_timer/(double)CLOCKS_PER_SEC, rank);
 
-  // ======= Finite Element Analysis =======
+  // ======= Finite Element Analysis =======6
   // FEA.1 Initial solution and history variables (1 per node)
   PDNSolution * disp = new PDNSolution_heatEqn(pNode, fNode, locBC, 2);
   PDNSolution * velo = new PDNSolution_heatEqn(pNode, fNode, locBC, 0);
@@ -191,7 +191,8 @@ int main(int argc, char *argv[])
 
   // FEA.3 Globaly assembly setup
   int vpetsc_type = 0;
-  PGAssem * gloAssem_ptr = new PGAssem(locAssem_ptr, GMIptr, pNode, vpetsc_type);
+  PGAssem_NLHeat_GenAlpha * gloAssem_ptr
+    = new PGAssem_NLHeat_GenAlpha(locAssem_ptr, GMIptr, pNode, vpetsc_type);
 
   // FEA.4 Estimate nonzero structure
   gloAssem_ptr->Assem_nonzero_estimate( locElem, locAssem_ptr, locIEN, pNode, locBC );
@@ -214,14 +215,16 @@ int main(int argc, char *argv[])
   SYS_T::commPrint("\n===> Initial solution's time derivative obtained. \n");
 
   // FEA.7 Nonlinear solver steup
-  PNonlinear_Solver * nsolver = new PNonlinear_Solver(nl_rtol, nl_atol,
-      nl_dtol, nl_maxits, nl_refreq);
+  PNonlinear_Solver_NLHeat_GenAlpha * nsolver
+    = new PNonlinear_Solver_NLHeat_GenAlpha(nl_rtol, nl_atol,
+					    nl_dtol, nl_maxits, nl_refreq);
   SYS_T::commPrint("===> Nonlinear solver setted up:\n");
   nsolver->Info();
 
   // FEA.8 Time solver steup
-  PTime_Solver * tsolver = new PTime_Solver( sol_bName, sol_record_freq,
-      ttan_renew_freq, final_time );
+  PTime_Solver_NLHeat_GenAlpha * tsolver =
+    new PTime_Solver_NLHeat_GenAlpha( sol_bName, sol_record_freq,
+				      ttan_renew_freq, final_time );
 
   SYS_T::commPrint("===> Time marching solver setted up:\n");
   tsolver->Info();

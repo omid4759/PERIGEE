@@ -165,6 +165,13 @@ class PDNSolution
     // --------------------------------------------------------------
     virtual int get_dof_num() const {return dof_num;}
 
+    virtual int GetSize() const;
+
+    virtual double GetValue(const int &location) const;  
+
+    virtual double SetValue(const int &location,
+			    const double &value) const;
+
   private:
    int nlocal, nghost, dof_num; 
 };
