@@ -112,6 +112,7 @@ void PTime_Solver_NLHeat_GenAlpha::TM_generalized_alpha(
     const IALocal_BC * const &bc_part,
     const AInt_Weight * const &wei_ptr,
     const std::vector<FEAElement *> &ele_ptr,
+    const IonicModel * const &ionicmodel_ptr,
     IPLocAssem * const &lassem_ptr,
     PGAssem_NLHeat_GenAlpha * const &gassem_ptr,
     PLinear_Solver_PETSc * const &lsolver_ptr,
@@ -153,8 +154,8 @@ void PTime_Solver_NLHeat_GenAlpha::TM_generalized_alpha(
     nsolver_ptr->Gen_alpha_solve(renew_flag, time_info->get_time(),
         time_info->get_step(), pre_velo, pre_disp, pre_hist, tmga_ptr,
         alelem_ptr, lien_ptr, anode_ptr, feanode_ptr, bc_part,
-        wei_ptr, ele_ptr, lassem_ptr, gassem_ptr, lsolver_ptr, 
-        cur_velo, cur_disp, cur_hist, conv_flag, nl_counter);
+	wei_ptr, ele_ptr, ionicmodel_ptr, lassem_ptr, gassem_ptr, 
+	lsolver_ptr, cur_velo, cur_disp, cur_hist, conv_flag, nl_counter);
 
     time_info->TimeIncrement();
 

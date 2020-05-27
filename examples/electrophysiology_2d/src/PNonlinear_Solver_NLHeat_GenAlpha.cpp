@@ -178,6 +178,7 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
     const IALocal_BC * const &bc_part,
     const AInt_Weight * const &wei_ptr,
     const std::vector<FEAElement *> &ele_ptr,
+    const IonicModel * const &ionicmodel_ptr,
     IPLocAssem * const &lassem_ptr,
     PGAssem_NLHeat_GenAlpha * const &gassem_ptr,
     PLinear_Solver_PETSc * const &lsolver_ptr,
@@ -247,17 +248,18 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
       //new_soln = disp_alpha.GetValue (count);
       dt_alpha = alpha_f*dt ;
 
-      r_new_alpha = curr_time+dt_alpha;
-      
+      //r_new_alpha = r_old+dt_alpha;
+      ionicmodel_ptr -> material_routine(r_old, dt_alpha, r_new_alpha);      
       //r_new_alpha.at(count) = curr_time+alpha_f*dt;
       //std::cout << "r_new_alpha " <<count<< ":"
       //		<<  r_new_alpha.at(count) << std::endl;
       hist_alpha.SetValue(count, r_new_alpha);
+
       //Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
       //            = material_routine(r_old, new_soln, dt)
     }
 
-  //hist_alpha.PrintWithGhost();
+  hist_alpha.PrintWithGhost();
   //========================================================
   
     
@@ -333,10 +335,10 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
 	//Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
 	//            = material_routine(r_old, new_soln, dt)
       }
-    std::cout << "pre hist " << std::endl;
-    pre_hist->PrintWithGhost();
-    std::cout << "hist " << std::endl;
-    hist->PrintWithGhost();
+    //std::cout << "pre hist " << std::endl;
+    //pre_hist->PrintWithGhost();
+    //std::cout << "hist " << std::endl;
+    //hist->PrintWithGhost();
     //========================================================
 
     if(nl_counter % nrenew_freq == 0)

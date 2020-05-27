@@ -57,6 +57,7 @@ class PTime_Solver_NLHeat_GenAlpha
         const IALocal_BC * const &bc_part,
         const AInt_Weight * const &wei_ptr,
         const std::vector<FEAElement *> &ele_ptr,
+	const IonicModel * const &ionicmodel_ptr,	
         IPLocAssem * const &lassem_ptr,
 	PGAssem_NLHeat_GenAlpha * const &gassem_ptr,
         PLinear_Solver_PETSc * const &lsolver_ptr,

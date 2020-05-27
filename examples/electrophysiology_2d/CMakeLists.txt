@@ -103,6 +103,7 @@ SET( perigee_analysis_lib_src
   ${perigee_SOURCE_DIR}/src/PTime_Solver_NLHeat_GenAlpha.cpp
   ${perigee_SOURCE_DIR}/src/PNonlinear_Solver_NLHeat_GenAlpha.cpp
   ${perigee_SOURCE_DIR}/src/PGAssem_NLHeat_GenAlpha.cpp
+  ${perigee_SOURCE_DIR}/src/IonicModel.cpp
   )
 
 # 3. Postprocess cpp

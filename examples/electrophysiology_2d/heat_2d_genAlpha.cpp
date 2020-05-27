@@ -29,6 +29,7 @@
 #include "PDNSolution_heatEqn.hpp"
 #include "PLocAssem_NLHeat_2D_GenAlpha.hpp"
 #include "PTime_Solver_NLHeat_GenAlpha.hpp"
+#include "IonicModel.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -181,6 +182,10 @@ int main(int argc, char *argv[])
 
   PDNTimeStep * timeinfo = new PDNTimeStep(initial_index, initial_time, initial_step);
 
+  // FEA.1.5 Ionic model setup
+  SYS_T::commPrint("===> Generate Ionic Model ... \n");
+  IonicModel * ionicmodel_ptr = new IonicModel () ;
+
   // FEA.2 Local assembly setup
   SYS_T::commPrint("===> Genereate the Generalized-alpha time scheme ... \n");
   TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha(0.5);
@@ -232,8 +237,8 @@ int main(int argc, char *argv[])
   SYS_T::commPrint("===> Start Finite Element Analysis:\n");
   tsolver->TM_generalized_alpha(
       velo, disp, hist, timeinfo, tm_galpha_ptr, locElem, locIEN, pNode,
-      fNode, locBC, Int_w, elemArray, locAssem_ptr, gloAssem_ptr,
-      lsolver, nsolver );
+      fNode, locBC, Int_w, elemArray, ionicmodel_ptr, locAssem_ptr,
+      gloAssem_ptr, lsolver, nsolver );
 
   // ======= PETSc Finalize =======
   SYS_T::commPrint("===> Clean memory ...\n");
@@ -244,7 +249,7 @@ int main(int argc, char *argv[])
   delete quad_x; delete quad_y; delete Int_w;
 
   delete disp; delete velo; delete timeinfo; delete tm_galpha_ptr;
-  delete locAssem_ptr; delete gloAssem_ptr;
+  delete locAssem_ptr; delete gloAssem_ptr; delete ionicmodel_ptr;
 
   delete lsolver; delete nsolver; delete tsolver;
 
