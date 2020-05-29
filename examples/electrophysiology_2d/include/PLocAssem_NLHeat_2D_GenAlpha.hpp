@@ -15,12 +15,14 @@
 #include "AInt_Weight.hpp"
 #include "IPLocAssem.hpp"
 #include "FEAElement.hpp"
+#include "IonicModel.hpp"
 
 class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
 {
   public:
     PLocAssem_NLHeat_2D_GenAlpha(
         const class TimeMethod_GenAlpha * const &tm_gAlpha,
+	const class IonicModel * const &ionicmodel,
         const int &in_nlocbas, const int &in_nqp
         );
     virtual ~PLocAssem_NLHeat_2D_GenAlpha();
@@ -47,6 +49,8 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
         double time, double dt,
         const double * const &vec_a,
         const double * const &vec_b,
+	const double * const &vec_c,
+        const double * const &vec_d,
         const class FEAElement * const &element,
         const double * const &eleCtrlPts_x,
         const double * const &eleCtrlPts_y,
@@ -71,7 +75,10 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
     // ! Necessary data for assembly:
     // generalized-alpha method
     double alpha_f, alpha_m, gamma;
-
+  
+    // anisotrpic conduction coefficients
+    double d_iso, d_ani;
+  
     // vec_size = nLocBas * dof_per_node
     int vec_size, nLocBas, dof_per_node;
 
@@ -88,9 +95,9 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
     void get_k( const double &u, const double &x, const double &y,
         double &k11, double &k12, double &k21, double &k22 ) const
     {
-      const double cond_coeff = 1e-1;
-      k11 = cond_coeff*1.0;    k12 = cond_coeff*0.0;
-      k21 = cond_coeff*0.0;    k22 = cond_coeff*1.0;
+      //assume 1 fiber direction is x
+      k11 = d_ani+d_iso;    k12 = 0.0;
+      k21 = 0.0;            k22 = d_iso;
     }
 
     // ! define the derivative the conductivity tensor w.r.t. u

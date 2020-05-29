@@ -240,26 +240,26 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
   // for each node. (At time t_{n+alpha_f}, using disp_alpha)
   int node_num; 
   node_num =pre_hist -> GetSize();
-  double r_new_alpha, r_old, dt_alpha;
-  
+  double r_new_alpha_tmp, r_old, dt_alpha, new_soln_alpha,
+    dPhi_Iion_alpha_tmp, Iion_alpha_tmp;
+
   for (int count{ 0 }; count < node_num; ++count)
     {
       r_old = pre_hist->GetValue(count);
-      //new_soln = disp_alpha.GetValue (count);
+      new_soln_alpha = disp_alpha.GetValue (count);
       dt_alpha = alpha_f*dt ;
 
-      //r_new_alpha = r_old+dt_alpha;
-      ionicmodel_ptr -> material_routine(r_old, dt_alpha, r_new_alpha);      
-      //r_new_alpha.at(count) = curr_time+alpha_f*dt;
-      //std::cout << "r_new_alpha " <<count<< ":"
-      //		<<  r_new_alpha.at(count) << std::endl;
-      hist_alpha.SetValue(count, r_new_alpha);
+      ionicmodel_ptr->
+	material_routine(r_old, dt_alpha,new_soln_alpha,
+			 Iion_alpha_tmp, dPhi_Iion_alpha_tmp,
+			 r_new_alpha_tmp);
 
-      //Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
-      //            = material_routine(r_old, new_soln, dt)
-    }
+      hist_alpha.SetValue(count, r_new_alpha_tmp);
+      Iion_alpha.SetValue(count, Iion_alpha_tmp);
+      dPhi_Iion_alpha.SetValue(count, dPhi_Iion_alpha_tmp);
+    } 
 
-  hist_alpha.PrintWithGhost();
+  //hist_alpha.PrintWithGhost();
   //========================================================
   
     
@@ -317,28 +317,21 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
     //========================================================
     //find new hist variables and ionic currents, and derivatives
     // for each node. (At time t_{n+alpha_f}, using disp_alpha)
-    int node_num; 
-    node_num =pre_hist -> GetSize();
-    double r_new, r_old;
-  
     for (int count{ 0 }; count < node_num; ++count)
       {
 	r_old = pre_hist->GetValue(count);
-	//new_soln = disp_alpha.GetValue (count);
+	new_soln_alpha = disp_alpha.GetValue (count);
+	dt_alpha = alpha_f*dt ;
 
-	r_new = curr_time+dt;
-      
-	//r_new_alpha.at(count) = curr_time+alpha_f*dt;
-	//std::cout << "r_new_alpha " <<count<< ":"
-	//		<<  r_new_alpha.at(count) << std::endl;
-	hist->SetValue(count, r_new);
-	//Iion_alpha(node), dphi_Iion_alpha(node), r_new_alpha(node)
-	//            = material_routine(r_old, new_soln, dt)
+	ionicmodel_ptr->
+	  material_routine(r_old, dt_alpha,new_soln_alpha,
+			   Iion_alpha_tmp, dPhi_Iion_alpha_tmp,
+			   r_new_alpha_tmp);
+
+	hist_alpha.SetValue(count, r_new_alpha_tmp);
+	Iion_alpha.SetValue(count, Iion_alpha_tmp);
+	dPhi_Iion_alpha.SetValue(count, dPhi_Iion_alpha_tmp);
       }
-    //std::cout << "pre hist " << std::endl;
-    //pre_hist->PrintWithGhost();
-    //std::cout << "hist " << std::endl;
-    //hist->PrintWithGhost();
     //========================================================
 
     if(nl_counter % nrenew_freq == 0)
@@ -379,6 +372,7 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
   }while(nl_counter < nmaxits && relative_error > nr_tol && 
 	 residual_norm > na_tol );
 
+  //========================================================
   // calculate hist_new again at t_n+1, at new time step
   //find new hist variables and ionic currents, and derivatives
   // for each node. (At time t_{n+1})
@@ -388,6 +382,27 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
   //     dt = dt ; 
   //     Iion(node), dphi_Iion(node), r_new(node)
   //              = material_routine(r_old, new_soln, dt)
+  //find new hist variables and ionic currents, and derivatives
+  // for each node. (At time t_{n+alpha_f}, using disp_alpha)
+  //int node_num; 
+  //node_num =pre_hist -> GetSize();
+  double r_new_tmp, new_soln, Iion_tmp, dPhi_Iion_tmp ;
+  
+  for (int count{ 0 }; count < node_num; ++count)
+    {
+      r_old = pre_hist->GetValue(count);
+      new_soln = disp->GetValue (count);
+
+      ionicmodel_ptr->
+	material_routine(r_old, dt, new_soln,
+			 Iion_tmp, dPhi_Iion_tmp,r_new_tmp);
+      
+      hist->SetValue(count, r_new_tmp);
+      //Iion.SetValue(count, Iion_tmp);
+      //dPhi_Iion.SetValue(count, dPhi_Iion_tmp);
+    }
+  //hist->PrintWithGhost();
+  //========================================================
   
   Print_convergence_info(nl_counter, relative_error, residual_norm);
 

@@ -2,12 +2,15 @@
 
 PLocAssem_NLHeat_2D_GenAlpha::PLocAssem_NLHeat_2D_GenAlpha(
     const class TimeMethod_GenAlpha * const &tm_gAlpha,
+    const class IonicModel * const &ionicmodel,
     const int &in_locbas, const int &in_nqp )
 {
   alpha_m = tm_gAlpha->get_alpha_m();
   alpha_f = tm_gAlpha->get_alpha_f();
   gamma   = tm_gAlpha->get_gamma();
-
+  d_iso   =ionicmodel->get_diso();
+  d_ani   =ionicmodel->get_dani();
+  
   nLocBas = in_locbas;
   
   dof_per_node = 1;
@@ -120,6 +123,8 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
     double time, double dt,
     const double * const &velo,
     const double * const &disp,
+    const double * const &Iion,
+    const double * const &dPhi_Iion,    
     const class FEAElement * const &element,
     const double * const &eleCtrlPts_x,
     const double * const &eleCtrlPts_y,
@@ -160,6 +165,11 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
     f = get_f(coor_x, coor_y, curr);
     get_k(d, coor_x, coor_y, k11, k12, k21, k22);
     get_dk_du(d, coor_x, coor_y, dk11, dk12, dk21, dk22);
+
+    std::cout<< "k11:" << k11
+	     << "k12:" << k12
+	     << "k21:" << k21
+	     << "k22:" << k22 <<std::endl;
 
     for(A=0; A<nLocBas; ++A)
     {

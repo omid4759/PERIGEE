@@ -439,11 +439,15 @@ class PGAssem_NLHeat_GenAlpha
     //   solution vector
     double * array_a;
     double * array_b;
+    double * array_c;
+    double * array_d;
 
     //   local_a & local_b are element solution vector, i.e. with size
     //   nLocBas * dof
     double * local_a;
     double * local_b;
+    double * local_c;
+    double * local_d;  
 
     //   IEN_e: LIEN indices in one particular element
     int * IEN_e;

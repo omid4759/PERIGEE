@@ -35,9 +35,13 @@ PGAssem_NLHeat_GenAlpha::PGAssem_NLHeat_GenAlpha( const IPLocAssem * const &loca
   int nlgn = pnode_ptr->get_nlocghonode(); //number of local ghost nodes
   array_a = new double [nlgn * dof];
   array_b = new double [nlgn * dof];
+  array_c = new double [nlgn * dof];
+  array_d = new double [nlgn * dof];  
 
   local_a = new double [dof * nLocBas];
   local_b = new double [dof * nLocBas];
+  local_c = new double [dof * nLocBas];
+  local_d = new double [dof * nLocBas];  
 
   IEN_e = new int [nLocBas];
 
@@ -147,8 +151,12 @@ PGAssem_NLHeat_GenAlpha::~PGAssem_NLHeat_GenAlpha()
   delete [] col_index;
   delete [] array_a;
   delete [] array_b;
+  delete [] array_c;
+  delete [] array_d;  
   delete [] local_a;
   delete [] local_b;
+  delete [] local_c;
+  delete [] local_d;  
   delete [] IEN_e;
   delete [] ectrl_x;
   delete [] ectrl_y;
@@ -603,6 +611,8 @@ void PGAssem_NLHeat_GenAlpha::Assem_tangent_residual(
 
   sol_a->GetLocalArray( array_a, node_ptr );
   sol_b->GetLocalArray( array_b, node_ptr );
+  sol_c->GetLocalArray( array_c, node_ptr );
+  sol_d->GetLocalArray( array_d, node_ptr );  
 
   for( int ee=0; ee<nElem; ++ee )
   {
@@ -611,11 +621,14 @@ void PGAssem_NLHeat_GenAlpha::Assem_tangent_residual(
       lien_ptr->get_LIEN_e(ee, IEN_e);
       GetLocal(array_a, IEN_e, local_a); 
       GetLocal(array_b, IEN_e, local_b);
+      GetLocal(array_c, IEN_e, local_c); 
+      GetLocal(array_d, IEN_e, local_d);      
 
       fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
 
       lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
-          eptr_array[ee], ectrl_x, ectrl_y, ectrl_z, wei_ptr);
+					 local_c, local_d, eptr_array[ee],
+					 ectrl_x, ectrl_y, ectrl_z, wei_ptr);
 
       for(int i=0; i<nLocBas; ++i)
       {

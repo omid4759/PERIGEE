@@ -2,15 +2,9 @@
 #define IMATERIALMODEL_HPP
 // ==================================================================
 // IMaterialModel.hpp
-//
-// Interface for electroactive material models .
-//
-// There are three pure virtual functions that need to be implemented
-// for each instantiations: 
-//   -- print_info : print the basic information of the class.
-//   -- get_ionic_current : return the transmembrane current and 
-//                          its tangent,update ionic model variables 
 // 
+// Interface for electroactive material models .
+// Aliev-Panfilov model from Goktepe&Kuhl,2009
 //
 // Date: May 25 2020
 // Author: Oguz Ziya Tikenogullari, Ju Liu
@@ -29,9 +23,19 @@ public:
   
   virtual void print_info() const; //const =0 ;
 
+  virtual double get_diso() const;
+
+  virtual double get_dani() const;
+  
   virtual void material_routine(const double &r_old,
 				const double &dt,
-				double &r_new_out) const; 
+				const double &Phi,
+				double &f_Phi,
+				double &dP_fP,
+				double &r_new) const;
+private:
+  const double ap_1, ap_2, ap_3, m1, m2, alpha, gamma,
+    b, c, d_iso, d_ani, tol;
 
 //  virtual void get_PK(const Matrix_3x3 &F, Matrix_3x3 &P, Matrix_3x3 &S) = 0;
 //

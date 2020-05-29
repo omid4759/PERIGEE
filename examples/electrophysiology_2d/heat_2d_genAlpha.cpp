@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
   double initial_time = 0.0;
   double initial_step = 0.1;
   int initial_index = 0;
-  double final_time = 2.0;
+  double final_time = 0.1; // 2.0
 
   // Time solver parameters
   std::string sol_bName("SOL_");
@@ -185,14 +185,16 @@ int main(int argc, char *argv[])
   // FEA.1.5 Ionic model setup
   SYS_T::commPrint("===> Generate Ionic Model ... \n");
   IonicModel * ionicmodel_ptr = new IonicModel () ;
+  ionicmodel_ptr -> print_info();
 
   // FEA.2 Local assembly setup
   SYS_T::commPrint("===> Genereate the Generalized-alpha time scheme ... \n");
   TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha(0.5);
 
   SYS_T::commPrint("===> Initialize local assembly routine ... \n");
-  IPLocAssem * locAssem_ptr = new PLocAssem_NLHeat_2D_GenAlpha(
-      tm_galpha_ptr, GMIptr->get_nLocBas(), Int_w->get_num() );
+  IPLocAssem * locAssem_ptr =
+    new PLocAssem_NLHeat_2D_GenAlpha( tm_galpha_ptr, ionicmodel_ptr,
+				      GMIptr->get_nLocBas(), Int_w->get_num() );
 
   // FEA.3 Globaly assembly setup
   int vpetsc_type = 0;
