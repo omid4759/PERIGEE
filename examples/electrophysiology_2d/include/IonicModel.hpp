@@ -26,6 +26,10 @@ public:
   virtual double get_diso() const;
 
   virtual double get_dani() const;
+
+  virtual double get_chi() const;
+
+  virtual double get_C_m() const;
   
   virtual void material_routine(const double &r_old,
 				const double &dt,
@@ -35,7 +39,7 @@ public:
 				double &r_new) const;
 private:
   const double ap_1, ap_2, ap_3, m1, m2, alpha, gamma,
-    b, c, d_iso, d_ani, tol;
+    b, c, d_iso, d_ani, tol, chi, C_m;
 
 //  virtual void get_PK(const Matrix_3x3 &F, Matrix_3x3 &P, Matrix_3x3 &S) = 0;
 //

@@ -38,6 +38,8 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
         double time, double dt,
         const double * const &vec_a,
         const double * const &vec_b,
+	const double * const &vec_c,
+        const double * const &vec_d,
         const class FEAElement * const &element,
         const double * const &eleCtrlPts_x,
         const double * const &eleCtrlPts_y,
@@ -76,8 +78,8 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
     // generalized-alpha method
     double alpha_f, alpha_m, gamma;
   
-    // anisotrpic conduction coefficients
-    double d_iso, d_ani;
+    //  conduction coefficients
+    double d_iso, d_ani, chi, C_m;
   
     // vec_size = nLocBas * dof_per_node
     int vec_size, nLocBas, dof_per_node;

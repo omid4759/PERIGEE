@@ -251,6 +251,7 @@ class IPLocAssem
         const double * const &eleCtrlPts_z,
         const AInt_Weight * const &weight )
     {SYS_T::commPrint("Warning: this Assem_Tangent_Residual(...) is not implemented. \n");}
+  
 
   // \para vec_c: ionic currents calculated in electrophysiology
   //              problem.
@@ -271,7 +272,29 @@ class IPLocAssem
         const double * const &eleCtrlPts_y,
         const double * const &eleCtrlPts_z,
         const AInt_Weight * const &weight )
-    {SYS_T::commPrint("Warning: this Assem_Tangent_Residual(...) is not implemented. \n");}
+    {SYS_T::commPrint("Warning: this Assem_Tangent_Residual(...) for electrophysiology is not implemented. \n");}
+
+
+  // \para vec_c: ionic currents calculated in electrophysiology
+  //              problem.
+  // \para vec_d: tangent of ionic currents wrt solution variable
+  //              transmembrane potential(Phi)
+  // note:        These are passed from global assembly routine if
+  //              ionic equations are evaluated at the nodes (state
+  //              variables at the nodes too), instead of Gauss pts.
+  
+      virtual void Assem_Residual(
+        double time, double dt,
+        const double * const &vec_a,
+        const double * const &vec_b,
+	const double * const &vec_c,
+        const double * const &vec_d,
+        const FEAElement * const &element,
+        const double * const &eleCtrlPts_x,
+        const double * const &eleCtrlPts_y,
+        const double * const &eleCtrlPts_z,
+        const AInt_Weight * const &weight )
+    {SYS_T::commPrint("Warning: this Assem_Residual(...) for electrophysiology is not implemented. \n");}
 
 
     // ! Assembly element residual vector and tengent matrix without cached

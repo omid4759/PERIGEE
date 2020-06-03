@@ -520,72 +520,72 @@ void PGAssem_NLHeat_GenAlpha::Get_dnz_onz( const int &nElem,
 
 
 
-void PGAssem_NLHeat_GenAlpha::Assem_tangent_residual(
-    const PDNSolution * const &sol_a,
-    const PDNSolution * const &sol_b,
-    const double &curr_time,
-    const double &dt,
-    const ALocal_Elem * const &alelem_ptr,
-    IPLocAssem * const &lassem_ptr, 
-    const ALocal_IEN * const &lien_ptr,
-    const APart_Node * const &node_ptr,
-    const FEANode * const &fnode_ptr,
-    const AInt_Weight * const &wei_ptr,
-    const std::vector<FEAElement*> &eptr_array,
-    const IALocal_BC * const &bc_part )
-{
-  int nElem = alelem_ptr->get_nlocalele();
-  int loc_dof = dof * nLocBas;
-  int loc_index, lrow_index; // lcol_index;
-
-  sol_a->GetLocalArray( array_a, node_ptr );
-  sol_b->GetLocalArray( array_b, node_ptr );
-
-  for( int ee=0; ee<nElem; ++ee )
-  {
-    if( eptr_array[ee]->is_sizeNonzero() )
-    {
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a); 
-      GetLocal(array_b, IEN_e, local_b);
-
-      fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
-
-      lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
-          eptr_array[ee], ectrl_x, ectrl_y, ectrl_z, wei_ptr);
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-        //lcol_index = node_ptr->get_local_to_global( loc_index );
-
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-
-          row_index[dof * i + m] = dof * lrow_index + m;
-          col_index[dof * i + m] = dof * lrow_index + m;
-        }
-      }
-
-      MatSetValues(K, loc_dof, row_index, loc_dof, col_index,
-          lassem_ptr->Tangent, ADD_VALUES);
-
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-
-  VecAssemblyBegin(G);
-  VecAssemblyEnd(G);
-
-  for(int fie = 0; fie<dof; ++fie)
-    EssBC_KG( bc_part, fie);
-
-  MatAssemblyBegin(K, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
-  VecAssemblyBegin(G);
-  VecAssemblyEnd(G);
-}
+//void PGAssem_NLHeat_GenAlpha::Assem_tangent_residual(
+//    const PDNSolution * const &sol_a,
+//    const PDNSolution * const &sol_b,
+//    const double &curr_time,
+//    const double &dt,
+//    const ALocal_Elem * const &alelem_ptr,
+//    IPLocAssem * const &lassem_ptr, 
+//    const ALocal_IEN * const &lien_ptr,
+//    const APart_Node * const &node_ptr,
+//    const FEANode * const &fnode_ptr,
+//    const AInt_Weight * const &wei_ptr,
+//    const std::vector<FEAElement*> &eptr_array,
+//    const IALocal_BC * const &bc_part )
+//{
+//  int nElem = alelem_ptr->get_nlocalele();
+//  int loc_dof = dof * nLocBas;
+//  int loc_index, lrow_index; // lcol_index;
+//
+//  sol_a->GetLocalArray( array_a, node_ptr );
+//  sol_b->GetLocalArray( array_b, node_ptr );
+//
+//  for( int ee=0; ee<nElem; ++ee )
+//  {
+//    if( eptr_array[ee]->is_sizeNonzero() )
+//    {
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a); 
+//      GetLocal(array_b, IEN_e, local_b);
+//
+//      fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
+//
+//      lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
+//          eptr_array[ee], ectrl_x, ectrl_y, ectrl_z, wei_ptr);
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//        //lcol_index = node_ptr->get_local_to_global( loc_index );
+//
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//          col_index[dof * i + m] = dof * lrow_index + m;
+//        }
+//      }
+//
+//      MatSetValues(K, loc_dof, row_index, loc_dof, col_index,
+//          lassem_ptr->Tangent, ADD_VALUES);
+//
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//
+//  VecAssemblyBegin(G);
+//  VecAssemblyEnd(G);
+//
+//  for(int fie = 0; fie<dof; ++fie)
+//    EssBC_KG( bc_part, fie);
+//
+//  MatAssemblyBegin(K, MAT_FINAL_ASSEMBLY);
+//  MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
+//  VecAssemblyBegin(G);
+//  VecAssemblyEnd(G);
+//}
 
 //assemble when history variables exist
 void PGAssem_NLHeat_GenAlpha::Assem_tangent_residual(
@@ -663,241 +663,241 @@ void PGAssem_NLHeat_GenAlpha::Assem_tangent_residual(
   VecAssemblyEnd(G);
 }
 
-void PGAssem_NLHeat_GenAlpha::Assem_tangent_residual(
-    const PDNSolution * const &sol_a,
-    const PDNSolution * const &sol_b,
-    const double &curr_time,
-    const double &dt,
-    const ALocal_Elem * const &alelem_ptr,
-    IPLocAssem * const &lassem_ptr, 
-    const ALocal_IEN * const &lien_ptr,
-    const APart_Node * const &node_ptr,
-    const FEANode * const &fnode_ptr,
-    const AInt_Weight * const &wei_ptr,
-    const IALocal_meshSize * const &mSize,
-    const BernsteinBasis_Array * const &bs,
-    const BernsteinBasis_Array * const &bt,
-    const BernsteinBasis_Array * const &bu,
-    const IAExtractor * const &extractor,
-    const IALocal_BC * const &bc_part )
-{
-  const int nElem = alelem_ptr->get_nlocalele();
-  const int loc_dof = dof * nLocBas;
-  int loc_index, lrow_index; // lcol_index;
+//void PGAssem_NLHeat_GenAlpha::Assem_tangent_residual(
+//    const PDNSolution * const &sol_a,
+//    const PDNSolution * const &sol_b,
+//    const double &curr_time,
+//    const double &dt,
+//    const ALocal_Elem * const &alelem_ptr,
+//    IPLocAssem * const &lassem_ptr, 
+//    const ALocal_IEN * const &lien_ptr,
+//    const APart_Node * const &node_ptr,
+//    const FEANode * const &fnode_ptr,
+//    const AInt_Weight * const &wei_ptr,
+//    const IALocal_meshSize * const &mSize,
+//    const BernsteinBasis_Array * const &bs,
+//    const BernsteinBasis_Array * const &bt,
+//    const BernsteinBasis_Array * const &bu,
+//    const IAExtractor * const &extractor,
+//    const IALocal_BC * const &bc_part )
+//{
+//  const int nElem = alelem_ptr->get_nlocalele();
+//  const int loc_dof = dof * nLocBas;
+//  int loc_index, lrow_index; // lcol_index;
+//
+//  sol_a->GetLocalArray( array_a, node_ptr );
+//  sol_b->GetLocalArray( array_b, node_ptr );
+//
+//  double ehx, ehy, ehz; // element mesh size in each direction
+//
+//  std::vector<double> ext_x, ext_y, ext_z; // extraction operator in each direction
+//
+//  double * ectrl_w = new double [nLocBas]; // element's weights
+//
+//  for( int ee=0; ee<nElem; ++ee )
+//  {
+//    //rmeshsize = mSize->get_meshsize(ee);
+//
+//    if( mSize->get_meshsize(ee) > 0.0 )
+//    {
+//      // Obtian the mesh size in element ee
+//      ehx = mSize->get_hx(ee);
+//      ehy = mSize->get_hy(ee);
+//      ehz = mSize->get_hz(ee);
+//
+//      // Obtain the extractor in element ee
+//      extractor->get_EXT_x(ee, ext_x);
+//      extractor->get_EXT_y(ee, ext_y);
+//      extractor->get_EXT_z(ee, ext_z);
+//
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a); 
+//      GetLocal(array_b, IEN_e, local_b);
+//
+//      // Obtain the control points gemoetrical information
+//      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
+//
+//      // Call local assembly routine to generate element matrix and vector
+//      lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
+//          ee, ehx, ehy, ehz, bs, bt, bu, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
+//          &ext_x[0], &ext_y[0], &ext_z[0], wei_ptr);
+//
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//          col_index[dof * i + m] = dof * lrow_index + m;
+//        }
+//      }
+//
+//      MatSetValues(K, loc_dof, row_index, loc_dof, col_index,
+//          lassem_ptr->Tangent, ADD_VALUES);
+//
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//
+//  // Loop over top boundary face integral
+//  // Due to the design of the boundary element info, one has to specify the
+//  // location of boundary integral for the dof with index 0, even if the
+//  // boundary condition is applied for other dofs. In the global
+//  // assembly routine, I will only check the 0-index in the local bc object,
+//  // if it indicates that the bc element number is greater than 0, boundary
+//  // integral will be performed. This might be a bad design. However, if we
+//  // adopt weak-imposition of dirichlet bc in the future, this does not matter
+//  // at all. We will eventaully perform boundary integral for all dof's on all
+//  // faces for all boundary conditions. The difference of difference bc will
+//  // appear only in the local assembly routine.
+//  for(int ei=0; ei<bc_part->get_NumLE_Top(0); ++ei)
+//  {
+//    // get the element index whose top surface needs to perform integral
+//    int ee = bc_part->get_LTop_Elem(0, ei);
+//    if( mSize->get_meshsize(ee) > 0.0 )
+//    {
+//      ehx = mSize->get_hx(ee);
+//      ehy = mSize->get_hy(ee);
+//      ehz = mSize->get_hz(ee);
+//
+//      extractor->get_EXT_x(ee, ext_x);
+//      extractor->get_EXT_y(ee, ext_y);
+//      extractor->get_EXT_z(ee, ext_z);
+//
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a); 
+//      GetLocal(array_b, IEN_e, local_b);
+//
+//      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
+//
+//      lassem_ptr->Assem_Residual_TopFace( curr_time, dt, local_a, local_b,
+//          ee, ehx, ehy, ehz, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
+//          &ext_x[0], &ext_y[0], &ext_z[0] );
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//        } 
+//      }
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//  
+//  for(int ei=0; ei<bc_part->get_NumLE_Bot(0); ++ei)
+//  {
+//    // get the element index whose top surface needs to perform integral
+//    int ee = bc_part->get_LBottom_Elem(0, ei);
+//    if( mSize->get_meshsize(ee) > 0.0 )
+//    {
+//      ehx = mSize->get_hx(ee);
+//      ehy = mSize->get_hy(ee);
+//      ehz = mSize->get_hz(ee);
+//
+//      extractor->get_EXT_x(ee, ext_x);
+//      extractor->get_EXT_y(ee, ext_y);
+//      extractor->get_EXT_z(ee, ext_z);
+//
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a); 
+//      GetLocal(array_b, IEN_e, local_b);
+//
+//      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
+//
+//      lassem_ptr->Assem_Residual_BotFace( curr_time, dt, local_a, local_b,
+//          ee, ehx, ehy, ehz, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
+//          &ext_x[0], &ext_y[0], &ext_z[0] );
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//        } 
+//      }
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//
+//
+//  // The Rest boundary integrals need to be completed
+//
+//  VecAssemblyBegin(G);
+//  VecAssemblyEnd(G);
+//
+//  // Imposing essential boundary conditions
+//  for(int fie = 0; fie<dof; ++fie)
+//    EssBC_KG( bc_part, fie);
+//
+//  MatAssemblyBegin(K, MAT_FINAL_ASSEMBLY);
+//  MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
+//  VecAssemblyBegin(G);
+//  VecAssemblyEnd(G);
+//
+//  delete [] ectrl_w;
+//}
 
-  sol_a->GetLocalArray( array_a, node_ptr );
-  sol_b->GetLocalArray( array_b, node_ptr );
 
-  double ehx, ehy, ehz; // element mesh size in each direction
-
-  std::vector<double> ext_x, ext_y, ext_z; // extraction operator in each direction
-
-  double * ectrl_w = new double [nLocBas]; // element's weights
-
-  for( int ee=0; ee<nElem; ++ee )
-  {
-    //rmeshsize = mSize->get_meshsize(ee);
-
-    if( mSize->get_meshsize(ee) > 0.0 )
-    {
-      // Obtian the mesh size in element ee
-      ehx = mSize->get_hx(ee);
-      ehy = mSize->get_hy(ee);
-      ehz = mSize->get_hz(ee);
-
-      // Obtain the extractor in element ee
-      extractor->get_EXT_x(ee, ext_x);
-      extractor->get_EXT_y(ee, ext_y);
-      extractor->get_EXT_z(ee, ext_z);
-
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a); 
-      GetLocal(array_b, IEN_e, local_b);
-
-      // Obtain the control points gemoetrical information
-      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
-
-      // Call local assembly routine to generate element matrix and vector
-      lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
-          ee, ehx, ehy, ehz, bs, bt, bu, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
-          &ext_x[0], &ext_y[0], &ext_z[0], wei_ptr);
-
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-
-          row_index[dof * i + m] = dof * lrow_index + m;
-          col_index[dof * i + m] = dof * lrow_index + m;
-        }
-      }
-
-      MatSetValues(K, loc_dof, row_index, loc_dof, col_index,
-          lassem_ptr->Tangent, ADD_VALUES);
-
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-
-  // Loop over top boundary face integral
-  // Due to the design of the boundary element info, one has to specify the
-  // location of boundary integral for the dof with index 0, even if the
-  // boundary condition is applied for other dofs. In the global
-  // assembly routine, I will only check the 0-index in the local bc object,
-  // if it indicates that the bc element number is greater than 0, boundary
-  // integral will be performed. This might be a bad design. However, if we
-  // adopt weak-imposition of dirichlet bc in the future, this does not matter
-  // at all. We will eventaully perform boundary integral for all dof's on all
-  // faces for all boundary conditions. The difference of difference bc will
-  // appear only in the local assembly routine.
-  for(int ei=0; ei<bc_part->get_NumLE_Top(0); ++ei)
-  {
-    // get the element index whose top surface needs to perform integral
-    int ee = bc_part->get_LTop_Elem(0, ei);
-    if( mSize->get_meshsize(ee) > 0.0 )
-    {
-      ehx = mSize->get_hx(ee);
-      ehy = mSize->get_hy(ee);
-      ehz = mSize->get_hz(ee);
-
-      extractor->get_EXT_x(ee, ext_x);
-      extractor->get_EXT_y(ee, ext_y);
-      extractor->get_EXT_z(ee, ext_z);
-
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a); 
-      GetLocal(array_b, IEN_e, local_b);
-
-      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
-
-      lassem_ptr->Assem_Residual_TopFace( curr_time, dt, local_a, local_b,
-          ee, ehx, ehy, ehz, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
-          &ext_x[0], &ext_y[0], &ext_z[0] );
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-          row_index[dof * i + m] = dof * lrow_index + m;
-        } 
-      }
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-  
-  for(int ei=0; ei<bc_part->get_NumLE_Bot(0); ++ei)
-  {
-    // get the element index whose top surface needs to perform integral
-    int ee = bc_part->get_LBottom_Elem(0, ei);
-    if( mSize->get_meshsize(ee) > 0.0 )
-    {
-      ehx = mSize->get_hx(ee);
-      ehy = mSize->get_hy(ee);
-      ehz = mSize->get_hz(ee);
-
-      extractor->get_EXT_x(ee, ext_x);
-      extractor->get_EXT_y(ee, ext_y);
-      extractor->get_EXT_z(ee, ext_z);
-
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a); 
-      GetLocal(array_b, IEN_e, local_b);
-
-      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
-
-      lassem_ptr->Assem_Residual_BotFace( curr_time, dt, local_a, local_b,
-          ee, ehx, ehy, ehz, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
-          &ext_x[0], &ext_y[0], &ext_z[0] );
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-          row_index[dof * i + m] = dof * lrow_index + m;
-        } 
-      }
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-
-
-  // The Rest boundary integrals need to be completed
-
-  VecAssemblyBegin(G);
-  VecAssemblyEnd(G);
-
-  // Imposing essential boundary conditions
-  for(int fie = 0; fie<dof; ++fie)
-    EssBC_KG( bc_part, fie);
-
-  MatAssemblyBegin(K, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
-  VecAssemblyBegin(G);
-  VecAssemblyEnd(G);
-
-  delete [] ectrl_w;
-}
-
-
-void PGAssem_NLHeat_GenAlpha::Assem_residual(
-    const PDNSolution * const &sol_a,
-    const PDNSolution * const &sol_b,
-    const double &curr_time,
-    const double &dt,
-    const ALocal_Elem * const &alelem_ptr,
-    IPLocAssem * const &lassem_ptr, 
-    const ALocal_IEN * const &lien_ptr,
-    const APart_Node * const &node_ptr,
-    const FEANode * const &fnode_ptr,
-    const AInt_Weight * const &wei_ptr,
-    const std::vector<FEAElement*> &eptr_array,
-    const IALocal_BC * const &bc_part )
-{
-  int nElem = alelem_ptr->get_nlocalele();
-  int loc_dof = dof * nLocBas;
-  int loc_index, lrow_index;
-
-  sol_a->GetLocalArray( array_a, node_ptr );
-  sol_b->GetLocalArray( array_b, node_ptr );
-
-  for( int ee=0; ee<nElem; ++ee )
-  {
-    if( eptr_array[ee]->is_sizeNonzero() )
-    {
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a); 
-      GetLocal(array_b, IEN_e, local_b);
-
-      fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
-
-      lassem_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
-          eptr_array[ee], ectrl_x, ectrl_y, ectrl_z, wei_ptr);
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-          row_index[dof * i + m] = dof * lrow_index + m;
-        }
-      }
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-
-  VecAssemblyBegin(G);
-  VecAssemblyEnd(G);
-}
+//void PGAssem_NLHeat_GenAlpha::Assem_residual(
+//    const PDNSolution * const &sol_a,
+//    const PDNSolution * const &sol_b,
+//    const double &curr_time,
+//    const double &dt,
+//    const ALocal_Elem * const &alelem_ptr,
+//    IPLocAssem * const &lassem_ptr, 
+//    const ALocal_IEN * const &lien_ptr,
+//    const APart_Node * const &node_ptr,
+//    const FEANode * const &fnode_ptr,
+//    const AInt_Weight * const &wei_ptr,
+//    const std::vector<FEAElement*> &eptr_array,
+//    const IALocal_BC * const &bc_part )
+//{
+//  int nElem = alelem_ptr->get_nlocalele();
+//  int loc_dof = dof * nLocBas;
+//  int loc_index, lrow_index;
+//
+//  sol_a->GetLocalArray( array_a, node_ptr );
+//  sol_b->GetLocalArray( array_b, node_ptr );
+//
+//  for( int ee=0; ee<nElem; ++ee )
+//  {
+//    if( eptr_array[ee]->is_sizeNonzero() )
+//    {
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a); 
+//      GetLocal(array_b, IEN_e, local_b);
+//
+//      fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
+//
+//      lassem_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
+//          eptr_array[ee], ectrl_x, ectrl_y, ectrl_z, wei_ptr);
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//        }
+//      }
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//
+//  VecAssemblyBegin(G);
+//  VecAssemblyEnd(G);
+//}
 
 //assemble when history variables exist
 void PGAssem_NLHeat_GenAlpha::Assem_residual(
@@ -923,8 +923,8 @@ void PGAssem_NLHeat_GenAlpha::Assem_residual(
 
   sol_a->GetLocalArray( array_a, node_ptr );
   sol_b->GetLocalArray( array_b, node_ptr );
-  //sol_c->GetLocalArray( array_c, node_ptr );
-  //sol_d->GetLocalArray( array_d, node_ptr );
+  sol_c->GetLocalArray( array_c, node_ptr );
+  sol_d->GetLocalArray( array_d, node_ptr );
 
   for( int ee=0; ee<nElem; ++ee )
   {
@@ -933,11 +933,14 @@ void PGAssem_NLHeat_GenAlpha::Assem_residual(
       lien_ptr->get_LIEN_e(ee, IEN_e);
       GetLocal(array_a, IEN_e, local_a); 
       GetLocal(array_b, IEN_e, local_b);
-
+      GetLocal(array_c, IEN_e, local_c); 
+      GetLocal(array_d, IEN_e, local_d);
+      
       fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
 
       lassem_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
-          eptr_array[ee], ectrl_x, ectrl_y, ectrl_z, wei_ptr);
+				 local_c, local_d, eptr_array[ee],
+				 ectrl_x, ectrl_y, ectrl_z, wei_ptr);
 
       for(int i=0; i<nLocBas; ++i)
       {
@@ -958,159 +961,159 @@ void PGAssem_NLHeat_GenAlpha::Assem_residual(
 }
 
 
-void PGAssem_NLHeat_GenAlpha::Assem_residual(
-    const PDNSolution * const &sol_a,
-    const PDNSolution * const &sol_b,
-    const double &curr_time,
-    const double &dt,
-    const ALocal_Elem * const &alelem_ptr,
-    IPLocAssem * const &lassem_ptr, 
-    const ALocal_IEN * const &lien_ptr,
-    const APart_Node * const &node_ptr,
-    const FEANode * const &fnode_ptr,
-    const AInt_Weight * const &wei_ptr,
-    const IALocal_meshSize * const &mSize,
-    const BernsteinBasis_Array * const &bs,
-    const BernsteinBasis_Array * const &bt,
-    const BernsteinBasis_Array * const &bu,
-    const IAExtractor * const &extractor,
-    const IALocal_BC * const &bc_part )
-{
-  const int nElem = alelem_ptr->get_nlocalele();
-  const int loc_dof = dof * nLocBas;
-  int loc_index, lrow_index;
-
-  sol_a->GetLocalArray( array_a, node_ptr );
-  sol_b->GetLocalArray( array_b, node_ptr );
-
-  double ehx, ehy, ehz; // element mesh size in each direction
-
-  std::vector<double> ext_x, ext_y, ext_z; // extraction operator in each direction
-
-  double * ectrl_w = new double [nLocBas]; // element's weights
-
-  for( int ee=0; ee<nElem; ++ee )
-  {
-    if( mSize->get_meshsize(ee) > 0.0 )
-    {
-      // Obtain the mesh size in element ee
-      ehx = mSize->get_hx(ee);
-      ehy = mSize->get_hy(ee);
-      ehz = mSize->get_hz(ee);
-
-      // Obtain the extraction operator in element ee
-      extractor->get_EXT_x(ee, ext_x);
-      extractor->get_EXT_y(ee, ext_y);
-      extractor->get_EXT_z(ee, ext_z);
-
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a); 
-      GetLocal(array_b, IEN_e, local_b);
-
-      // Obtain the geometrical infomation
-      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
-
-      // Call local assembly routine to generate element matrix and vector
-      lassem_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
-          ee, ehx, ehy, ehz, bs, bt, bu, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
-          &ext_x[0], &ext_y[0], &ext_z[0], wei_ptr);
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-          row_index[dof * i + m] = dof * lrow_index + m;
-        }
-      }
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-  
-  for(int ei=0; ei<bc_part->get_NumLE_Top(0); ++ei)
-  {
-    // get the element index whose top surface needs to perform integral
-    int ee = bc_part->get_LTop_Elem(0, ei);
-    if( mSize->get_meshsize(ee) > 0.0 )
-    {
-      ehx = mSize->get_hx(ee);
-      ehy = mSize->get_hy(ee);
-      ehz = mSize->get_hz(ee);
-
-      extractor->get_EXT_x(ee, ext_x);
-      extractor->get_EXT_y(ee, ext_y);
-      extractor->get_EXT_z(ee, ext_z);
-
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a); 
-      GetLocal(array_b, IEN_e, local_b);
-
-      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
-
-      lassem_ptr->Assem_Residual_TopFace( curr_time, dt, local_a, local_b,
-          ee, ehx, ehy, ehz, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
-          &ext_x[0], &ext_y[0], &ext_z[0] );
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-          row_index[dof * i + m] = dof * lrow_index + m;
-        } 
-      }
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-  
-  for(int ei=0; ei<bc_part->get_NumLE_Bot(0); ++ei)
-  {
-    // get the element index whose top surface needs to perform integral
-    int ee = bc_part->get_LBottom_Elem(0, ei);
-    if( mSize->get_meshsize(ee) > 0.0 )
-    {
-      ehx = mSize->get_hx(ee);
-      ehy = mSize->get_hy(ee);
-      ehz = mSize->get_hz(ee);
-
-      extractor->get_EXT_x(ee, ext_x);
-      extractor->get_EXT_y(ee, ext_y);
-      extractor->get_EXT_z(ee, ext_z);
-
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a); 
-      GetLocal(array_b, IEN_e, local_b);
-
-      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
-
-      lassem_ptr->Assem_Residual_BotFace( curr_time, dt, local_a, local_b,
-          ee, ehx, ehy, ehz, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
-          &ext_x[0], &ext_y[0], &ext_z[0] );
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-          row_index[dof * i + m] = dof * lrow_index + m;
-        } 
-      }
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-
-
-  // The Rest boundary integrals need to be completed
-
-  VecAssemblyBegin(G);
-  VecAssemblyEnd(G);
-
-  delete [] ectrl_w;
-}
+//void PGAssem_NLHeat_GenAlpha::Assem_residual(
+//    const PDNSolution * const &sol_a,
+//    const PDNSolution * const &sol_b,
+//    const double &curr_time,
+//    const double &dt,
+//    const ALocal_Elem * const &alelem_ptr,
+//    IPLocAssem * const &lassem_ptr, 
+//    const ALocal_IEN * const &lien_ptr,
+//    const APart_Node * const &node_ptr,
+//    const FEANode * const &fnode_ptr,
+//    const AInt_Weight * const &wei_ptr,
+//    const IALocal_meshSize * const &mSize,
+//    const BernsteinBasis_Array * const &bs,
+//    const BernsteinBasis_Array * const &bt,
+//    const BernsteinBasis_Array * const &bu,
+//    const IAExtractor * const &extractor,
+//    const IALocal_BC * const &bc_part )
+//{
+//  const int nElem = alelem_ptr->get_nlocalele();
+//  const int loc_dof = dof * nLocBas;
+//  int loc_index, lrow_index;
+//
+//  sol_a->GetLocalArray( array_a, node_ptr );
+//  sol_b->GetLocalArray( array_b, node_ptr );
+//
+//  double ehx, ehy, ehz; // element mesh size in each direction
+//
+//  std::vector<double> ext_x, ext_y, ext_z; // extraction operator in each direction
+//
+//  double * ectrl_w = new double [nLocBas]; // element's weights
+//
+//  for( int ee=0; ee<nElem; ++ee )
+//  {
+//    if( mSize->get_meshsize(ee) > 0.0 )
+//    {
+//      // Obtain the mesh size in element ee
+//      ehx = mSize->get_hx(ee);
+//      ehy = mSize->get_hy(ee);
+//      ehz = mSize->get_hz(ee);
+//
+//      // Obtain the extraction operator in element ee
+//      extractor->get_EXT_x(ee, ext_x);
+//      extractor->get_EXT_y(ee, ext_y);
+//      extractor->get_EXT_z(ee, ext_z);
+//
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a); 
+//      GetLocal(array_b, IEN_e, local_b);
+//
+//      // Obtain the geometrical infomation
+//      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
+//
+//      // Call local assembly routine to generate element matrix and vector
+//      lassem_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
+//          ee, ehx, ehy, ehz, bs, bt, bu, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
+//          &ext_x[0], &ext_y[0], &ext_z[0], wei_ptr);
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//        }
+//      }
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//  
+//  for(int ei=0; ei<bc_part->get_NumLE_Top(0); ++ei)
+//  {
+//    // get the element index whose top surface needs to perform integral
+//    int ee = bc_part->get_LTop_Elem(0, ei);
+//    if( mSize->get_meshsize(ee) > 0.0 )
+//    {
+//      ehx = mSize->get_hx(ee);
+//      ehy = mSize->get_hy(ee);
+//      ehz = mSize->get_hz(ee);
+//
+//      extractor->get_EXT_x(ee, ext_x);
+//      extractor->get_EXT_y(ee, ext_y);
+//      extractor->get_EXT_z(ee, ext_z);
+//
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a); 
+//      GetLocal(array_b, IEN_e, local_b);
+//
+//      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
+//
+//      lassem_ptr->Assem_Residual_TopFace( curr_time, dt, local_a, local_b,
+//          ee, ehx, ehy, ehz, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
+//          &ext_x[0], &ext_y[0], &ext_z[0] );
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//        } 
+//      }
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//  
+//  for(int ei=0; ei<bc_part->get_NumLE_Bot(0); ++ei)
+//  {
+//    // get the element index whose top surface needs to perform integral
+//    int ee = bc_part->get_LBottom_Elem(0, ei);
+//    if( mSize->get_meshsize(ee) > 0.0 )
+//    {
+//      ehx = mSize->get_hx(ee);
+//      ehy = mSize->get_hy(ee);
+//      ehz = mSize->get_hz(ee);
+//
+//      extractor->get_EXT_x(ee, ext_x);
+//      extractor->get_EXT_y(ee, ext_y);
+//      extractor->get_EXT_z(ee, ext_z);
+//
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a); 
+//      GetLocal(array_b, IEN_e, local_b);
+//
+//      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
+//
+//      lassem_ptr->Assem_Residual_BotFace( curr_time, dt, local_a, local_b,
+//          ee, ehx, ehy, ehz, ectrl_x, ectrl_y, ectrl_z, ectrl_w,
+//          &ext_x[0], &ext_y[0], &ext_z[0] );
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//        } 
+//      }
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//
+//
+//  // The Rest boundary integrals need to be completed
+//
+//  VecAssemblyBegin(G);
+//  VecAssemblyEnd(G);
+//
+//  delete [] ectrl_w;
+//}
 
 
 void PGAssem_NLHeat_GenAlpha::Assem_mass_residual(

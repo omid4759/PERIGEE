@@ -129,19 +129,19 @@ class PGAssem_NLHeat_GenAlpha
     //       sol_a : disp /or sol_n+1
     //       sol_b : velo /or sol_n
     // ------------------------------------------------------------------------
-    void Assem_tangent_residual(
-        const PDNSolution * const &sol_a,
-        const PDNSolution * const &sol_b,
-        const double &curr_time,
-        const double &dt,
-        const ALocal_Elem * const &alelem_ptr,
-        IPLocAssem * const &lassem_ptr, 
-        const ALocal_IEN * const &lien_ptr,
-        const APart_Node * const &node_ptr,
-        const FEANode * const &fnode_ptr,
-        const AInt_Weight * const &wei_ptr,
-        const std::vector<FEAElement*> &eptr_array,
-        const IALocal_BC * const &bc_part );
+    //void Assem_tangent_residual(
+    //    const PDNSolution * const &sol_a,
+    //    const PDNSolution * const &sol_b,
+    //    const double &curr_time,
+    //    const double &dt,
+    //    const ALocal_Elem * const &alelem_ptr,
+    //    IPLocAssem * const &lassem_ptr, 
+    //    const ALocal_IEN * const &lien_ptr,
+    //    const APart_Node * const &node_ptr,
+    //    const FEANode * const &fnode_ptr,
+    //    const AInt_Weight * const &wei_ptr,
+    //    const std::vector<FEAElement*> &eptr_array,
+    //    const IALocal_BC * const &bc_part );
 
     // ------------------------------------------------------------------------
     // ! Assembly tangent matrix and residual vector,
@@ -182,41 +182,41 @@ class PGAssem_NLHeat_GenAlpha
     //                      quadrature points for volumetric integration
     //     IAExtractor : Bezier extraction operator
     // ------------------------------------------------------------------------
-    void Assem_tangent_residual(
-        const PDNSolution * const &sol_a,
-        const PDNSolution * const &sol_b,
-        const double &curr_time,
-        const double &dt,
-        const ALocal_Elem * const &alelem_ptr,
-        IPLocAssem * const &lassem_ptr, 
-        const ALocal_IEN * const &lien_ptr,
-        const APart_Node * const &node_ptr,
-        const FEANode * const &fnode_ptr,
-        const AInt_Weight * const &wei_ptr,
-        const IALocal_meshSize * const &mSize,
-        const BernsteinBasis_Array * const &bs,
-        const BernsteinBasis_Array * const &bt,
-        const BernsteinBasis_Array * const &bu,
-        const IAExtractor * const &extractor,
-        const IALocal_BC * const &bc_part );
+    //void Assem_tangent_residual(
+    //    const PDNSolution * const &sol_a,
+    //    const PDNSolution * const &sol_b,
+    //    const double &curr_time,
+    //    const double &dt,
+    //    const ALocal_Elem * const &alelem_ptr,
+    //    IPLocAssem * const &lassem_ptr, 
+    //    const ALocal_IEN * const &lien_ptr,
+    //    const APart_Node * const &node_ptr,
+    //    const FEANode * const &fnode_ptr,
+    //    const AInt_Weight * const &wei_ptr,
+    //    const IALocal_meshSize * const &mSize,
+    //    const BernsteinBasis_Array * const &bs,
+    //    const BernsteinBasis_Array * const &bt,
+    //    const BernsteinBasis_Array * const &bu,
+    //    const IAExtractor * const &extractor,
+    //    const IALocal_BC * const &bc_part );
 
     
     // ------------------------------------------------------------------------
     // ! Assembly residual vector
     // ------------------------------------------------------------------------
-    void Assem_residual(
-        const PDNSolution * const &sol_a,
-        const PDNSolution * const &sol_b,
-        const double &curr_time,
-        const double &dt,
-        const ALocal_Elem * const &alelem_ptr,
-        IPLocAssem * const &lassem_ptr, 
-        const ALocal_IEN * const &lien_ptr,
-        const APart_Node * const &node_ptr,
-        const FEANode * const &fnode_ptr,
-        const AInt_Weight * const &wei_ptr,
-        const std::vector<FEAElement*> &eptr_array,
-        const IALocal_BC * const &bc_part );
+    //void Assem_residual(
+    //    const PDNSolution * const &sol_a,
+    //    const PDNSolution * const &sol_b,
+    //    const double &curr_time,
+    //    const double &dt,
+    //    const ALocal_Elem * const &alelem_ptr,
+    //    IPLocAssem * const &lassem_ptr, 
+    //    const ALocal_IEN * const &lien_ptr,
+    //    const APart_Node * const &node_ptr,
+    //    const FEANode * const &fnode_ptr,
+    //    const AInt_Weight * const &wei_ptr,
+    //    const std::vector<FEAElement*> &eptr_array,
+    //    const IALocal_BC * const &bc_part );
 
     // ------------------------------------------------------------------------
     // ! Assembly residual vector when history variables are present
@@ -249,23 +249,23 @@ class PGAssem_NLHeat_GenAlpha
     // !                  quadrature points for volumetric integration
     // ! IAExtractor : Bezier extraction operator
     // ------------------------------------------------------------------------
-    void Assem_residual(
-        const PDNSolution * const &sol_a,
-        const PDNSolution * const &sol_b,
-        const double &curr_time,
-        const double &dt,
-        const ALocal_Elem * const &alelem_ptr,
-        IPLocAssem * const &lassem_ptr, 
-        const ALocal_IEN * const &lien_ptr,
-        const APart_Node * const &node_ptr,
-        const FEANode * const &fnode_ptr,
-        const AInt_Weight * const &wei_ptr,
-        const IALocal_meshSize * const &mSize,
-        const BernsteinBasis_Array * const &bs,
-        const BernsteinBasis_Array * const &bt,
-        const BernsteinBasis_Array * const &bu,
-        const IAExtractor * const &extractor,
-        const IALocal_BC * const &bc_part );
+    //void Assem_residual(
+    //    const PDNSolution * const &sol_a,
+    //    const PDNSolution * const &sol_b,
+    //    const double &curr_time,
+    //    const double &dt,
+    //    const ALocal_Elem * const &alelem_ptr,
+    //    IPLocAssem * const &lassem_ptr, 
+    //    const ALocal_IEN * const &lien_ptr,
+    //    const APart_Node * const &node_ptr,
+    //    const FEANode * const &fnode_ptr,
+    //    const AInt_Weight * const &wei_ptr,
+    //    const IALocal_meshSize * const &mSize,
+    //    const BernsteinBasis_Array * const &bs,
+    //    const BernsteinBasis_Array * const &bt,
+    //    const BernsteinBasis_Array * const &bu,
+    //    const IAExtractor * const &extractor,
+    //    const IALocal_BC * const &bc_part );
 
 
     // ------------------------------------------------------------------------

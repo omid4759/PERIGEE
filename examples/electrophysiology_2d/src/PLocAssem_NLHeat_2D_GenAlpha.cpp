@@ -10,7 +10,9 @@ PLocAssem_NLHeat_2D_GenAlpha::PLocAssem_NLHeat_2D_GenAlpha(
   gamma   = tm_gAlpha->get_gamma();
   d_iso   =ionicmodel->get_diso();
   d_ani   =ionicmodel->get_dani();
-  
+  chi     =ionicmodel->get_chi();
+  C_m     =ionicmodel->get_C_m();
+
   nLocBas = in_locbas;
   
   dof_per_node = 1;
@@ -67,27 +69,37 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Residual(
     double time, double dt,
     const double * const &velo,
     const double * const &disp,
+    const double * const &Iion,
+    const double * const &dPhi_Iion,    
     const class FEAElement * const &element,
     const double * const &eleCtrlPts_x,
     const double * const &eleCtrlPts_y,
     const double * const &eleCtrlPts_z,
     const class AInt_Weight * const &weight )
 {
-  double v, d, d_x, d_y;
+  double v, d, d_x, d_y, Im;
   double gwts; // quadrature weights
   int qua; // quadrature index
   double coor_x, coor_y; // xy coor of the quad pts
   double f, k11, k12, k21, k22; // material
-
+  std::vector<double> E_Im(nLocBas);// E_ is for element
+  std::vector<double> dIm(nLocBas);
+  std::vector<double> E_dIm(nLocBas);  
   double curr = time + alpha_f * dt;
 
   int ii; // iterator
+
+  for (ii=0; ii<nLocBas; ++ii)
+    {
+      E_Im[ii] = 0 - chi * Iion[ii]; //E_Istim=0
+      E_dIm[ii] = 0 - chi * dPhi_Iion[ii];//E_dIstim=0
+    }
 
   Zero_Residual(); // zero all values for assembly
 
   for(qua=0; qua<nqp; ++qua)
   {
-    v = 0.0; d = 0.0; d_x = 0.0; d_y = 0.0;
+    v = 0.0; d = 0.0; Im= 0.0; d_x = 0.0; d_y = 0.0;
     coor_x = 0.0; coor_y = 0.0;
     
     element->get_R_gradR(qua, R, dR_dx, dR_dy);
@@ -98,6 +110,9 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Residual(
     {
       v   += velo[ii] * R[ii];
       d   += disp[ii] * R[ii];
+      Im  += E_Im[ii] * R[ii];
+      dIm[ii] = E_dIm[ii] * R[ii]; //d_Im is a vector
+      
       d_x += disp[ii] * dR_dx[ii];
       d_y += disp[ii] * dR_dy[ii];
       coor_x += eleCtrlPts_x[ii] * R[ii];
@@ -111,10 +126,10 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Residual(
     
     for(ii=0; ii<nLocBas; ++ii)
     {
-      Residual[ii] += gwts * (R[ii] * v
+      Residual[ii] += gwts * (chi * C_m * R[ii] * v
           + k11 * d_x * dR_dx[ii] + k12 * d_y * dR_dx[ii]
           + k21 * d_x * dR_dy[ii] + k22 * d_y * dR_dy[ii]
-          - f * R[ii] );
+          - Im * R[ii] );
     }
   }
 }
@@ -132,19 +147,29 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
     const class AInt_Weight * const &weight )
 {
   int ii, qua, A, B, index; // iterator
-  double v, d, d_x, d_y;
+  double v, d, d_x, d_y, Im;
   double gwts;
   double coor_x, coor_y;
   double f, k11, k12, k21, k22;
   double dk11, dk12, dk21, dk22;
-
+  std::vector<double> E_Im(nLocBas);// E_ is for element
+  std::vector<double> dIm(nLocBas);
+  std::vector<double> E_dIm(nLocBas);  
   double curr = time + alpha_f * dt;
 
+  //calculate Im and dIm from Iion&Istim and dIion&dIstim
+  // at nodes! for the local element
+  for (ii=0; ii<nLocBas; ++ii)
+    {
+      E_Im[ii] = 0 - chi * Iion[ii]; //E_Istim=0
+      E_dIm[ii] = 0 - chi * dPhi_Iion[ii];//E_dIstim=0
+    }
+    
   Zero_Tangent_Residual(); // zero all values for assembly
   
   for(qua =0; qua<nqp; ++qua)
   {
-    v = 0.0; d = 0.0; d_x = 0.0; d_y = 0.0;
+    v = 0.0; d = 0.0; Im= 0.0; d_x = 0.0; d_y = 0.0;
     coor_x = 0.0; coor_y = 0.0;
 
     element->get_R_gradR(qua, R, dR_dx, dR_dy);
@@ -154,6 +179,9 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
     {
       v   += velo[ii] * R[ii];
       d   += disp[ii] * R[ii];
+      Im  += E_Im[ii] * R[ii];
+      dIm[ii] = E_dIm[ii] * R[ii]; //d_Im is a vector
+      
       d_x += disp[ii] * dR_dx[ii];
       d_y += disp[ii] * dR_dy[ii];
       coor_x += eleCtrlPts_x[ii] * R[ii];
@@ -162,27 +190,28 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
 
     gwts = element->get_detJac(qua) * weight->get_weight(qua);
 
-    f = get_f(coor_x, coor_y, curr);
+    f = get_f(coor_x, coor_y, curr); 
     get_k(d, coor_x, coor_y, k11, k12, k21, k22);
     get_dk_du(d, coor_x, coor_y, dk11, dk12, dk21, dk22);
 
-    std::cout<< "k11:" << k11
-	     << "k12:" << k12
-	     << "k21:" << k21
-	     << "k22:" << k22 <<std::endl;
-
     for(A=0; A<nLocBas; ++A)
     {
-      Residual[A] += gwts * (R[A] * v
-          + k11 * d_x * dR_dx[A] + k12 * d_y * dR_dx[A]
-          + k21 * d_x * dR_dy[A] + k22 * d_y * dR_dy[A]
-          - f * R[A] );
+      //Residual[A] += gwts * (R[A] * v
+      //    + k11 * d_x * dR_dx[A] + k12 * d_y * dR_dx[A]
+      //    + k21 * d_x * dR_dy[A] + k22 * d_y * dR_dy[A]
+      //    - f * R[A] );
+      Residual[A] += gwts * (chi * C_m * R[A] * v
+      	     + k11 * d_x * dR_dx[A] + k12 * d_y * dR_dx[A]
+      	     + k21 * d_x * dR_dy[A] + k22 * d_y * dR_dy[A]
+      	     - Im * R[A] );
 
       for(B=0; B<nLocBas; ++B)
       {
         index = A * nLocBas + B;
 
-        Tangent[index] += gwts * (R[A] * R[B] * alpha_m);
+        //Tangent[index] += gwts * (R[A] * R[B] * alpha_m);
+	Tangent[index] += gwts * (chi * C_m * R[A] * R[B] * alpha_m);
+
         Tangent[index] += gwts * alpha_f * gamma * dt * 
           ( k11 * dR_dx[A] * dR_dx[B] + k12 * dR_dx[A] * dR_dy[B]
           + k21 * dR_dy[A] * dR_dx[B] + k22 * dR_dy[A] * dR_dy[B]
@@ -192,6 +221,9 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
           ( dk11 * d_x * dR_dx[A] + dk12 * d_y * dR_dx[A]
           + dk21 * d_x * dR_dy[A] + dk22 * d_y * dR_dy[A]
            ) * R[B];
+
+	Tangent[index] += gwts * alpha_f * gamma *dt *
+	  ( - R[A] * dIm[B]);
       }
     }
   }
