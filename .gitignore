@@ -2,4 +2,5 @@
 *.swo
 *.aux
 *~
+*#
 .DS_Store
