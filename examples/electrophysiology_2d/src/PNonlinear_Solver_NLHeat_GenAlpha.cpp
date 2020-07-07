@@ -261,7 +261,23 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
       dPhi_Iion_alpha.SetValue(count, -dPhi_Iion_alpha_tmp);
     } 
 
+  //std::cout<<"alpha f" << alpha_f << std::endl;
+  //std::cout<<"alpha m" << alpha_m << std::endl;
+  //std::cout<<"gamma"   << gamma   << std::endl;
+  //
+  //std::cout<<"pre_disp" << std::endl;
+  //pre_disp->PrintWithGhost();
+  //
+  //std::cout<<"disp_alpha" << std::endl;
+  //disp_alpha.PrintWithGhost();
+  //
+  //std::cout<<"pre_hist" << std::endl;
+  //pre_hist->PrintWithGhost();
+  //
+  //std::cout<<"hist_alpha" << std::endl;
   //hist_alpha.PrintWithGhost();
+
+  
   //========================================================
   
     
@@ -331,8 +347,8 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
 			   r_new_alpha_tmp);
 
 	hist_alpha.SetValue(count, r_new_alpha_tmp);
-	Iion_alpha.SetValue(count, Iion_alpha_tmp);
-	dPhi_Iion_alpha.SetValue(count, dPhi_Iion_alpha_tmp);
+	Iion_alpha.SetValue(count, -Iion_alpha_tmp);
+	dPhi_Iion_alpha.SetValue(count, -dPhi_Iion_alpha_tmp);
       }
     //========================================================
 

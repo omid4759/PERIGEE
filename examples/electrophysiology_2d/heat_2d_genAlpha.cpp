@@ -48,9 +48,9 @@ int main(int argc, char *argv[])
 
   // Time stepping parameters
   double initial_time = 0.0;
-  double initial_step = 0.1;
+  double initial_step = 1.0;
   int initial_index = 0;
-  double final_time = 20.0; // 2.0
+  double final_time = 500.0; // 2.0
 
   // Time solver parameters
   std::string sol_bName("SOL_");
@@ -176,6 +176,7 @@ int main(int argc, char *argv[])
   // ======= Finite Element Analysis =======6
   // FEA.1 Initial solution and history variables (1 per node)
   PDNSolution * disp = new PDNSolution_heatEqn(pNode, fNode, locBC, 2);
+  //disp->PlusAX(PDNSolution_heatEqn(pNode, fNode, locBC, 1), -75);
   PDNSolution * velo = new PDNSolution_heatEqn(pNode, fNode, locBC, 0);
   PDNSolution * hist = new PDNSolution_heatEqn(pNode, fNode, locBC, 0);
   //PDNSolution * hist_dot = new PDNSolution_heatEqn(pNode, fNode, locBC, 0);
@@ -189,7 +190,7 @@ int main(int argc, char *argv[])
 
   // FEA.2 Local assembly setup
   SYS_T::commPrint("===> Genereate the Generalized-alpha time scheme ... \n");
-  TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha(0.5);
+  TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha(1.0, 1.0, 1.0);
 
   SYS_T::commPrint("===> Initialize local assembly routine ... \n");
   IPLocAssem * locAssem_ptr =

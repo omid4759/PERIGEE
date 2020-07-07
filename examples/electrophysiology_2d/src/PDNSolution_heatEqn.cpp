@@ -74,7 +74,7 @@ void PDNSolution_heatEqn::Init_Partial( const class APart_Node * const &pNode,
     y_coor = fNode ->  get_ctrlPts_y(ii);
 
     //set some nodes to 0 and some to -80
-    if ((x_coor <= 0.8) && (y_coor <=0.3)) {
+    if ((x_coor <= 0.5)) { // && (y_coor <=0.3)
       value = 0.0;
     }
     else {
