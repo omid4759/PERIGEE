@@ -18,8 +18,12 @@ ALocal_EBC_wIntPts::ALocal_EBC_wIntPts( const std::string &fileBaseName,
       subgroup_name.append("/ebcid_");
       subgroup_name.append( SYS_T::to_string(ii) );
 
-      h5r -> read_doubleVector( subgroup_name.c_str(), 
-          "local_intpt_xyz", local_intpts[ii] );
+
+      std::cout << "subgroup name: " << subgroup_name.c_str() << std::endl;
+      std::cout << "num ebc: " << num_ebc << std::endl;
+      std::cout << "num local cell: " << num_local_cell[ii] << std::endl;      
+//      h5r -> read_doubleVector( subgroup_name.c_str(), 
+//          "local_intpt_xyz", local_intpts[ii] );
     }
     else
       local_intpts[ii].clear();
