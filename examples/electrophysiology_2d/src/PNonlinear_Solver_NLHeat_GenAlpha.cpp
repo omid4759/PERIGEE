@@ -256,7 +256,7 @@ void PNonlinear_Solver_NLHeat_GenAlpha::Gen_alpha_solve(
 
       hist_alpha.SetValue(count, r_new_alpha_tmp);
       //use negative below, to be consistent with krishnamoorthi
-      //2013 quadrature paper. 
+      //2013 quadrature paper and goktepe 2009 paper. 
       Iion_alpha.SetValue(count, -Iion_alpha_tmp);
       dPhi_Iion_alpha.SetValue(count, -dPhi_Iion_alpha_tmp);
     } 

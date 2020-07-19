@@ -67,6 +67,8 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
 
     virtual void Assem_Mass_Residual(
         const double * const &vec_a,
+	const double * const &vec_b,
+	const double * const &vec_c,    
         const class FEAElement * const &element,
         const double * const &eleCtrlPts_x,
         const double * const &eleCtrlPts_y,

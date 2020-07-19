@@ -677,6 +677,24 @@ class IPLocAssem
         const AInt_Weight * const &weight )
     {SYS_T::commPrint("Warning: this Assem_Mass_Residual(...) is not implemented. \n");}
 
+  // suitable for electrophysiology equation
+  // \para vec_a: input vector a -- disp/curr soln/elect. pot.
+  // \para vec_b: input vector b -- hist variable.
+  // \para vec_c: input vector c -- hist var derivative wrt soln var.
+  // \para element: the element quadrature info
+  // \para eleCtrlPts: this element's control points
+  // \para wight: the corresponding quadrature weights    
+  virtual void Assem_Mass_Residual(
+				   const double * const &vec_a,
+				   const double * const &vec_b,
+				   const double * const &vec_c,		   
+				   const FEAElement * const &element,
+				   const double * const &eleCtrlPts_x,
+				   const double * const &eleCtrlPts_y,
+				   const double * const &eleCtrlPts_z,
+				   const AInt_Weight * const &weight )
+  {SYS_T::commPrint("Warning: this Assem_Mass_Residual(...) is not implemented. \n");}
+
 
     // ! Assembly the mass matrix and residual vector without cached quadrature
     //   info for 3D element.

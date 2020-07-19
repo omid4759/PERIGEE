@@ -77,13 +77,14 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Residual(
     const double * const &eleCtrlPts_z,
     const class AInt_Weight * const &weight )
 {
-  double v, d, d_x, d_y, Im;
+  double v, d, d_x, d_y, Im, Istim;
   double gwts; // quadrature weights
   int qua; // quadrature index
   double coor_x, coor_y; // xy coor of the quad pts
-  double f, k11, k12, k21, k22; // material
+  double  k11, k12, k21, k22; // material
   std::vector<double> E_Im(nLocBas);// E_ is for element
   std::vector<double> dIm(nLocBas);
+  std::vector<double> dIstim(nLocBas);
   std::vector<double> E_dIm(nLocBas);  
   double curr = time + alpha_f * dt;
 
@@ -103,14 +104,14 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Residual(
     coor_x = 0.0; coor_y = 0.0;
     
     element->get_R_gradR(qua, R, dR_dx, dR_dy);
-    
+
     // Inner product with basis functions
     // ! This loop may be speed up by calling the sdot function in cblas 
     for(ii=0; ii<nLocBas; ++ii)
     {
       v   += velo[ii] * R[ii];
       d   += disp[ii] * R[ii];
-      Im  += E_Im[ii] * R[ii];
+      Im  += E_Im[ii] * R[ii];     //NOTE!: update I_m with Istim below
       dIm[ii] = E_dIm[ii] * R[ii]; //d_Im is a vector
       
       d_x += disp[ii] * dR_dx[ii];
@@ -121,7 +122,16 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Residual(
     
     gwts = element->get_detJac(qua) * weight->get_weight(qua);
 
-    f = get_f(coor_x, coor_y, curr);
+    //get stimulus for the volume (not the boundary)
+    Istim = get_f(coor_x, coor_y, curr);
+    //dIstim= 0; already
+    
+    Im = Im + Istim;
+    for(ii=0; ii<nLocBas; ++ii)
+      {      
+	dIm[ii] = dIm[ii] +  dIstim[ii] ;
+      }
+
     get_k(d, coor_x, coor_y, k11, k12, k21, k22);
     
     for(ii=0; ii<nLocBas; ++ii)
@@ -147,13 +157,14 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
     const class AInt_Weight * const &weight )
 {
   int ii, qua, A, B, index; // iterator
-  double v, d, d_x, d_y, Im;
+  double v, d, d_x, d_y, Im, Istim;
   double gwts;
   double coor_x, coor_y;
-  double f, k11, k12, k21, k22;
+  double k11, k12, k21, k22;
   double dk11, dk12, dk21, dk22;
   std::vector<double> E_Im(nLocBas);// E_ is for element
   std::vector<double> dIm(nLocBas);
+  std::vector<double> dIstim(nLocBas);  
   std::vector<double> E_dIm(nLocBas);  
   double curr = time + alpha_f * dt;
 
@@ -179,7 +190,7 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
     {
       v   += velo[ii] * R[ii];
       d   += disp[ii] * R[ii];
-      Im  += E_Im[ii] * R[ii];
+      Im  += E_Im[ii] * R[ii];     //NOTE!: update I_m with Istim below
       dIm[ii] = E_dIm[ii] * R[ii]; //d_Im is a vector
       
       d_x += disp[ii] * dR_dx[ii];
@@ -190,7 +201,16 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Tangent_Residual(
 
     gwts = element->get_detJac(qua) * weight->get_weight(qua);
 
-    f = get_f(coor_x, coor_y, curr); 
+    //get stimulus for the volume (not the boundary)
+    Istim = get_f(coor_x, coor_y, curr);
+    //dIstim= 0; already
+    
+    Im = Im + Istim;
+    for(ii=0; ii<nLocBas; ++ii)
+      {      
+	dIm[ii] = dIm[ii] +  dIstim[ii] ;
+      }
+    
     get_k(d, coor_x, coor_y, k11, k12, k21, k22);
     get_dk_du(d, coor_x, coor_y, dk11, dk12, dk21, dk22);
 
@@ -249,7 +269,7 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Mass(
       for(B =0; B<nLocBas; ++B)
       {
         index = A * nLocBas + B;
-        Tangent[index] += gwts * R[A] * R[B];
+        Tangent[index] += gwts * chi * C_m * R[A] * R[B];
       }
     }
   }
@@ -257,6 +277,8 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Mass(
 
 void PLocAssem_NLHeat_2D_GenAlpha::Assem_Mass_Residual(
     const double * const &disp,
+    const double * const &Iion,
+    const double * const &dPhi_Iion,    
     const class FEAElement * const &element,
     const double * const &eleCtrlPts_x,
     const double * const &eleCtrlPts_y,
@@ -264,13 +286,25 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Mass_Residual(
     const class AInt_Weight * const &weight )
 {
   int ii, qua, A, B, index; // iterator
-  double d, d_x, d_y;
+  double d, d_x, d_y, Im, Istim;
   double gwts;
   double coor_x, coor_y;
-  double f, k11, k12, k21, k22;
+  double k11, k12, k21, k22;
   double dk11, dk12, dk21, dk22;
+  std::vector<double> E_Im(nLocBas);// E_ is for element
+  std::vector<double> dIm(nLocBas);
+  std::vector<double> dIstim(nLocBas);  
+  std::vector<double> E_dIm(nLocBas);  
 
   double curr = 0.0;
+
+  //calculate Im and dIm from Iion&Istim and dIion&dIstim
+  // at nodes! for the local element
+  for (ii=0; ii<nLocBas; ++ii)
+    {
+      E_Im[ii] = 0 - chi * Iion[ii]; //E_Istim=0
+      E_dIm[ii] = 0 - chi * dPhi_Iion[ii];//E_dIstim=0
+    }
 
   Zero_Tangent_Residual(); // zero all values for assembly
   
@@ -285,6 +319,9 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Mass_Residual(
     for(ii=0; ii<nLocBas; ++ii)
     {
       d   += disp[ii] * R[ii];
+      Im  += E_Im[ii] * R[ii];//NOTE!: update I_m with Istim below
+      dIm[ii] = E_dIm[ii] * R[ii]; //d_Im is a vector
+     
       d_x += disp[ii] * dR_dx[ii];
       d_y += disp[ii] * dR_dy[ii];
       coor_x += eleCtrlPts_x[ii] * R[ii];
@@ -293,7 +330,17 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Mass_Residual(
 
     gwts = element->get_detJac(qua) * weight->get_weight(qua);
 
-    f = get_f(coor_x, coor_y, curr);
+
+    //get stimulus for the volume (not the boundary)
+    Istim = get_f(coor_x, coor_y, curr);
+    //dIstim= 0; already
+    
+    Im = Im + Istim;
+    for(ii=0; ii<nLocBas; ++ii)
+      {      
+	dIm[ii] = dIm[ii] +  dIstim[ii] ;
+      }
+    
     get_k(d, coor_x, coor_y, k11, k12, k21, k22);
     get_dk_du(d, coor_x, coor_y, dk11, dk12, dk21, dk22);
 
@@ -302,12 +349,12 @@ void PLocAssem_NLHeat_2D_GenAlpha::Assem_Mass_Residual(
       Residual[A] -= gwts * (
             k11 * d_x * dR_dx[A] + k12 * d_y * dR_dx[A]
           + k21 * d_x * dR_dy[A] + k22 * d_y * dR_dy[A]
-          - f * R[A] );
+          - Im * R[A] );
 
       for(B=0; B<nLocBas; ++B)
       {
         index = A * nLocBas + B;
-        Tangent[index] += gwts * R[A] * R[B];
+        Tangent[index] += gwts * chi * C_m * R[A] * R[B];
       }
     }
   }

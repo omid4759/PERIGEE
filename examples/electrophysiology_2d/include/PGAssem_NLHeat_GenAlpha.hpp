@@ -28,6 +28,9 @@
 #include "FEAElement.hpp"
 #include "AInt_Weight.hpp"
 
+#include "IonicModel.hpp"
+#include "PDNTimeStep.hpp"
+
 class PGAssem_NLHeat_GenAlpha
 {
   public:
@@ -273,6 +276,9 @@ class PGAssem_NLHeat_GenAlpha
     // ------------------------------------------------------------------------
     void Assem_mass_residual(
         const PDNSolution * const &sol_a,
+	const PDNSolution * const &sol_b,
+	const PDNTimeStep * const &time_info,
+	const IonicModel * const &ionicmodel_ptr,
         const ALocal_Elem * const &alelem_ptr,
         IPLocAssem * const &lassem_ptr, 
         const ALocal_IEN * const &lien_ptr,
@@ -293,20 +299,20 @@ class PGAssem_NLHeat_GenAlpha
     // !                  quadrature points for volumetric integration
     // ! IAExtractor : Bezier extraction operator
     // ------------------------------------------------------------------------
-    void Assem_mass_residual(
-        const PDNSolution * const &sol_a,
-        const ALocal_Elem * const &alelem_ptr,
-        IPLocAssem * const &lassem_ptr, 
-        const ALocal_IEN * const &lien_ptr,
-        const APart_Node * const &node_ptr,
-        const FEANode * const &fnode_ptr,
-        const AInt_Weight * const &wei_ptr,
-        const IALocal_meshSize * const &mSize,
-        const BernsteinBasis_Array * const &bs,
-        const BernsteinBasis_Array * const &bt,
-        const BernsteinBasis_Array * const &bu,
-        const IAExtractor * const &extractor,
-        const IALocal_BC * const &bc_part );
+  //void Assem_mass_residual(
+  //      const PDNSolution * const &sol_a,
+  //      const ALocal_Elem * const &alelem_ptr,
+  //      IPLocAssem * const &lassem_ptr, 
+  //      const ALocal_IEN * const &lien_ptr,
+  //      const APart_Node * const &node_ptr,
+  //      const FEANode * const &fnode_ptr,
+  //      const AInt_Weight * const &wei_ptr,
+  //      const IALocal_meshSize * const &mSize,
+  //      const BernsteinBasis_Array * const &bs,
+  //      const BernsteinBasis_Array * const &bt,
+  //      const BernsteinBasis_Array * const &bu,
+  //      const IAExtractor * const &extractor,
+  //      const IALocal_BC * const &bc_part );
 
 
     // ------------------------------------------------------------------------

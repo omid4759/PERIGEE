@@ -1118,6 +1118,9 @@ void PGAssem_NLHeat_GenAlpha::Assem_residual(
 
 void PGAssem_NLHeat_GenAlpha::Assem_mass_residual(
     const PDNSolution * const &sol_a,
+    const PDNSolution * const &hist,
+    const PDNTimeStep * const &time_info,
+    const IonicModel * const &ionicmodel_ptr,
     const ALocal_Elem * const &alelem_ptr,
     IPLocAssem * const &lassem_ptr,
     const ALocal_IEN * const &lien_ptr,
@@ -1131,19 +1134,49 @@ void PGAssem_NLHeat_GenAlpha::Assem_mass_residual(
   const int loc_dof = dof * nLocBas;
   int loc_index, lrow_index;
 
-  sol_a->GetLocalArray( array_a, node_ptr );
+  //FIRST: get ionic currents from initial potentials and hist.
+  PDNSolution Iion(*hist); 
+  PDNSolution dPhi_Iion(*hist);
+  
+  int node_num; 
+  node_num =hist -> GetSize();
+  double r_new_tmp, r_old, dt, new_soln, dPhi_Iion_tmp, Iion_tmp;
+  dt=time_info->get_step();
+  for (int count{ 0 }; count < node_num; ++count)
+    {
+      r_old = hist->GetValue(count);
+      new_soln = sol_a->GetValue (count);
 
+      ionicmodel_ptr->
+	material_routine(r_old, dt,new_soln,
+			 Iion_tmp, dPhi_Iion_tmp,
+			 r_new_tmp);
+
+      //hist_alpha.SetValue(count, r_new_alpha_tmp);
+      //use negative below, to be consistent with krishnamoorthi
+      //2013 quadrature paper and goktepe 2009 paper. 
+      Iion.SetValue(count, -Iion_tmp);
+      dPhi_Iion.SetValue(count, -dPhi_Iion_tmp);
+    }
+    
+  sol_a->GetLocalArray( array_a, node_ptr );
+  Iion.GetLocalArray( array_b, node_ptr );
+  dPhi_Iion.GetLocalArray( array_c, node_ptr );
+  
   for(int ee=0; ee<nElem; ++ee)
   {
     if( eptr_array[ee]->is_sizeNonzero() )
     {
       lien_ptr->get_LIEN_e(ee, IEN_e);
       GetLocal(array_a, IEN_e, local_a);
+      GetLocal(array_b, IEN_e, local_b);//iion
+      GetLocal(array_c, IEN_e, local_c);//d_iion
 
       fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
 
-      lassem_ptr->Assem_Mass_Residual(local_a, eptr_array[ee], ectrl_x, ectrl_y,
-          ectrl_z, wei_ptr); 
+      lassem_ptr->Assem_Mass_Residual(local_a, local_b, local_c,
+				      eptr_array[ee], ectrl_x, ectrl_y,
+				      ectrl_z, wei_ptr); 
 
       for(int i=0; i<nLocBas; ++i)
       {
@@ -1176,87 +1209,87 @@ void PGAssem_NLHeat_GenAlpha::Assem_mass_residual(
 }
 
 
-void PGAssem_NLHeat_GenAlpha::Assem_mass_residual(
-    const PDNSolution * const &sol_a,
-    const ALocal_Elem * const &alelem_ptr,
-    IPLocAssem * const &lassem_ptr,
-    const ALocal_IEN * const &lien_ptr,
-    const APart_Node * const &node_ptr,
-    const FEANode * const &fnode_ptr,
-    const AInt_Weight * const &wei_ptr,
-    const IALocal_meshSize * const &mSize,
-    const BernsteinBasis_Array * const &bs,
-    const BernsteinBasis_Array * const &bt,
-    const BernsteinBasis_Array * const &bu,
-    const IAExtractor * const &extractor,
-    const IALocal_BC * const &bc_part )
-{
-  const int nElem = alelem_ptr->get_nlocalele();
-  const int loc_dof = dof * nLocBas;
-  int loc_index, lrow_index;
-
-  double ehx, ehy, ehz; // element mesh size in each direction
-
-  std::vector<double> ext_x, ext_y, ext_z; // extraction operator in each direction
-
-  double * ectrl_w = new double [nLocBas]; // element's weights
-
-  sol_a->GetLocalArray( array_a, node_ptr );
-
-  for(int ee=0; ee<nElem; ++ee)
-  {
-    if( mSize->get_meshsize(ee) > 0.0 )
-    {
-      // obtain the mesh size in element ee
-      ehx = mSize->get_hx(ee);
-      ehy = mSize->get_hy(ee);
-      ehz = mSize->get_hz(ee);
-
-      // obtain the extraction operator in element ee
-      extractor->get_EXT_x(ee, ext_x);
-      extractor->get_EXT_y(ee, ext_y);
-      extractor->get_EXT_z(ee, ext_z);
-
-      lien_ptr->get_LIEN_e(ee, IEN_e);
-      GetLocal(array_a, IEN_e, local_a);
-
-      // obtain geometrical info
-      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
-
-      lassem_ptr->Assem_Mass_Residual(local_a, ee, ehx, ehy, ehz, bs, bt, bu, 
-          ectrl_x, ectrl_y, ectrl_z, ectrl_w, &ext_x[0], &ext_y[0], &ext_z[0], wei_ptr); 
-
-      for(int i=0; i<nLocBas; ++i)
-      {
-        loc_index = IEN_e[i];
-
-        for(int m=0; m<dof; ++m)
-        {
-          lrow_index = bc_part->get_LID(m, loc_index);
-
-          row_index[dof * i + m] = dof * lrow_index + m;
-          col_index[dof * i + m] = dof * lrow_index + m;
-        }
-      }
-      MatSetValues(K, loc_dof, row_index, loc_dof, col_index,
-          lassem_ptr->Tangent, ADD_VALUES);
-
-      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
-    }
-  }
-  VecAssemblyBegin(G);
-  VecAssemblyEnd(G);
-
-  for(int fie = 0; fie<dof; ++fie)
-    EssBC_KG( bc_part, fie);
-
-  MatAssemblyBegin(K, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
-  VecAssemblyBegin(G);
-  VecAssemblyEnd(G);
-
-  delete [] ectrl_w;
-}
+//void PGAssem_NLHeat_GenAlpha::Assem_mass_residual(
+//    const PDNSolution * const &sol_a,
+//    const ALocal_Elem * const &alelem_ptr,
+//    IPLocAssem * const &lassem_ptr,
+//    const ALocal_IEN * const &lien_ptr,
+//    const APart_Node * const &node_ptr,
+//    const FEANode * const &fnode_ptr,
+//    const AInt_Weight * const &wei_ptr,
+//    const IALocal_meshSize * const &mSize,
+//    const BernsteinBasis_Array * const &bs,
+//    const BernsteinBasis_Array * const &bt,
+//    const BernsteinBasis_Array * const &bu,
+//    const IAExtractor * const &extractor,
+//    const IALocal_BC * const &bc_part )
+//{
+//  const int nElem = alelem_ptr->get_nlocalele();
+//  const int loc_dof = dof * nLocBas;
+//  int loc_index, lrow_index;
+//
+//  double ehx, ehy, ehz; // element mesh size in each direction
+//
+//  std::vector<double> ext_x, ext_y, ext_z; // extraction operator in each direction
+//
+//  double * ectrl_w = new double [nLocBas]; // element's weights
+//
+//  sol_a->GetLocalArray( array_a, node_ptr );
+//
+//  for(int ee=0; ee<nElem; ++ee)
+//  {
+//    if( mSize->get_meshsize(ee) > 0.0 )
+//    {
+//      // obtain the mesh size in element ee
+//      ehx = mSize->get_hx(ee);
+//      ehy = mSize->get_hy(ee);
+//      ehz = mSize->get_hz(ee);
+//
+//      // obtain the extraction operator in element ee
+//      extractor->get_EXT_x(ee, ext_x);
+//      extractor->get_EXT_y(ee, ext_y);
+//      extractor->get_EXT_z(ee, ext_z);
+//
+//      lien_ptr->get_LIEN_e(ee, IEN_e);
+//      GetLocal(array_a, IEN_e, local_a);
+//
+//      // obtain geometrical info
+//      fnode_ptr->get_ctrlPts_xyzw(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z, ectrl_w);
+//
+//      lassem_ptr->Assem_Mass_Residual(local_a, ee, ehx, ehy, ehz, bs, bt, bu, 
+//          ectrl_x, ectrl_y, ectrl_z, ectrl_w, &ext_x[0], &ext_y[0], &ext_z[0], wei_ptr); 
+//
+//      for(int i=0; i<nLocBas; ++i)
+//      {
+//        loc_index = IEN_e[i];
+//
+//        for(int m=0; m<dof; ++m)
+//        {
+//          lrow_index = bc_part->get_LID(m, loc_index);
+//
+//          row_index[dof * i + m] = dof * lrow_index + m;
+//          col_index[dof * i + m] = dof * lrow_index + m;
+//        }
+//      }
+//      MatSetValues(K, loc_dof, row_index, loc_dof, col_index,
+//          lassem_ptr->Tangent, ADD_VALUES);
+//
+//      VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
+//    }
+//  }
+//  VecAssemblyBegin(G);
+//  VecAssemblyEnd(G);
+//
+//  for(int fie = 0; fie<dof; ++fie)
+//    EssBC_KG( bc_part, fie);
+//
+//  MatAssemblyBegin(K, MAT_FINAL_ASSEMBLY);
+//  MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
+//  VecAssemblyBegin(G);
+//  VecAssemblyEnd(G);
+//
+//  delete [] ectrl_w;
+//}
 
 
 

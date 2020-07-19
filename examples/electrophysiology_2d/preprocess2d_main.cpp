@@ -48,7 +48,7 @@ int main(int argc, char * argv[])
   int addSDegree = 1, addTDegree = 1;
 
   // Number of knots to be inserted in spatial discretizations
-  int num_inserted_x = 200, num_inserted_y = 1;
+  int num_inserted_x = 20, num_inserted_y = 1;
 
   // Geometry file
   char * char_home_dir = getenv("HOME");

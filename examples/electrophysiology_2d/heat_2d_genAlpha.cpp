@@ -216,8 +216,9 @@ int main(int argc, char *argv[])
 
   // FEA.6 Solve for consistent initial condition
   gloAssem_ptr->Clear_KG();
-  gloAssem_ptr->Assem_mass_residual( disp, locElem, locAssem_ptr, locIEN, pNode,
-      fNode, Int_w, elemArray, locBC );
+  gloAssem_ptr->Assem_mass_residual( disp, hist, timeinfo, ionicmodel_ptr,
+				     locElem, locAssem_ptr, locIEN, pNode,
+				     fNode, Int_w, elemArray, locBC );
 
   lsolver->Solve( gloAssem_ptr->K, gloAssem_ptr->G, velo);
   SYS_T::commPrint("\n===> Initial solution's time derivative obtained. \n");
