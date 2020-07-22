@@ -63,13 +63,13 @@ int main(int argc, char * argv[])
   // refinement
   int addSDegree = 1, addTDegree = 1;
 
-  int num_inserted_x = 20, num_inserted_y = 1;
+  int num_inserted_x = 20, num_inserted_y = 20;
 
   // geometry file
   char * char_home_dir = getenv("HOME");
   string geo_file(char_home_dir);
-  geo_file.append("/PERIGEE/examples/electrophysiology_2d/rectangle.txt");
-
+  //geo_file.append("/PERIGEE/examples/electrophysiology_2d/rectangle.txt");
+  geo_file.append("/PERIGEE/examples/electrophysiology_2d/square.txt");
   // partition file basename
   string part_file("postpart");
 

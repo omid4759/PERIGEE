@@ -116,7 +116,7 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
     // ! define the external heat source
     double get_f( const double &x, const double &y, const double &t ) const
     { 
-      //const double pi = MATH_T::PI;
+      const double pi = MATH_T::PI;
       //const double a = sin(pi*x);
       //const double b = sin(pi*y);
       //const double pi2 = pi * pi;
@@ -130,7 +130,13 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
       //}
       //	  
       //return val;
-      return 0;
+      double val;
+      
+      val =(cos(2.0*pi*x)/4.0 - 1.0/4.0)*(cos(2.0*pi*y) - 1.0)
+	+ 4.0*t*std::pow(pi,2)*cos(2.0*pi*y)*(cos(2.0*pi*x)/4.0 - 1.0/4.0)
+	+ t*std::pow(pi,2)*cos(2.0*pi*x)*(cos(2.0*pi*y) - 1.0);
+
+      return val; 
     } 
 };
 

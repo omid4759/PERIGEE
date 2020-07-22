@@ -19,7 +19,11 @@ PDNSolution_heatEqn::PDNSolution_heatEqn(const class APart_Node * const &pNode,
     case 2:
       Init_Partial(pNode, fNode, locbc);
       SYS_T::commPrint("===> Initial solution: -80 and 0 volts partially. \n");
-      break;      
+      break;
+    case 3:
+      Init_Rest(locbc);
+      SYS_T::commPrint("===> Initial solution: -80 milivolt overall. \n");
+      break;            
     default:
       SYS_T::commPrint("ERROR: PDNSolution_heatEqn: No such type of initial solution. \n");
       MPI_Abort(PETSC_COMM_WORLD, 1); 
@@ -101,6 +105,12 @@ void PDNSolution_heatEqn::Init_Partial( const class APart_Node * const &pNode,
   VecAssemblyEnd(solution);
   GhostUpdate();
   delete [] index; delete [] value_bc;
+}
+
+void PDNSolution_heatEqn::Init_Rest( const class IALocal_BC * const &LBC )
+{
+  VecSet(solution, -80.0);
+  GhostUpdate();
 }
 
 int PDNSolution_heatEqn::GetSize() const
