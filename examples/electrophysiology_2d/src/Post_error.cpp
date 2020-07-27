@@ -23,9 +23,9 @@ double POST_T::exact_scalar(const double &x, const double &y, const double &t)
 {
   const double pi = MATH_T::PI;
   
-  const double theta = sin(pi*t)*sin(pi*x) * sin(pi*y);
+  const double V = 1.0/4.0*(1-cos(2.0*pi*x))*(1-cos(2.0*pi*y))*t-80;
 
-  return theta;
+  return V;
 }
 
 
@@ -45,11 +45,11 @@ void POST_T::exact_2dvector(const double &x, const double &y,
 {
   const double pi = MATH_T::PI;
 
-  const double u_x = sin(pi*t)*cos(4*pi*x)*sin(4*pi*y);
-  const double u_y = sin(pi*t)*sin(4*pi*x)*cos(4*pi*y);
+  const double V_x = 1.0/4.0*(1-cos(2.0*pi*y))*t*sin(2*pi*x)*2*pi;
+  const double V_y = 1.0/4.0*(1-cos(2.0*pi*x))*t*sin(2*pi*y)*2*pi;
 
-  val_x = u_x;
-  val_y = u_y;
+  val_x = V_x;
+  val_y = V_y;
 }
 
 

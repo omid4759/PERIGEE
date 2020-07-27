@@ -44,10 +44,10 @@ int main( int argc, char * argv[] )
   int nqpx = 3; int nqpy = 3;
 
   // solution name
-  string sol_name("SOL_900000000");
+  string sol_name("SOL_900001000");
 
   // solution time
-  double sol_time = 1.0;
+  double sol_time = 100.0;
 
   // partition file base name
   string part_file("postpart");
@@ -113,7 +113,7 @@ int main( int argc, char * argv[] )
 
 
   PetscPrintf(PETSC_COMM_WORLD, "\n===> %d processor(s) are assigned for:", size);
-  PetscPrintf(PETSC_COMM_WORLD, "Postprocessing - compute error 2d heat manufactured solutions.\n");
+  PetscPrintf(PETSC_COMM_WORLD, "Postprocessing - compute error 2d electrophysiology manufactured solutions.\n");
 
   delete h5reader;
 
@@ -161,8 +161,8 @@ int main( int argc, char * argv[] )
     el2error += POST_T::get_manu_scalar_l2_error(loc_sol, elem_ptr, ectrl_x,
         ectrl_y, Int_w, R, sol_time);
 
-    eh1error += POST_T::get_manu_scalar_h1_error(loc_sol, elem_ptr, ectrl_x,
-        ectrl_y, Int_w, R, Rx, Ry, sol_time);
+    //eh1error += POST_T::get_manu_scalar_h1_error(loc_sol, elem_ptr, ectrl_x,
+    //    ectrl_y, Int_w, R, Rx, Ry, sol_time);
 
     delete elem_ptr;
   }
