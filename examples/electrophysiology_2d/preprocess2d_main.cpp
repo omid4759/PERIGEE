@@ -45,10 +45,10 @@ int main(int argc, char * argv[])
   int elemType = 0;
 
   // Degrees to be added in s t directions
-  int addSDegree = 1, addTDegree = 1;
+  int addSDegree = 0, addTDegree = 0;
 
   // Number of knots to be inserted in spatial discretizations
-  int num_inserted_x = 10, num_inserted_y = 10;
+  int num_inserted_x = 80, num_inserted_y = 80;
 
   // Geometry file
   char * char_home_dir = getenv("HOME");

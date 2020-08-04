@@ -131,10 +131,13 @@ class PLocAssem_NLHeat_2D_GenAlpha : public IPLocAssem
       //	  
       //return val;
       double val;
-      
+
+      //MANUFACTURED SOLUTION, constant ionic output:
       val =140.0*(cos(2.0*pi*x)/4.0 - 1.0/4.0)*(cos(2.0*pi*y) - 1.0)
-	+ (2.0*t*std::pow(pi,2.0)*cos(2.0*pi*y)*(cos(2.0*pi*x)/4.0 - 1.0/4.0))/5.0
-	+ (t*std::pow(pi,2.0)*cos(2.0*pi*x)*(cos(2.0*pi*y) - 1.0))/10.0 - 1400.0;
+      + (2.0*t*std::pow(pi,2.0)*cos(2.0*pi*y)*(cos(2.0*pi*x)/4.0 - 1.0/4.0))/5.0
+      + (t*std::pow(pi,2.0)*cos(2.0*pi*x)*(cos(2.0*pi*y) - 1.0))/10.0 - 1400.0;
+
+      //val=0;
 
       return val; 
     } 

@@ -44,7 +44,7 @@ int main( int argc, char * argv[] )
   int nqpx = 3; int nqpy = 3;
 
   // solution name
-  string sol_name("SOL_900001000");
+  string sol_name("SOL_900000100");
 
   // solution time
   double sol_time = 100.0;

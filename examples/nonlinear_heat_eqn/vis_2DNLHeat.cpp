@@ -46,7 +46,7 @@ int main( int argc, char * argv[] )
   int time_start = 0;
   int time_step = 1;
   int time_end = 1;
-  double dt = 0.01;
+  double dt = 0.1;
 
   // vtk format specification
   bool isXML = true;

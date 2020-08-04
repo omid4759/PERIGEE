@@ -2,7 +2,7 @@
 
 IonicModel::IonicModel()
   :ap_1{100}, ap_2{80}, ap_3{12.9}, m1{0.2}, m2{0.3},alpha{0.01},
-   gamma{0.002}, b{0.15}, c{8}, d_iso{0.1}, d_ani{0.0}, tol{1e-8},
+   gamma{0.002}, b{0.15}, c{8.0}, d_iso{0.1}, d_ani{0.0}, tol{1e-8},
    chi{140}, C_m{1}
 {
   SYS_T::commPrint("IonicModel constructor. \n");
@@ -82,10 +82,11 @@ void IonicModel::material_routine(const double &r_old_in,
 //  f_Phi = c*Phi_nd*(Phi_nd- alpha)*(1-Phi_nd)-r_new*Phi_nd;
 //  dP_fP = c*(-3*pow(Phi_nd,2)
 //	     +2*(1+alpha)*Phi_nd-alpha)-r_new-Phi_nd*dP_dr;
+//
+//  //redimensionalize
+//  f_Phi=ap_1*f_Phi/ap_3;
+//  dP_fP=dP_fP/ap_3;
 
-  //redimensionalize
-  // f_Phi=ap_1*f_Phi/ap_3;
-  //dP_fP=dP_fP/ap_3;
   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   //for manufactured solution:
   r_new=dt_in;
