@@ -63,7 +63,7 @@ int main(int argc, char * argv[])
   // refinement
   int addSDegree = 0, addTDegree = 0;
 
-  int num_inserted_x = 80, num_inserted_y = 80;
+  int num_inserted_x = 60, num_inserted_y = 60;
 
   // geometry file
   char * char_home_dir = getenv("HOME");
