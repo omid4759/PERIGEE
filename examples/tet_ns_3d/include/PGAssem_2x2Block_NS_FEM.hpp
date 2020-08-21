@@ -223,10 +223,12 @@ class PGAssem_2x2Block_NS_FEM
     int snLocBas;
 
     // Functions:
+    // Essential boundary condition
     void EssBC_KG( const ALocal_NodalBC * const &nbc_part );
 
     void EssBC_G( const ALocal_NodalBC * const &nbc_part );
 
+    // Natural boundary condition
     void NatBC_G( const double &curr_time, const double &dt,
         IPLocAssem_2x2Block * const &lassem_ptr,
         FEAElement * const &element_s,
@@ -234,6 +236,7 @@ class PGAssem_2x2Block_NS_FEM
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_EBC * const &ebc_part );
 
+    // Backflow stabilization on outlet surfaces
     void BackFlow_G( const PDNSolution * const &dot_sol,
         const PDNSolution * const &sol,
         IPLocAssem_2x2Block * const &lassem_ptr,
@@ -251,6 +254,7 @@ class PGAssem_2x2Block_NS_FEM
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_EBC * const &ebc_part );
 
+    // Reduced model couling on outlet surfaces
     void NatBC_Resis_G( const PDNSolution * const &dot_sol,
         const PDNSolution * const &sol,
         IPLocAssem_2x2Block * const &lassem_ptr,
@@ -270,6 +274,7 @@ class PGAssem_2x2Block_NS_FEM
         const ALocal_EBC * const &ebc_part,
         const IGenBC * const &gbc );
 
+    // Obtain the element local information
     void GetLocal(const double * const &array, const int * const &IEN,
         double * const &local_array) const
     {
