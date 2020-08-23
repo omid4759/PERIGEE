@@ -23,8 +23,8 @@
 #include "GenBC_Resistance.hpp"
 #include "GenBC_RCR.hpp"
 #include "GenBC_Inductance.hpp"
-#include "PLocAssem_Tet_VMS_NS_GenAlpha.hpp"
-#include "PGAssem_NS_FEM.hpp"
+#include "PLocAssem_2x2Block_Tet_VMS_NS_GenAlpha.hpp"
+#include "PGAssem_2x2Block_NS_FEM.hpp"
 #include "PTime_NS_Solver.hpp"
 
 int main(int argc, char *argv[])
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
   tm_galpha_ptr->print_info();
 
   // ===== Local Assembly routine =====
-  IPLocAssem * locAssem_ptr = new PLocAssem_Tet_VMS_NS_GenAlpha(
+  IPLocAssem_2x2Block * locAssem_ptr = new PLocAssem_2x2Block_Tet_VMS_NS_GenAlpha(
       tm_galpha_ptr, GMIptr->get_nLocBas(),
       quadv->get_num_quadPts(), elements->get_nLocBas(),
       fluid_density, fluid_mu, bs_beta, c_tauc, GMIptr->get_elemType() );
@@ -347,7 +347,8 @@ int main(int argc, char *argv[])
 
   // ===== Global assembly =====
   SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
-  IPGAssem * gloAssem_ptr = new PGAssem_NS_FEM( locAssem_ptr, elements, quads,
+  PGAssem_2x2Block_NS_FEM * gloAssem_ptr = new PGAssem_2x2Block_NS_FEM( 
+      locAssem_ptr, elements, quads,
       GMIptr, locElem, locIEN, pNode, locnbc, locebc, gbc, nz_estimate );
 
   SYS_T::commPrint("===> Assembly nonzero estimate matrix ... \n");
@@ -358,6 +359,7 @@ int main(int argc, char *argv[])
   gloAssem_ptr->Fix_nonzero_err_str();
   gloAssem_ptr->Clear_KG();
 
+  /*
   // ===== Initialize the dot_sol vector by solving mass matrix =====
   if( is_restart == false )
   {
@@ -496,7 +498,8 @@ int main(int argc, char *argv[])
   delete quads; delete quadv; delete inflow_rate_ptr; delete gbc; delete timeinfo;
   delete locAssem_ptr; delete base; delete sol; delete dot_sol; delete gloAssem_ptr;
   delete lsolver; delete nsolver; delete tsolver;
-
+  */
+  
   PetscFinalize();
   return EXIT_SUCCESS;
 }
