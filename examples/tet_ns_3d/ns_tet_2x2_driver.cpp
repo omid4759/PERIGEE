@@ -359,7 +359,6 @@ int main(int argc, char *argv[])
   gloAssem_ptr->Fix_nonzero_err_str();
   gloAssem_ptr->Clear_KG();
 
-  /*
   // ===== Initialize the dot_sol vector by solving mass matrix =====
   if( is_restart == false )
   {
@@ -389,6 +388,7 @@ int main(int argc, char *argv[])
     SYS_T::commPrint(" The mass matrix lsolver is destroyed. \n\n");
   }
 
+  /*
   // ===== Linear solver context =====
   PLinear_Solver_PETSc * lsolver = new PLinear_Solver_PETSc();
 
@@ -400,66 +400,66 @@ int main(int argc, char *argv[])
 
   // ===== Nonlinear solver context =====
   PNonlinear_NS_Solver * nsolver = new PNonlinear_NS_Solver( pNode, fNode, 
-      nl_rtol, nl_atol, nl_dtol, nl_maxits, nl_refreq, nl_threshold );
+  nl_rtol, nl_atol, nl_dtol, nl_maxits, nl_refreq, nl_threshold );
 
   nsolver->print_info();
 
   // ===== Temporal solver context =====
   PTime_NS_Solver * tsolver = new PTime_NS_Solver( sol_bName,
-      sol_record_freq, ttan_renew_freq, final_time );
+  sol_record_freq, ttan_renew_freq, final_time );
 
   tsolver->print_info();
 
   // ===== Outlet data recording files =====
   for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
   {
-    const double dot_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-        dot_sol, locAssem_ptr, elements, quads, locebc, ff );
+  const double dot_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
+  dot_sol, locAssem_ptr, elements, quads, locebc, ff );
 
-    const double face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-        sol, locAssem_ptr, elements, quads, locebc, ff );
+  const double face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
+  sol, locAssem_ptr, elements, quads, locebc, ff );
 
-    const double face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
-        sol, locAssem_ptr, elements, quads, locebc, ff );
+  const double face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
+  sol, locAssem_ptr, elements, quads, locebc, ff );
 
-    // set the gbc initial conditions using the 3D data
-    gbc -> reset_initial_sol( ff, face_flrate, face_avepre );
+  // set the gbc initial conditions using the 3D data
+  gbc -> reset_initial_sol( ff, face_flrate, face_avepre );
 
-    const double dot_lpn_flowrate = dot_face_flrate;
-    const double lpn_flowrate = face_flrate;
-    const double lpn_pressure = gbc -> get_P( ff, dot_lpn_flowrate, lpn_flowrate );
+  const double dot_lpn_flowrate = dot_face_flrate;
+  const double lpn_flowrate = face_flrate;
+  const double lpn_pressure = gbc -> get_P( ff, dot_lpn_flowrate, lpn_flowrate );
 
-    // Create the txt files and write the initial flow rates
-    if(rank == 0)
-    {
-      std::ofstream ofile;
+  // Create the txt files and write the initial flow rates
+  if(rank == 0)
+  {
+  std::ofstream ofile;
 
-      // If this is NOT a restart run, generate a new file, otherwise append to
-      // existing file
-      if( !is_restart )
-        ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::trunc );
-      else
-        ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::app );
+  // If this is NOT a restart run, generate a new file, otherwise append to
+  // existing file
+  if( !is_restart )
+  ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::trunc );
+  else
+  ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::app );
 
-      // If this is NOT a restart, then record the initial values
-      if( !is_restart )
-      {
-        ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"dot Flow rate"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\t'<<"Reduced model pressure"<<'\n';
-        ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<dot_face_flrate<<'\t'<<face_flrate<<'\t'<<face_avepre<<'\t'<<lpn_pressure<<'\n';
-      }
+  // If this is NOT a restart, then record the initial values
+  if( !is_restart )
+  {
+  ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"dot Flow rate"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\t'<<"Reduced model pressure"<<'\n';
+  ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<dot_face_flrate<<'\t'<<face_flrate<<'\t'<<face_avepre<<'\t'<<lpn_pressure<<'\n';
+  }
 
-      ofile.close();
-    }
+  ofile.close();
+  }
   }
 
   MPI_Barrier(PETSC_COMM_WORLD);
 
   // ===== Inlet data recording files =====
   const double inlet_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-      sol, locAssem_ptr, elements, quads, locinfnbc );
+  sol, locAssem_ptr, elements, quads, locinfnbc );
 
   const double inlet_face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
-      sol, locAssem_ptr, elements, quads, locinfnbc );
+  sol, locAssem_ptr, elements, quads, locinfnbc );
 
   if( rank == 0 )
   {
@@ -499,8 +499,8 @@ int main(int argc, char *argv[])
   delete locAssem_ptr; delete base; delete sol; delete dot_sol; delete gloAssem_ptr;
   delete lsolver; delete nsolver; delete tsolver;
   */
-  
-  PetscFinalize();
+
+    PetscFinalize();
   return EXIT_SUCCESS;
 }
 

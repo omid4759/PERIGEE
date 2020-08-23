@@ -14,8 +14,8 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
     const int &in_nz_estimate )
 : nLocBas( agmi_ptr->get_nLocBas() ),
   dof_sol( pnode_ptr->get_dof() ),
-  dof_mat_v( locassem_ptr->get_dof_mat_0() ), 
-  dof_mat_p( locassem_ptr->get_dof_mat_1() ),
+  dof_mat_p( locassem_ptr->get_dof_mat_0() ),
+  dof_mat_v( locassem_ptr->get_dof_mat_1() ), 
   num_ebc( part_ebc->get_num_ebc() ),
   nlgn( pnode_ptr->get_nlocghonode() ),
   snLocBas( 0 )
@@ -111,7 +111,7 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
 
   // Put them together as a nested matrix
   MatCreateNest(PETSC_COMM_WORLD, 2, NULL, 2, NULL, subK, &K);
- 
+
   // Get the index set for the nest matrix 
   MatNestGetISs(K, is, NULL);
 }
