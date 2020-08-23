@@ -58,6 +58,35 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_v, nlocrow_v, PETSC_DETERMINE,
       PETSC_DETERMINE, dof_mat_v*in_nz_estimate, NULL, 
       dof_mat_v*in_nz_estimate, NULL, &subK[3]);
+  
+  // Put them together as a nested matrix
+  MatCreateNest(PETSC_COMM_WORLD, 2, NULL, 2, NULL, subK, &K);
+
+  // Generate the index set compatible with the nest matrix
+  IS isg[2];
+
+  // Get the index set for the nest matrix 
+  MatNestGetISs(K, isg, NULL);
+
+  int isg_len; 
+  ISGetLocalSize(isg[0], &isg_len);
+  SYS_T::print_fatal_if(isg_len != nlocrow_p, "Error: Index set for pres is incompatible with the APart_Node.\n"); 
+  idx_p = new int [isg_len];
+  
+  ISGetLocalSize(isg[1], &isg_len);
+  SYS_T::print_fatal_if(isg_len != nlocrow_v, "Error: Index set for velo is incompatible with the APart_Node.\n"); 
+  idx_v = new int [isg_len];
+  
+  const PetscInt * temp_idx;
+  ISGetIndices(isg[0], &temp_idx);
+  for(int ii=0; ii<nlocrow_p; ++ii) idx_p[ii] = temp_idx[ii];
+
+  ISRestoreIndices(isg[0], &temp_idx);
+  
+  ISGetIndices(isg[1], &temp_idx);
+  for(int ii=0; ii<nlocrow_v; ++ii) idx_v[ii] = temp_idx[ii];
+
+  ISRestoreIndices(isg[1], &temp_idx);
 
   // Allocate the sub-vectors
   VecCreate(PETSC_COMM_WORLD, &subG[0]);
@@ -109,11 +138,9 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_v, nlocrow_v, PETSC_DETERMINE,
       PETSC_DETERMINE, 0, &Kdnz[0], 0, &Konz[0], &subK[3]);
 
-  // Put them together as a nested matrix
+  // Put them together again as a nested matrix
+  MatDestroy(&K);
   MatCreateNest(PETSC_COMM_WORLD, 2, NULL, 2, NULL, subK, &K);
-
-  // Get the index set for the nest matrix 
-  MatNestGetISs(K, is, NULL);
 }
 
 
@@ -124,6 +151,9 @@ PGAssem_2x2Block_NS_FEM::~PGAssem_2x2Block_NS_FEM()
   MatDestroy(&subK[0]); MatDestroy(&subK[1]);
   MatDestroy(&subK[2]); MatDestroy(&subK[3]);
   MatDestroy(&K);
+
+  delete [] idx_p; idx_p = nullptr;
+  delete [] idx_v; idx_v = nullptr;
 }
 
 

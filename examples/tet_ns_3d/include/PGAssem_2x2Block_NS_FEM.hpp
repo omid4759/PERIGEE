@@ -29,8 +29,6 @@ class PGAssem_2x2Block_NS_FEM
     Vec G;
     Vec subG[2];
 
-    IS is[2];
-
     // Constructor
     PGAssem_2x2Block_NS_FEM(
         IPLocAssem_2x2Block * const &locassem_ptr,
@@ -221,6 +219,8 @@ class PGAssem_2x2Block_NS_FEM
     const int nLocBas, dof_sol, dof_mat_v, dof_mat_p, num_ebc, nlgn;
 
     int snLocBas;
+
+    int * idx_p, * idx_v;
 
     // Functions:
     // Essential boundary condition

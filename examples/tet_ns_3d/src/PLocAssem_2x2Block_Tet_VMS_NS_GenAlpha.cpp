@@ -54,17 +54,17 @@ PLocAssem_2x2Block_Tet_VMS_NS_GenAlpha::PLocAssem_2x2Block_Tet_VMS_NS_GenAlpha(
 
 PLocAssem_2x2Block_Tet_VMS_NS_GenAlpha::~PLocAssem_2x2Block_Tet_VMS_NS_GenAlpha()
 {
-  delete Tangent00; Tangent00 = nullptr;
-  delete Tangent01; Tangent01 = nullptr;
-  delete Tangent10; Tangent10 = nullptr;
-  delete Tangent11; Tangent11 = nullptr;
+  delete [] Tangent00; Tangent00 = nullptr;
+  delete [] Tangent01; Tangent01 = nullptr;
+  delete [] Tangent10; Tangent10 = nullptr;
+  delete [] Tangent11; Tangent11 = nullptr;
 
-  delete sur_Tangent11; sur_Tangent11 = nullptr;
+  delete [] sur_Tangent11; sur_Tangent11 = nullptr;
 
-  delete Residual0; Residual0 = nullptr;
-  delete Residual1; Residual1 = nullptr;
+  delete [] Residual0; Residual0 = nullptr;
+  delete [] Residual1; Residual1 = nullptr;
   
-  delete sur_Residual1; sur_Residual1 = nullptr;
+  delete [] sur_Residual1; sur_Residual1 = nullptr;
 }
 
 

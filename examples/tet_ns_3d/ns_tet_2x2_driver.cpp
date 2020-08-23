@@ -359,6 +359,7 @@ int main(int argc, char *argv[])
   gloAssem_ptr->Fix_nonzero_err_str();
   gloAssem_ptr->Clear_KG();
 
+  /*
   // ===== Initialize the dot_sol vector by solving mass matrix =====
   if( is_restart == false )
   {
@@ -388,7 +389,6 @@ int main(int argc, char *argv[])
     SYS_T::commPrint(" The mass matrix lsolver is destroyed. \n\n");
   }
 
-  /*
   // ===== Linear solver context =====
   PLinear_Solver_PETSc * lsolver = new PLinear_Solver_PETSc();
 
@@ -491,16 +491,16 @@ int main(int argc, char *argv[])
   // ===== Print complete solver info =====
   lsolver -> print_info();
 
+  */
   // ===== Clean Memory =====
   delete fNode; delete locIEN; delete GMIptr; delete PartBasic;
   delete locElem; delete locnbc; delete locebc; delete pNode; delete locinfnbc;
   delete tm_galpha_ptr; delete pmat; delete elementv; delete elements;
   delete quads; delete quadv; delete inflow_rate_ptr; delete gbc; delete timeinfo;
   delete locAssem_ptr; delete base; delete sol; delete dot_sol; delete gloAssem_ptr;
-  delete lsolver; delete nsolver; delete tsolver;
-  */
+  //delete lsolver; delete nsolver; delete tsolver;
 
-    PetscFinalize();
+  PetscFinalize();
   return EXIT_SUCCESS;
 }
 
