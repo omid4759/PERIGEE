@@ -113,12 +113,19 @@ class PGAssem_2x2Block_NS_FEM
     {
       MatZeroEntries(K);
       VecSet(G, 0.0);
+      VecSet(subG[0], 0.0);
+      VecSet(subG[1], 0.0);
     }
 
     // ------------------------------------------------------------------------
     // ! Clear G to be zero
     // ------------------------------------------------------------------------
-    void Clear_G() {VecSet(G, 0.0);}
+    void Clear_G() 
+    {
+      VecSet(G, 0.0);
+      VecSet(subG[0], 0.0);
+      VecSet(subG[1], 0.0);
+    }
 
     // Nonzero pattern for the NS equation    
     virtual void Assem_nonzero_estimate(

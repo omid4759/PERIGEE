@@ -373,7 +373,6 @@ int main(int argc, char *argv[])
 
     PC preproc; lsolver_acce->GetPC(&preproc);
     PCSetType( preproc, PCNONE );
-    PCHYPRESetType( preproc, "boomeramg" );
 
     gloAssem_ptr->Assem_mass_residual( sol, locElem, locAssem_ptr, elementv,
         elements, quadv, quads, locIEN, pNode, fNode, locnbc, locebc );
