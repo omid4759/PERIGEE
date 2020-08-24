@@ -359,7 +359,6 @@ int main(int argc, char *argv[])
   gloAssem_ptr->Fix_nonzero_err_str();
   gloAssem_ptr->Clear_KG();
 
-  /*
   // ===== Initialize the dot_sol vector by solving mass matrix =====
   if( is_restart == false )
   {
@@ -373,7 +372,7 @@ int main(int argc, char *argv[])
     KSPGMRESSetRestart(lsolver_acce->ksp, 500);
 
     PC preproc; lsolver_acce->GetPC(&preproc);
-    PCSetType( preproc, PCHYPRE );
+    PCSetType( preproc, PCNONE );
     PCHYPRESetType( preproc, "boomeramg" );
 
     gloAssem_ptr->Assem_mass_residual( sol, locElem, locAssem_ptr, elementv,
@@ -389,6 +388,7 @@ int main(int argc, char *argv[])
     SYS_T::commPrint(" The mass matrix lsolver is destroyed. \n\n");
   }
 
+  /*
   // ===== Linear solver context =====
   PLinear_Solver_PETSc * lsolver = new PLinear_Solver_PETSc();
 
