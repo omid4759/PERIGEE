@@ -38,7 +38,6 @@ class PGAssem_2x2Block_NS_FEM
     Mat subK[4];
     
     Vec G;
-    Vec GG;
     Vec subG[2];
 
     // Constructor
@@ -284,6 +283,14 @@ class PGAssem_2x2Block_NS_FEM
         const ALocal_EBC * const &ebc_part,
         const IGenBC * const &gbc );
 
+    // --------------------------------------------------------------
+    // Assemble the subG vector into a stardard (not nest) vector, with
+    // the structure that pressure dofs comes first, followed by the
+    // velocity dofs in an interlaced pattern.
+    // This function should be called after each Assem_ function has
+    // subG assembled.
+    // This design enables a standard PETSc vector in the solvers.
+    // --------------------------------------------------------------
     void Assem_G_from_subG();
 
     // Obtain the element local information

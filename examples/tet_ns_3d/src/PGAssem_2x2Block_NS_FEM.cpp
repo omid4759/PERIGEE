@@ -75,15 +75,13 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
   VecSetOption(subG[0], VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetOption(subG[1], VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
 
-  // Setup nest vectors
-  VecCreateNest(PETSC_COMM_WORLD, 2, NULL, subG, &G);
+  // Setup the monolithic residual vector 
+  VecCreate(PETSC_COMM_WORLD, &G);
+  VecSetSizes(G, nlocrow_p + nlocrow_v, PETSC_DECIDE);
 
-  VecCreate(PETSC_COMM_WORLD, &GG);
-  VecSetSizes(GG, nlocrow_p + nlocrow_v, PETSC_DECIDE);
-
-  VecSetFromOptions(GG);
-  VecSet(GG, 0.0);
-  VecSetOption(GG, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+  VecSetFromOptions(G);
+  VecSet(G, 0.0);
+  VecSetOption(G, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
 
   // Temporarily ignore new entry allocation
   SYS_T::commPrint("===> MAT_NEW_NONZERO_ALLOCATION_ERR = FALSE.\n");
@@ -125,7 +123,6 @@ PGAssem_2x2Block_NS_FEM::~PGAssem_2x2Block_NS_FEM()
 {
   VecDestroy(&subG[0]); VecDestroy(&subG[1]); 
   VecDestroy(&G);
-  VecDestroy(&GG);
   MatDestroy(&subK[0]); MatDestroy(&subK[1]);
   MatDestroy(&subK[2]); MatDestroy(&subK[3]);
   MatDestroy(&K);
@@ -140,7 +137,7 @@ void PGAssem_2x2Block_NS_FEM::Assem_G_from_subG()
   // subG[0] is associated with pressure, and nlocal is indeed the number of
   // local nodes
   VecGetLocalSize(subG[0], &nlocal);
-  VecGetArray(GG, &array);
+  VecGetArray(G, &array);
   VecGetArray(subG[0], &array_sub);
   
   for(int ii=0; ii<nlocal; ++ii) array[ii] = array_sub[ii];
@@ -152,7 +149,7 @@ void PGAssem_2x2Block_NS_FEM::Assem_G_from_subG()
   for(int ii=0; ii<nlocal*3; ++ii) array[ii+nlocal] = array_sub[ii];
 
   VecRestoreArray(subG[1], &array_sub);
-  VecRestoreArray(GG, &array);
+  VecRestoreArray(G, &array);
 }
 
 
@@ -408,6 +405,8 @@ void PGAssem_2x2Block_NS_FEM::Assem_mass_residual(
   MatAssemblyBegin(subK[3], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[3], MAT_FINAL_ASSEMBLY);
   VecAssemblyBegin(subG[0]); VecAssemblyEnd(subG[0]);
   VecAssemblyBegin(subG[1]); VecAssemblyEnd(subG[1]);
+
+  Assem_G_from_subG();
 }
 
 
@@ -493,10 +492,12 @@ void PGAssem_2x2Block_NS_FEM::Assem_residual(
   VecAssemblyBegin(subG[0]); VecAssemblyEnd(subG[0]);
   VecAssemblyBegin(subG[1]); VecAssemblyEnd(subG[1]);
 
-  EssBC_KG( nbc_part );
+  EssBC_G( nbc_part );
 
   VecAssemblyBegin(subG[0]); VecAssemblyEnd(subG[0]);
   VecAssemblyBegin(subG[1]); VecAssemblyEnd(subG[1]);
+
+  Assem_G_from_subG();
 }
 
 
@@ -594,6 +595,8 @@ void PGAssem_2x2Block_NS_FEM::Assem_tangent_residual(
   MatAssemblyBegin(subK[3], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[3], MAT_FINAL_ASSEMBLY);
   VecAssemblyBegin(subG[0]); VecAssemblyEnd(subG[0]);
   VecAssemblyBegin(subG[1]); VecAssemblyEnd(subG[1]);
+
+  Assem_G_from_subG();
 }
 
 
