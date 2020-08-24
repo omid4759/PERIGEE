@@ -116,6 +116,9 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
 
   // Put them together again as a nested matrix
   MatCreateNest(PETSC_COMM_WORLD, 2, NULL, 2, NULL, subK, &K);
+
+  // Obtain the index set associated with the nest matrix
+  MatNestGetISs(K, is, NULL);
 }
 
 
@@ -590,10 +593,10 @@ void PGAssem_2x2Block_NS_FEM::Assem_tangent_residual(
 
   EssBC_KG( nbc_part );
 
-  MatAssemblyBegin(subK[0], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[0], MAT_FINAL_ASSEMBLY);
-  MatAssemblyBegin(subK[1], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[1], MAT_FINAL_ASSEMBLY);
-  MatAssemblyBegin(subK[2], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[2], MAT_FINAL_ASSEMBLY);
-  MatAssemblyBegin(subK[3], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[3], MAT_FINAL_ASSEMBLY);
+  //MatAssemblyBegin(subK[0], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[0], MAT_FINAL_ASSEMBLY);
+  //MatAssemblyBegin(subK[1], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[1], MAT_FINAL_ASSEMBLY);
+  //MatAssemblyBegin(subK[2], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[2], MAT_FINAL_ASSEMBLY);
+  //MatAssemblyBegin(subK[3], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[3], MAT_FINAL_ASSEMBLY);
   MatAssemblyBegin(K, MAT_FINAL_ASSEMBLY); MatAssemblyEnd(K, MAT_FINAL_ASSEMBLY);
   VecAssemblyBegin(subG[0]); VecAssemblyEnd(subG[0]);
   VecAssemblyBegin(subG[1]); VecAssemblyEnd(subG[1]);
