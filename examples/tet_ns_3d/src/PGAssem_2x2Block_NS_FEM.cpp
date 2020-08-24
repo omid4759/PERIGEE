@@ -78,6 +78,13 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
   // Setup nest vectors
   VecCreateNest(PETSC_COMM_WORLD, 2, NULL, subG, &G);
 
+  VecCreate(PETSC_COMM_WORLD, &GG);
+  VecSetSizes(GG, nlocrow_p + nlocrow_v, PETSC_DECIDE);
+
+  VecSetFromOptions(GG);
+  VecSet(GG, 0.0);
+  VecSetOption(GG, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+
   // Temporarily ignore new entry allocation
   SYS_T::commPrint("===> MAT_NEW_NONZERO_ALLOCATION_ERR = FALSE.\n");
   Release_nonzero_err_str();
@@ -118,9 +125,34 @@ PGAssem_2x2Block_NS_FEM::~PGAssem_2x2Block_NS_FEM()
 {
   VecDestroy(&subG[0]); VecDestroy(&subG[1]); 
   VecDestroy(&G);
+  VecDestroy(&GG);
   MatDestroy(&subK[0]); MatDestroy(&subK[1]);
   MatDestroy(&subK[2]); MatDestroy(&subK[3]);
   MatDestroy(&K);
+}
+
+
+void PGAssem_2x2Block_NS_FEM::Assem_G_from_subG()
+{
+  PetscScalar * array_sub, * array;
+  PetscInt nlocal;
+
+  // subG[0] is associated with pressure, and nlocal is indeed the number of
+  // local nodes
+  VecGetLocalSize(subG[0], &nlocal);
+  VecGetArray(GG, &array);
+  VecGetArray(subG[0], &array_sub);
+  
+  for(int ii=0; ii<nlocal; ++ii) array[ii] = array_sub[ii];
+
+  VecRestoreArray(subG[0],&array_sub);
+
+  VecGetArray(subG[1], &array_sub);
+  
+  for(int ii=0; ii<nlocal*3; ++ii) array[ii+nlocal] = array_sub[ii];
+
+  VecRestoreArray(subG[1], &array_sub);
+  VecRestoreArray(GG, &array);
 }
 
 
@@ -293,6 +325,8 @@ void PGAssem_2x2Block_NS_FEM::Assem_nonzero_estimate(
   MatAssemblyBegin(subK[3], MAT_FINAL_ASSEMBLY); MatAssemblyEnd(subK[3], MAT_FINAL_ASSEMBLY);
   VecAssemblyBegin(subG[0]); VecAssemblyEnd(subG[0]);
   VecAssemblyBegin(subG[1]); VecAssemblyEnd(subG[1]);
+
+  Assem_G_from_subG();
 }
 
 

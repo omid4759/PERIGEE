@@ -38,6 +38,7 @@ class PGAssem_2x2Block_NS_FEM
     Mat subK[4];
     
     Vec G;
+    Vec GG;
     Vec subG[2];
 
     // Constructor
@@ -227,11 +228,9 @@ class PGAssem_2x2Block_NS_FEM
 
   private:
     // Data:
-    const int nLocBas, dof_sol, dof_mat_v, dof_mat_p, num_ebc, nlgn;
+    const int nLocBas, dof_sol, dof_mat_p, dof_mat_v, num_ebc, nlgn;
 
     int snLocBas;
-
-    int * idx_p, * idx_v;
 
     // Functions:
     // Essential boundary condition
@@ -285,7 +284,11 @@ class PGAssem_2x2Block_NS_FEM
         const ALocal_EBC * const &ebc_part,
         const IGenBC * const &gbc );
 
+    void Assem_G_from_subG();
+
     // Obtain the element local information
+    // NOTE: This function needs to be written in a way compatible with the
+    //       nest data structure
     void GetLocal(const double * const &array, const int * const &IEN,
         double * const &local_array) const
     {
