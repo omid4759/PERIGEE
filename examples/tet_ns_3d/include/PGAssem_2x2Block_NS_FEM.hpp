@@ -7,6 +7,17 @@
 // The assembly is designed for C0 Lagrangian elements, which does
 // not need extraction operator or local mesh sizes.
 //
+// The layout of the Mat/Vec objects, or the compatible IS data is
+// like follows.
+// The row index start from pnode_ptr->get_node_loc(0)*4
+// Then the first nlocalnode indices are pressure dofs
+// Then the next nlocalnode*3 indices are interlaced velocity dofs 
+// In pseudo code, we have
+// nlocalnode = pnode_ptr -> get_nlocalnode();
+// nstart = pnode_ptr->get_node_loc(0);
+// idx_p[ii] = nstart * 4 + ii; 0 <= ii < nlocalnode
+// idx_v[ii] = nstart * 4 + nlocalnode + ii; 0 <= ii < 3*nlocalnode
+//
 // Author: Ju Liu
 // Date Created: Aug. 11 2020
 // ==================================================================

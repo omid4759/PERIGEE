@@ -59,35 +59,6 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
       PETSC_DETERMINE, dof_mat_v*in_nz_estimate, NULL, 
       dof_mat_v*in_nz_estimate, NULL, &subK[3]);
   
-  // Put them together as a nested matrix
-  MatCreateNest(PETSC_COMM_WORLD, 2, NULL, 2, NULL, subK, &K);
-
-  // Generate the index set compatible with the nest matrix
-  IS isg[2];
-
-  // Get the index set for the nest matrix 
-  MatNestGetISs(K, isg, NULL);
-
-  int isg_len; 
-  ISGetLocalSize(isg[0], &isg_len);
-  SYS_T::print_fatal_if(isg_len != nlocrow_p, "Error: Index set for pres is incompatible with the APart_Node.\n"); 
-  idx_p = new int [isg_len];
-  
-  ISGetLocalSize(isg[1], &isg_len);
-  SYS_T::print_fatal_if(isg_len != nlocrow_v, "Error: Index set for velo is incompatible with the APart_Node.\n"); 
-  idx_v = new int [isg_len];
-  
-  const PetscInt * temp_idx;
-  ISGetIndices(isg[0], &temp_idx);
-  for(int ii=0; ii<nlocrow_p; ++ii) idx_p[ii] = temp_idx[ii];
-
-  ISRestoreIndices(isg[0], &temp_idx);
-  
-  ISGetIndices(isg[1], &temp_idx);
-  for(int ii=0; ii<nlocrow_v; ++ii) idx_v[ii] = temp_idx[ii];
-
-  ISRestoreIndices(isg[1], &temp_idx);
-
   // Allocate the sub-vectors
   VecCreate(PETSC_COMM_WORLD, &subG[0]);
   VecCreate(PETSC_COMM_WORLD, &subG[1]);
@@ -100,7 +71,7 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
 
   VecSet(subG[0], 0.0);
   VecSet(subG[1], 0.0);
-  
+
   VecSetOption(subG[0], VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetOption(subG[1], VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
 
@@ -117,17 +88,17 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
 
   // Reallocate matrices with precise preallocation
   std::vector<int> Kdnz, Konz;
-  
+
   PETSc_T::Get_dnz_onz(subK[0], Kdnz, Konz);
   MatDestroy(&subK[0]);
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_p, nlocrow_p, PETSC_DETERMINE,
       PETSC_DETERMINE, 0, &Kdnz[0], 0, &Konz[0], &subK[0]);
-  
+
   PETSc_T::Get_dnz_onz(subK[1], Kdnz, Konz);
   MatDestroy(&subK[1]);
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_p, nlocrow_v, PETSC_DETERMINE,
       PETSC_DETERMINE, 0, &Kdnz[0], 0, &Konz[0], &subK[1]);
-  
+
   PETSc_T::Get_dnz_onz(subK[2], Kdnz, Konz);
   MatDestroy(&subK[2]);
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_v, nlocrow_p, PETSC_DETERMINE,
@@ -139,7 +110,6 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
       PETSC_DETERMINE, 0, &Kdnz[0], 0, &Konz[0], &subK[3]);
 
   // Put them together again as a nested matrix
-  MatDestroy(&K);
   MatCreateNest(PETSC_COMM_WORLD, 2, NULL, 2, NULL, subK, &K);
 }
 
@@ -151,9 +121,6 @@ PGAssem_2x2Block_NS_FEM::~PGAssem_2x2Block_NS_FEM()
   MatDestroy(&subK[0]); MatDestroy(&subK[1]);
   MatDestroy(&subK[2]); MatDestroy(&subK[3]);
   MatDestroy(&K);
-
-  delete [] idx_p; idx_p = nullptr;
-  delete [] idx_v; idx_v = nullptr;
 }
 
 
@@ -294,7 +261,7 @@ void PGAssem_2x2Block_NS_FEM::Assem_nonzero_estimate(
       row_idx_v[3*ii]   = 3 * nbc_part->get_LID( 1, loc_index );
       row_idx_v[3*ii+1] = 3 * nbc_part->get_LID( 2, loc_index ) + 1;
       row_idx_v[3*ii+2] = 3 * nbc_part->get_LID( 3, loc_index ) + 2;
-      
+
       row_idx_p[ii] = nbc_part->get_LID( 0, loc_index );
     }
 
@@ -458,7 +425,7 @@ void PGAssem_2x2Block_NS_FEM::Assem_residual(
 
     lassem_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
         elementv, ectrl_x, ectrl_y, ectrl_z, quad_v);
-  
+
     for(int ii=0; ii<nLocBas; ++ii)
     {
       const int loc_index  = lien_ptr->get_LIEN(ee, ii);
@@ -543,7 +510,7 @@ void PGAssem_2x2Block_NS_FEM::Assem_tangent_residual(
     GetLocal(array_a, IEN_e, local_a);
     GetLocal(array_b, IEN_e, local_b);
     fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
- 
+
     lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
         elementv, ectrl_x, ectrl_y, ectrl_z, quad_v); 
 
