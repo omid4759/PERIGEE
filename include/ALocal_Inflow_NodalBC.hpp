@@ -62,10 +62,12 @@ class ALocal_Inflow_NodalBC
     virtual int get_cell_nLocBas() const {return cell_nLocBas;}
 
     // get the coordinates of the nodes
-    virtual double get_local_pt_xyz(const int &ii) const {return local_pt_xyz[ii];}
+    virtual double get_local_pt_xyz(const int &ii, const int &dir) const
+    {return local_pt_xyz[3*ii + dir];}
 
     // get the element's IEN array
-    virtual int get_local_tri_ien(const int &ii) const {return local_tri_ien[ii];}
+    virtual int get_local_tri_ien(const int &ii, const int &lnode) const
+    {return local_tri_ien[cell_nLocBas*ii + lnode];}
 
     // --------------------------------------------------------------
     // get_ctrlPts_xyz: given element index eindex,

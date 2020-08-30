@@ -82,6 +82,8 @@ class PNonlinear_NS_Solver
 
     void rescale_inflow_value( const double &stime,
         const ALocal_Inflow_NodalBC * const &infbc,
+        const APart_Node * const &anode_ptr,
+        const FEANode * const &feanode_ptr,
         const ICVFlowRate * const &flrate,
         const PDNSolution * const &sol_base,
         PDNSolution * const &sol ) const;

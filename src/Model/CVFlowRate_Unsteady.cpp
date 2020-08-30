@@ -1,6 +1,7 @@
 #include "CVFlowRate_Unsteady.hpp"
 
-CVFlowRate_Unsteady::CVFlowRate_Unsteady( const char * const &filename )
+CVFlowRate_Unsteady::CVFlowRate_Unsteady( const char * const &filename, const int &type )
+: velo_profile_type(type)
 {
   SYS_T::commPrint("CVFlowRate_Unsteady: data read from %s \n", filename);
 

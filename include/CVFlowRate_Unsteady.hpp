@@ -26,15 +26,26 @@
 class CVFlowRate_Unsteady : public ICVFlowRate
 {
   public:
-    CVFlowRate_Unsteady( const char * const &filename );
+    CVFlowRate_Unsteady( const char * const &filename, const int &type );
 
     virtual ~CVFlowRate_Unsteady();
 
     virtual double get_flow_rate(const double &time) const;
 
+    virtual void get_fourier_coeff( std::vector<double>& a_n, std::vector<double>& b_n ) const
+    {
+      a_n = coef_a;
+      b_n = coef_b;
+    }
+
+    virtual int get_velo_profile_type() const
+    { return velo_profile_type; }
+
     virtual void print_info() const;
 
   private:
+    const int velo_profile_type;
+
     std::vector<double> coef_a, coef_b;
 
     int num_of_mode;

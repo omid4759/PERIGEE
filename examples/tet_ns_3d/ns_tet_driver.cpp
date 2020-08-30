@@ -231,14 +231,17 @@ int main(int argc, char *argv[])
   SYS_T::commPrint("===> %d processor(s) are assigned for FEM analysis. \n", size);
 
   // ===== Inflow flow rate =====
-  SYS_T::commPrint("===> Setup inflow flow rate. \n");
-
+  SYS_T::commPrint("===> Setup inflow flow rate. ");
   ICVFlowRate * inflow_rate_ptr = nullptr;
+  const int velo_profile_type = 1;  // 1: parabolic.  2: womersley.
+  if(velo_profile_type == 1) SYS_T::commPrint("PARABOLIC velocity profile specified.\n");
+  else if(velo_profile_type == 2) SYS_T::commPrint("WOMERSLEY velocity profile specified.\n");
+  else SYS_T::print_fatal("\nError: Inlet velocity profile type not supported.\n");
 
   // If inflow file exist, load it
   // otherwise, call the linear incremental flow rate to reach a steady flow
   if( SYS_T::file_exist( inflow_file ) )
-    inflow_rate_ptr = new CVFlowRate_Unsteady( inflow_file.c_str() );
+    inflow_rate_ptr = new CVFlowRate_Unsteady( inflow_file.c_str(), velo_profile_type );
   else
     inflow_rate_ptr = new CVFlowRate_Linear2Steady( inflow_thd_time, inflow_tgt_rate );
 

@@ -106,8 +106,8 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
 
   // ------------------------------------------------- 
   // Update the inflow boundary values
-  rescale_inflow_value(curr_time+dt, infnbc_part, flr_ptr, sol_base, sol);
-  rescale_inflow_value(curr_time+alpha_f*dt, infnbc_part, flr_ptr, sol_base, &sol_alpha);
+  rescale_inflow_value(curr_time+dt,         infnbc_part, anode_ptr, feanode_ptr, flr_ptr, sol_base, sol);
+  rescale_inflow_value(curr_time+alpha_f*dt, infnbc_part, anode_ptr, feanode_ptr, flr_ptr, sol_base, &sol_alpha);
   // ------------------------------------------------- 
 
   // If new_tangent_flag == TRUE, update the tangent matrix;
@@ -239,34 +239,90 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
 
 void PNonlinear_NS_Solver::rescale_inflow_value( const double &stime,
     const ALocal_Inflow_NodalBC * const &infbc,
+    const APart_Node * const &anode_ptr,
+    const FEANode * const &feanode_ptr,
     const ICVFlowRate * const &flrate,
     const PDNSolution * const &sol_base,
     PDNSolution * const &sol ) const
 {
-  const int numnode = infbc -> get_Num_LD();
+  const int nlocalnode = anode_ptr->get_nlocalnode();
 
-  const double val = flrate -> get_flow_rate( stime );
+  const int type = flrate -> get_velo_profile_type();
 
-  double base_vals[3];
-  int base_idx[3];
+  const double Q = flrate -> get_flow_rate( stime );
 
-  for(int ii=0; ii<numnode; ++ii)
+  // If there are inflow nodes, set their value to be parabolic flow
+  if( infbc->get_Num_LD() > 0)
   {
-    const int node_index = infbc -> get_LDN( ii );
+    for(int ii=0; ii<nlocalnode; ++ii)
+    {
+      if( infbc->is_inLDN(anode_ptr->get_node_loc(ii)) )
+      {
+        const int offset = anode_ptr->get_node_loc(ii) * 4;
+ 
+        const double x = feanode_ptr->get_ctrlPts_x(ii);
+        const double y = feanode_ptr->get_ctrlPts_y(ii);
+        const double z = feanode_ptr->get_ctrlPts_z(ii);
 
-    base_idx[0] = node_index * 4 + 1;
-    base_idx[1] = node_index * 4 + 2;
-    base_idx[2] = node_index * 4 + 3;
+        // effective radius for velocity profile specification
+        const double r = infbc -> get_radius(x,y,z);
+        std::cout << r << " ";
 
-    VecGetValues(sol_base->solution, 3, base_idx, base_vals);
+        double vel;
 
-    VecSetValue(sol->solution, node_index*4+1, base_vals[0] * val, INSERT_VALUES);
-    VecSetValue(sol->solution, node_index*4+2, base_vals[1] * val, INSERT_VALUES);
-    VecSetValue(sol->solution, node_index*4+3, base_vals[2] * val, INSERT_VALUES);
+        // parabolic profile
+        if(type == 1)
+        {
+          const double vmax = 2.0 * Q / infbc->get_fularea();
+          vel = vmax * (1.0 - r*r);
+        }
+        // womersley profile
+        else if(type == 2)
+        {
+        }
+        else
+        {
+          SYS_T::print_fatal( "Error: Inlet velocity profile type not supported.\n" );
+        }
+ 
+        const double out_nx = infbc->get_outvec(0);
+        const double out_ny = infbc->get_outvec(1);
+        const double out_nz = infbc->get_outvec(2);
+
+        VecSetValue(sol->solution, offset + 1, vel * (-1.0) * out_nx, INSERT_VALUES);
+        VecSetValue(sol->solution, offset + 2, vel * (-1.0) * out_ny, INSERT_VALUES);
+        VecSetValue(sol->solution, offset + 3, vel * (-1.0) * out_nz, INSERT_VALUES);
+      }
+    }
+ 
+    VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
+    sol->GhostUpdate();
   }
 
-  VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
-  sol->GhostUpdate();
+  // const int numnode = infbc -> get_Num_LD();
+
+  // const double val = flrate -> get_flow_rate( stime );
+
+  // double base_vals[3];
+  // int base_idx[3];
+
+  // for(int ii=0; ii<numnode; ++ii)
+  // {
+  //   const int node_index = infbc -> get_LDN( ii );
+
+  //   base_idx[0] = node_index * 4 + 1;
+  //   base_idx[1] = node_index * 4 + 2;
+  //   base_idx[2] = node_index * 4 + 3;
+
+  //   VecGetValues(sol_base->solution, 3, base_idx, base_vals);
+
+  //   VecSetValue(sol->solution, node_index*4+1, base_vals[0] * val, INSERT_VALUES);
+  //   VecSetValue(sol->solution, node_index*4+2, base_vals[1] * val, INSERT_VALUES);
+  //   VecSetValue(sol->solution, node_index*4+3, base_vals[2] * val, INSERT_VALUES);
+  // }
+
+  // VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
+  // sol->GhostUpdate();
 }
 
 // EOF
