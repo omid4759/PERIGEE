@@ -266,7 +266,6 @@ void PNonlinear_NS_Solver::rescale_inflow_value( const double &stime,
 
         // effective radius for velocity profile specification
         const double r = infbc -> get_radius(x,y,z);
-        std::cout << r << " ";
 
         double vel;
 
@@ -294,35 +293,11 @@ void PNonlinear_NS_Solver::rescale_inflow_value( const double &stime,
         VecSetValue(sol->solution, offset + 3, vel * (-1.0) * out_nz, INSERT_VALUES);
       }
     }
- 
-    VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
-    sol->GhostUpdate();
   }
 
-  // const int numnode = infbc -> get_Num_LD();
+  VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
+  sol->GhostUpdate();
 
-  // const double val = flrate -> get_flow_rate( stime );
-
-  // double base_vals[3];
-  // int base_idx[3];
-
-  // for(int ii=0; ii<numnode; ++ii)
-  // {
-  //   const int node_index = infbc -> get_LDN( ii );
-
-  //   base_idx[0] = node_index * 4 + 1;
-  //   base_idx[1] = node_index * 4 + 2;
-  //   base_idx[2] = node_index * 4 + 3;
-
-  //   VecGetValues(sol_base->solution, 3, base_idx, base_vals);
-
-  //   VecSetValue(sol->solution, node_index*4+1, base_vals[0] * val, INSERT_VALUES);
-  //   VecSetValue(sol->solution, node_index*4+2, base_vals[1] * val, INSERT_VALUES);
-  //   VecSetValue(sol->solution, node_index*4+3, base_vals[2] * val, INSERT_VALUES);
-  // }
-
-  // VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
-  // sol->GhostUpdate();
 }
 
 // EOF
