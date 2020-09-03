@@ -9,6 +9,7 @@
 // Author: Ju Liu
 // Date: Feb. 10 2020
 // ==================================================================
+#include <complex_bessel.h>
 #include "IPLocAssem.hpp"
 #include "TimeMethod_GenAlpha.hpp"
 
@@ -198,7 +199,35 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
         const double &t, const double &nx, const double &ny,
         const double &nz, double &gx, double &gy, double &gz ) const
     {
-      return ((*this).*(flist[ebc_id]))(x,y,z,t,nx,ny,nz,gx,gy,gz);
+      // ==== WOMERSLEY CHANGES BEGIN ====
+      const double R     = 0.3;                                     // pipe radius
+      const double omega = MATH_T::PI * 2.0 / 1.1;                  // freqency
+      const std::complex<double> i1(0.0, 1.0);
+      const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
+      const auto Omega   = std::sqrt(rho0 * omega / vis_mu) * R;    // womersley number 
+      const auto Lambda  = i1_1d5 * Omega;
+      const double r     = sqrt(x*x+y*y);                           // radial coord
+      const auto   xi    = Lambda * r / R;
+
+      const auto bes_top = sp_bessel::besselJ(1, xi);
+      const auto bes_bot = sp_bessel::besselJ(0, Lambda);
+
+      // Define pressure Fourier coefficients
+      const double k0 = -21.0469;
+      const std::complex<double> k1( -33.0102, 42.9332 );
+
+      const auto coef1 = i1 * k1 / (rho0 * omega);
+      const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R) );
+      const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R) );
+      const double w_z = 0.0;
+      const double p   = k0 * z + std::real( k1 * z * exp(i1*omega*t) );
+      
+      gx = MATH_T::dot3d(          -p,          0.0,          vis_mu * w_x, nx, ny, nz); 
+      gy = MATH_T::dot3d(         0.0,           -p,          vis_mu * w_y, nx, ny, nz); 
+      gz = MATH_T::dot3d(vis_mu * w_x, vis_mu * w_y, -p + 2.0*vis_mu * w_z, nx, ny, nz); 
+
+      // return ((*this).*(flist[ebc_id]))(x,y,z,t,nx,ny,nz,gx,gy,gz);
+      // ==== WOMERSLEY CHANGES END ====
     }
 };
 

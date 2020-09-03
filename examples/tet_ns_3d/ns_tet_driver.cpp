@@ -37,8 +37,12 @@ int main(int argc, char *argv[])
   int nz_estimate = 300;
 
   // fluid properties
-  double fluid_density = 1.065;
-  double fluid_mu = 3.5e-2;
+
+  // ==== WOMERSLEY CHANGES BEGIN ====
+  double fluid_density = 1.00; // 1.065;
+  double fluid_mu = 4.0e-4;    // 3.5e-2;
+  // ==== WOMERSLEY CHANGES END ====
+
   double c_tauc = 1.0; // scaling factor for tau_c, take 0.0, 0.125, or 1.0
 
   // inflow file

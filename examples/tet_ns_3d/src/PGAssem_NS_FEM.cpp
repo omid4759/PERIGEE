@@ -317,11 +317,16 @@ void PGAssem_NS_FEM::Assem_residual(
   delete [] ectrl_z; ectrl_z = nullptr;
   delete [] row_index; row_index = nullptr;
   
+  // ==== WOMERSLEY CHANGES BEGIN ====
   // Backflow stabilization residual contribution
-  BackFlow_G( sol_a, sol_b, lassem_ptr, elements, quad_s, nbc_part, ebc_part );
+  // BackFlow_G( sol_a, sol_b, lassem_ptr, elements, quad_s, nbc_part, ebc_part );
 
   // Resistance type boundary condition
-  NatBC_Resis_G( dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ebc_part, gbc );
+  // NatBC_Resis_G( dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ebc_part, gbc );
+
+  // Time-dependent traction on cylinder inlet + outlet
+  NatBC_G( curr_time, dt, lassem_ptr, elements, quad_s, nbc_part, ebc_part );
+  // ==== WOMERSLEY CHANGES END ====
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
@@ -402,11 +407,16 @@ void PGAssem_NS_FEM::Assem_tangent_residual(
   delete [] ectrl_z; ectrl_z = nullptr;
   delete [] row_index; row_index = nullptr;
 
+  // ==== WOMERSLEY CHANGES BEGIN ====
   // Backflow stabilization residual & tangent contribution
-  BackFlow_KG( dt, sol_a, sol_b, lassem_ptr, elements, quad_s, nbc_part, ebc_part );
+  // BackFlow_KG( dt, sol_a, sol_b, lassem_ptr, elements, quad_s, nbc_part, ebc_part );
 
   // Resistance type boundary condition
-  NatBC_Resis_KG( dt, dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ebc_part, gbc );
+  // NatBC_Resis_KG( dt, dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ebc_part, gbc );
+
+  // Time-dependent traction on cylinder inlet + outlet
+  NatBC_G( curr_time, dt, lassem_ptr, elements, quad_s, nbc_part, ebc_part );
+  // ==== WOMERSLEY CHANGES END ====
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
