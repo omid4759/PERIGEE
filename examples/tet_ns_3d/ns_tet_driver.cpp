@@ -298,9 +298,9 @@ int main(int argc, char *argv[])
   // ===== Initial condition =====
   PDNSolution * base = new PDNSolution_NS( pNode, fNode, locinfnbc, 1 );
 
-  PDNSolution * sol = new PDNSolution_NS( pNode, 0 );
+  PDNSolution * sol = new PDNSolution_NS( pNode, fNode, fluid_density, fluid_mu, 3 );
 
-  PDNSolution * dot_sol = new PDNSolution_NS( pNode, 0 );
+  PDNSolution * dot_sol = new PDNSolution_NS( pNode, fNode, fluid_density, fluid_mu, 4 );
 
   if( is_restart )
   {

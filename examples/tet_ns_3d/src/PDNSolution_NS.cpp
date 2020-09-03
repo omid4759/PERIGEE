@@ -1,11 +1,12 @@
 #include "PDNSolution_NS.hpp"
+#include <complex_bessel.h>
 
 PDNSolution_NS::PDNSolution_NS( 
     const APart_Node * const &pNode,
     const FEANode * const &fNode_ptr,
     const ALocal_Inflow_NodalBC * const &infbc,
     const int &type, const bool &isprint ) 
-: PDNSolution( pNode ), is_print(isprint)
+: PDNSolution( pNode ), is_print( isprint )
 {
   if( pNode->get_dof() != 4 ) SYS_T::print_fatal("Error: PDNSolution_NS : the APart_Node gives wrong dof number. \n");
 
@@ -21,15 +22,15 @@ PDNSolution_NS::PDNSolution_NS(
       Init_pipe_parabolic( pNode, fNode_ptr );
       break;
     default:
-      SYS_T::print_fatal("Error: PDNSolution_NS: No such type of initional condition.\n");
+      SYS_T::print_fatal("Error: PDNSolution_NS: No such type of initial condition.\n");
       break;
   }
 }
 
 
-PDNSolution_NS::PDNSolution_NS( 
+PDNSolution_NS::PDNSolution_NS(
     const APart_Node * const &pNode,
-    const int &type, const bool &isprint ) 
+    const int &type, const bool &isprint )
 : PDNSolution( pNode ), is_print( isprint )
 {
   if( pNode->get_dof() != 4 ) SYS_T::print_fatal("Error: PDNSolution_NS : the APart_Node gives wrong dof number. \n");
@@ -40,10 +41,39 @@ PDNSolution_NS::PDNSolution_NS(
       Init_zero( pNode );
       break;
     default:
-      SYS_T::print_fatal("Error: PDNSolution_NS : No such type of initional condition.\n");
+      SYS_T::print_fatal("Error: PDNSolution_NS : No such type of initial condition.\n");
       break;
   }
 }
+
+// ==== WOMERSLEY CHANGES BEGIN ====
+PDNSolution_NS::PDNSolution_NS( 
+    const APart_Node * const &pNode,
+    const FEANode * const &fNode_ptr,
+    const double &rho,
+    const double &vis_mu,
+    const int &type, const bool &isprint ) 
+: PDNSolution( pNode ), is_print( isprint )
+{
+  if( pNode->get_dof() != 4 ) SYS_T::print_fatal("Error: PDNSolution_NS : the APart_Node gives wrong dof number. \n");
+
+  switch(type)
+  {
+    case 0:
+      Init_zero( pNode );
+      break;
+    case 3:
+      Init_womersley( pNode, fNode_ptr, rho, vis_mu );
+      break;
+    case 4:
+      Init_womersley_dot( pNode, fNode_ptr, rho, vis_mu );
+      break;
+    default:
+      SYS_T::print_fatal("Error: PDNSolution_NS : No such type of initial condition.\n");
+      break;
+  }
+}
+// ==== WOMERSLEY CHANGES END ====
 
 
 PDNSolution_NS::~PDNSolution_NS()
@@ -220,5 +250,154 @@ void PDNSolution_NS::Init_pipe_parabolic(
     SYS_T::commPrint("                       direction [%e %e %e].\n", out_nx, out_ny, out_nz);
   }
 }
+
+
+// ==== WOMERSLEY CHANGES BEGIN ====
+void PDNSolution_NS::Init_womersley(
+    const APart_Node * const &pNode_ptr,
+    const FEANode * const &fNode_ptr,
+    const double &rho,
+    const double &vis_mu )
+{
+  int location[4];
+  double value[4] = {0.0, 0.0, 0.0, 0.0};
+  const int nlocalnode = pNode_ptr->get_nlocalnode();
+
+  // First enforce everything to be zero
+  for(int ii=0; ii<nlocalnode; ++ii)
+  {
+    location[0] = pNode_ptr->get_node_loc(ii) * 4;
+    location[1] = location[0] + 1;
+    location[2] = location[0] + 2;
+    location[3] = location[0] + 3;
+
+    VecSetValues(solution, 4, location, value, INSERT_VALUES);
+  }
+
+  // Inlet face's outward unit normal points in -z direction
+  const double out_nx =  0.0;
+  const double out_ny =  0.0;
+  const double out_nz = -1.0;
+
+  const double R     = 2.0;                                     // pipe radius
+  const double omega = MATH_T::PI * 2.0 / 1.1;                  // freqency
+  const std::complex<double> i1(0.0, 1.0);
+  const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
+  const auto Omega   = std::sqrt(rho * omega / vis_mu) * R;     // womersley number 
+  const auto Lambda  = i1_1d5 * Omega;
+
+  // Define pressure Fourier coefficients
+  const double k0 = -21.0469;
+  const std::complex<double> k1( -33.0102, 42.9332 );
+
+  for(int ii=0; ii<nlocalnode; ++ii)
+  {
+    location[0] = pNode_ptr->get_node_loc(ii) * 4;
+    location[1] = location[0] + 1;
+    location[2] = location[0] + 2;
+    location[3] = location[0] + 3;
+
+    const double x  = fNode_ptr->get_ctrlPts_x(ii);
+    const double y  = fNode_ptr->get_ctrlPts_y(ii);
+    const double z  = fNode_ptr->get_ctrlPts_z(ii);
+    const double r  = sqrt(x*x + y*y);
+    const auto   xi = Lambda * r / R;
+
+    // pressure
+    const double pres    = k0 * z + std::real( k1*z );
+
+    // axial velocity
+    const auto   bes_top = sp_bessel::besselJ(0, xi);
+    const auto   bes_bot = sp_bessel::besselJ(0, Lambda);
+    const auto   coef1   = i1 * k1 / (rho * omega);
+    const double vel     = k0 * (x*x + y*y - R*R) / (4.0*vis_mu) + std::real( coef1 * (1.0 - bes_top/bes_bot) );
+    
+    // -1.0 is multiplied to make the flow direction inward
+    value[0] = pres;
+    value[1] = vel * (-1.0) * out_nx;
+    value[2] = vel * (-1.0) * out_ny;
+    value[3] = vel * (-1.0) * out_nz;
+
+    VecSetValues(solution, 4, location, value, INSERT_VALUES);
+  }
+
+  VecAssemblyBegin(solution); VecAssemblyEnd(solution);
+  GhostUpdate();
+}
+
+void PDNSolution_NS::Init_womersley_dot(
+    const APart_Node * const &pNode_ptr,
+    const FEANode * const &fNode_ptr,
+    const double &rho,
+    const double &vis_mu )
+{
+  int location[4];
+  double value[4] = {0.0, 0.0, 0.0, 0.0};
+  const int nlocalnode = pNode_ptr->get_nlocalnode();
+
+  // First enforce everything to be zero
+  for(int ii=0; ii<nlocalnode; ++ii)
+  {
+    location[0] = pNode_ptr->get_node_loc(ii) * 4;
+    location[1] = location[0] + 1;
+    location[2] = location[0] + 2;
+    location[3] = location[0] + 3;
+
+    VecSetValues(solution, 4, location, value, INSERT_VALUES);
+  }
+
+  // Inlet face's outward unit normal points in -z direction
+  const double out_nx =  0.0;
+  const double out_ny =  0.0;
+  const double out_nz = -1.0;
+
+  const double R     = 2.0;                                     // pipe radius
+  const double omega = MATH_T::PI * 2.0 / 1.1;                  // freqency
+  const std::complex<double> i1(0.0, 1.0);
+  const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
+  const auto Omega   = std::sqrt(rho * omega / vis_mu) * R;     // womersley number 
+  const auto Lambda  = i1_1d5 * Omega;
+
+  // Define pressure Fourier coefficients
+  // const double k0 = -21.0469;
+  const std::complex<double> k1( -33.0102, 42.9332 );
+
+  for(int ii=0; ii<nlocalnode; ++ii)
+  {
+    location[0] = pNode_ptr->get_node_loc(ii) * 4;
+    location[1] = location[0] + 1;
+    location[2] = location[0] + 2;
+    location[3] = location[0] + 3;
+
+    const double x  = fNode_ptr->get_ctrlPts_x(ii);
+    const double y  = fNode_ptr->get_ctrlPts_y(ii);
+    const double z  = fNode_ptr->get_ctrlPts_z(ii);
+    const double r  = sqrt(x*x + y*y);
+    const auto   xi = Lambda * r / R;
+
+    // dot pressure
+    const double dot_pres = std::real( k1*z*i1*omega );
+
+    // dot axial velocity
+    const auto   bes_top  = sp_bessel::besselJ(0, xi);
+    const auto   bes_bot  = sp_bessel::besselJ(0, Lambda);
+    const auto   coef1    = i1 * k1 / (rho * omega); 
+    const double dot_vel  = std::real( coef1 * i1 * omega * (1.0 - bes_top/bes_bot) );
+
+    // -1.0 is multiplied to make the flow direction inward
+    value[0] = dot_pres; 
+
+    // -1.0 is multiplied to make the flow direction inward
+    value[1] = dot_vel * (-1.0) * out_nx;
+    value[2] = dot_vel * (-1.0) * out_ny;
+    value[3] = dot_vel * (-1.0) * out_nz;
+
+    VecSetValues(solution, 4, location, value, INSERT_VALUES);
+  }
+
+  VecAssemblyBegin(solution); VecAssemblyEnd(solution);
+  GhostUpdate();
+}
+// ==== WOMERSLEY CHANGES END ====
 
 // EOF
