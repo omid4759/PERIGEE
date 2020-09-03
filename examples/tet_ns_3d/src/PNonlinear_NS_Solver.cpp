@@ -106,8 +106,10 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
 
   // ------------------------------------------------- 
   // Update the inflow boundary values
-  rescale_inflow_value(curr_time+dt, infnbc_part, flr_ptr, sol_base, sol);
-  rescale_inflow_value(curr_time+alpha_f*dt, infnbc_part, flr_ptr, sol_base, &sol_alpha);
+  // ==== WOMERSLEY CHANGES BEGIN ====
+  // rescale_inflow_value(curr_time+dt, infnbc_part, flr_ptr, sol_base, sol);
+  // rescale_inflow_value(curr_time+alpha_f*dt, infnbc_part, flr_ptr, sol_base, &sol_alpha);
+  // ==== WOMERSLEY CHANGES END ====
   // ------------------------------------------------- 
 
   // If new_tangent_flag == TRUE, update the tangent matrix;
