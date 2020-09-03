@@ -279,7 +279,7 @@ void PDNSolution_NS::Init_womersley(
   const double out_ny =  0.0;
   const double out_nz = -1.0;
 
-  const double R     = 2.0;                                     // pipe radius
+  const double R     = 0.3;                                     // pipe radius
   const double omega = MATH_T::PI * 2.0 / 1.1;                  // freqency
   const std::complex<double> i1(0.0, 1.0);
   const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
@@ -351,7 +351,7 @@ void PDNSolution_NS::Init_womersley_dot(
   const double out_ny =  0.0;
   const double out_nz = -1.0;
 
-  const double R     = 2.0;                                     // pipe radius
+  const double R     = 0.3;                                     // pipe radius
   const double omega = MATH_T::PI * 2.0 / 1.1;                  // freqency
   const std::complex<double> i1(0.0, 1.0);
   const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
