@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
   // ==== WOMERSLEY CHANGES BEGIN ====
   double fluid_density = 1.00; // 1.065;
-  double fluid_mu = 4.0e-4;    // 3.5e-2;
+  double fluid_mu = 4.0e-2;    // 3.5e-2;
   // ==== WOMERSLEY CHANGES END ====
 
   double c_tauc = 1.0; // scaling factor for tau_c, take 0.0, 0.125, or 1.0
@@ -362,34 +362,36 @@ int main(int argc, char *argv[])
   gloAssem_ptr->Fix_nonzero_err_str();
   gloAssem_ptr->Clear_KG();
 
+  // ==== WOMERSLEY CHANGES BEGIN ====
   // ===== Initialize the dot_sol vector by solving mass matrix =====
-  if( is_restart == false )
-  {
-    SYS_T::commPrint("===> Assembly mass matrix and residual vector.\n");
-    PLinear_Solver_PETSc * lsolver_acce = new PLinear_Solver_PETSc(
-        1.0e-14, 1.0e-85, 1.0e30, 1000, "mass_", "mass_" );
+  // if( is_restart == false )
+  // {
+  //   SYS_T::commPrint("===> Assembly mass matrix and residual vector.\n");
+  //   PLinear_Solver_PETSc * lsolver_acce = new PLinear_Solver_PETSc(
+  //       1.0e-14, 1.0e-85, 1.0e30, 1000, "mass_", "mass_" );
 
-    KSPSetType(lsolver_acce->ksp, KSPGMRES);
-    KSPGMRESSetOrthogonalization(lsolver_acce->ksp,
-        KSPGMRESModifiedGramSchmidtOrthogonalization);
-    KSPGMRESSetRestart(lsolver_acce->ksp, 500);
+  //   KSPSetType(lsolver_acce->ksp, KSPGMRES);
+  //   KSPGMRESSetOrthogonalization(lsolver_acce->ksp,
+  //       KSPGMRESModifiedGramSchmidtOrthogonalization);
+  //   KSPGMRESSetRestart(lsolver_acce->ksp, 500);
 
-    PC preproc; lsolver_acce->GetPC(&preproc);
-    PCSetType( preproc, PCHYPRE );
-    PCHYPRESetType( preproc, "boomeramg" );
+  //   PC preproc; lsolver_acce->GetPC(&preproc);
+  //   PCSetType( preproc, PCHYPRE );
+  //   PCHYPRESetType( preproc, "boomeramg" );
 
-    gloAssem_ptr->Assem_mass_residual( sol, locElem, locAssem_ptr, elementv,
-        elements, quadv, quads, locIEN, pNode, fNode, locnbc, locebc );
+  //   gloAssem_ptr->Assem_mass_residual( sol, locElem, locAssem_ptr, elementv,
+  //       elements, quadv, quads, locIEN, pNode, fNode, locnbc, locebc );
 
-    lsolver_acce->Solve( gloAssem_ptr->K, gloAssem_ptr->G, dot_sol );
+  //   lsolver_acce->Solve( gloAssem_ptr->K, gloAssem_ptr->G, dot_sol );
 
-    dot_sol -> ScaleValue(-1.0);
+  //   dot_sol -> ScaleValue(-1.0);
 
-    SYS_T::commPrint("\n===> Consistent initial acceleration is obtained. \n");
-    lsolver_acce -> print_info();
-    delete lsolver_acce;
-    SYS_T::commPrint(" The mass matrix lsolver is destroyed. \n\n");
-  }
+  //   SYS_T::commPrint("\n===> Consistent initial acceleration is obtained. \n");
+  //   lsolver_acce -> print_info();
+  //   delete lsolver_acce;
+  //   SYS_T::commPrint(" The mass matrix lsolver is destroyed. \n\n");
+  // }
+  // ==== WOMERSLEY CHANGES END ====
 
   // ===== Linear solver context =====
   PLinear_Solver_PETSc * lsolver = new PLinear_Solver_PETSc();

@@ -178,7 +178,9 @@ int main( int argc, char * argv[] )
   NBC_list.clear(); NBC_list.resize( dofMat );
 
   std::vector<std::string> dir_list;
-  dir_list.push_back( sur_file_in );
+  // ==== WOMERSLEY CHANGES BEGIN ====
+  // dir_list.push_back( sur_file_in );
+  // ==== WOMERSLEY CHANGES END ====
   dir_list.push_back( sur_file_wall );
 
   if(elemType == 501)
