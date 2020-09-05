@@ -36,12 +36,12 @@ set(gca, 'FontSize', 12)
 
 % ------- Plot axial velocity as a function of r, t -------
 r = (-R : 0.01 : R)';                % radius vector
-t_ds = 0 : T / 8 : T;                % downsampled time vector
+t_ds = 0 : T / 10 : T;                % downsampled time vector
 
 v_z = zeros(length(r), length(t_ds));
 figure; hold on;
 legend_list = cell(1, length(t_ds));
-line_style = {'k-', 'k--', 'k.-', 'r-', 'r--', 'r.-', 'b-', 'b--', 'b.-'};
+line_style = {'k-', 'k--', 'k.-', 'r-', 'r--', 'r.-', 'b-', 'b--', 'b.-', 'g-', 'g--'};
 
 for ii = 1 : length(t_ds)
     
