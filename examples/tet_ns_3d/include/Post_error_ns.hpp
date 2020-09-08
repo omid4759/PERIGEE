@@ -13,12 +13,12 @@ namespace POST_T_NS
   const double mu = 4.0e-2;
   const double rho0 = 1.0;
 
-  const double R     = 0.3;                                 // pipe radius
-  const double omega = MATH_T::PI * 2.0 / 1.1;              // freqency
+  const double R_pipe = 0.3;                                     // pipe radius
+  const double omega  = MATH_T::PI * 2.0 / 1.1;                  // freqency
   const std::complex<double> i1(0.0, 1.0);
   const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
-  const auto Omega   = std::sqrt(rho0 * omega / mu) * R;    // womersley number 
-  const auto Lambda  = i1_1d5 * Omega;
+  const auto Omega    = std::sqrt(rho0 * omega / mu) * R_pipe;   // womersley number 
+  const auto Lambda   = i1_1d5 * Omega;
 
   // Define pressure Fourier coefficients
   const double k0 = -21.0469;
