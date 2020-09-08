@@ -4,7 +4,7 @@
 #include <complex_bessel.h>
 #include "Math_Tools.hpp"
 #include "Matrix_3x3.hpp"
-// #include "FEAElement.hpp"
+#include "FEAElement.hpp"
 // #include "AInt_Weight.hpp"
 
 namespace POST_T_NS
@@ -39,54 +39,49 @@ namespace POST_T_NS
   void exact_grad_velo( const double &x, const double &y, const double &z,
       const double &t, Matrix_3x3 &grad_velo );
 
-  /*
-  double get_pres_l2_error( const double * const &sol,
-      const FEAElement * const &element_d,
-      const FEAElement * const &element_p,
-      const double * const &ectrlPts_x,
-      const double * const &ectrlPts_y,
-      const double * const &ectrlPts_z,
-      const AInt_Weight * const &weight,
-      double * const &Rd,
-      double * const &Rp,
-      const double &curr );
-
-  double get_pres_h1_error( const double * const &sol,
-      const FEAElement * const &element_d,
-      const FEAElement * const &element_p,
-      const double * const &ectrlPts_x,
-      const double * const &ectrlPts_y,
-      const double * const &ectrlPts_z,
-      const AInt_Weight * const &weight,
-      double * const &Rd,
-      double * const &Rx,
-      double * const &Ry,
-      double * const &Rz,
-      const double &curr );
-
-  double get_velo_l2_error( const double * const &solu,
-      const double * const &solv, const double * const &solw,
+  double get_pres_l2_error( const std::vector<double> &sol,
       const FEAElement * const &element,
       const double * const &ectrlPts_x,
       const double * const &ectrlPts_y,
       const double * const &ectrlPts_z,
-      const AInt_Weight * const &weight,
+      const IQuadPts * const &quad,
       double * const &R,
-      const double &curr );
+      const double &t );
 
-  double get_velo_h1_error( const double * const &solu,
-      const double * const &solv, const double * const &solw,
+  double get_pres_h1_error( const std::vector<double> &sol,
       const FEAElement * const &element,
       const double * const &ectrlPts_x,
       const double * const &ectrlPts_y,
       const double * const &ectrlPts_z,
-      const AInt_Weight * const &weight,
+      const IQuadPts * const &quad,
       double * const &R,
       double * const &Rx,
       double * const &Ry,
       double * const &Rz,
-      const double &curr );
-  */
+      const double &t );
+
+  double get_velo_l2_error( const std::vector<double> &solu,
+      const std::vector<double> &solv, const std::vector<double> &solw,
+      const FEAElement * const &element,
+      const double * const &ectrlPts_x,
+      const double * const &ectrlPts_y,
+      const double * const &ectrlPts_z,
+      const IQuadPts * const &quad,
+      double * const &R,
+      const double &t );
+
+  double get_velo_h1_error( const std::vector<double> &solu,
+      const std::vector<double> &solv, const std::vector<double> &solw,
+      const FEAElement * const &element,
+      const double * const &ectrlPts_x,
+      const double * const &ectrlPts_y,
+      const double * const &ectrlPts_z,
+      const IQuadPts * const &quad,
+      double * const &R,
+      double * const &Rx,
+      double * const &Ry,
+      double * const &Rz,
+      const double &t );
 }
 
 #endif
