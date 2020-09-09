@@ -60,10 +60,10 @@ int main( int argc, char * argv[] )
   SYS_T::GetOptionBool("-xml", isXML);
   SYS_T::GetOptionBool("-restart", isRestart);
 
-  // ===== WOMERSLEY CHANGES BEGIN ===== 
+  // ==== WOMERSLEY CHANGES BEGIN ==== 
   int manu_sol_time = 0;
   SYS_T::GetOptionInt("-manu_sol_time", manu_sol_time);
-  // ==== WOMERSLEY CHANGES END =====
+  // ==== WOMERSLEY CHANGES END ====
   
   SYS_T::commPrint("=== Command line arguments ===\n");
   SYS_T::cmdPrint("-sol_bname:", sol_bname);
@@ -72,6 +72,10 @@ int main( int argc, char * argv[] )
   SYS_T::cmdPrint("-time_step:", time_step);
   SYS_T::cmdPrint("-time_end:", time_end);
   SYS_T::cmdPrint("-dt:",dt);
+  // ==== WOMERSLEY CHANGES BEGIN ==== 
+  SYS_T::cmdPrint("-manu_sol_time:", manu_sol_time);
+  // ==== WOMERSLEY CHANGES END ====
+
   if(isXML) SYS_T::commPrint("-xml: true \n");
   else SYS_T::commPrint("-xml: false \n");
 
@@ -234,11 +238,11 @@ int main( int argc, char * argv[] )
   velo_l2 = sqrt(velo_l2); velo_h1 = sqrt(velo_h1 + velo_l2*velo_l2);
   pres_l2 = sqrt(pres_l2); pres_h1 = sqrt(pres_h1 + pres_l2*pres_l2);
 
-  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in L2 norm of velo is : %e \n", velo_l2);
-  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in H1 norm of velo is : %e \n", velo_h1);
+  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in L2 norm of velo at t=%f is : %e \n", manu_sol_time * dt, velo_l2);
+  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in H1 norm of velo at t=%f is : %e \n", manu_sol_time * dt, velo_h1);
 
-  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in L2 norm of pres is : %e \n", pres_l2);
-  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in H1 norm of pres is : %e \n", pres_h1);
+  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in L2 norm of pres at t=%f is : %e \n", manu_sol_time * dt, pres_l2);
+  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in H1 norm of pres at t=%f is : %e \n", manu_sol_time * dt, pres_h1);
   // ==== WOMERSLEY CHANGES END ====
 
   // ===== Clean the memory =====
