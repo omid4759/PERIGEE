@@ -38,7 +38,7 @@ namespace POST_T_NS
   void exact_grad_velo( const double &x, const double &y, const double &z,
       const double &t, Matrix_3x3 &grad_velo );
 
-  double get_pres_l2_error( const std::vector<double> &sol,
+  double get_pres_l2_error( const double * const &sol,
       const FEAElement * const &element,
       const double * const &ectrlPts_x,
       const double * const &ectrlPts_y,
@@ -47,7 +47,7 @@ namespace POST_T_NS
       double * const &R,
       const double &t );
 
-  double get_pres_h1_error( const std::vector<double> &sol,
+  double get_pres_h1_error( const double * const &sol,
       const FEAElement * const &element,
       const double * const &ectrlPts_x,
       const double * const &ectrlPts_y,
@@ -59,8 +59,8 @@ namespace POST_T_NS
       double * const &Rz,
       const double &t );
 
-  double get_velo_l2_error( const std::vector<double> &solu,
-      const std::vector<double> &solv, const std::vector<double> &solw,
+  double get_velo_l2_error( const double * const &solu,
+      const double * const &solv, const double * const &solw,
       const FEAElement * const &element,
       const double * const &ectrlPts_x,
       const double * const &ectrlPts_y,
@@ -69,8 +69,8 @@ namespace POST_T_NS
       double * const &R,
       const double &t );
 
-  double get_velo_h1_error( const std::vector<double> &solu,
-      const std::vector<double> &solv, const std::vector<double> &solw,
+  double get_velo_h1_error( const double * const &solu,
+      const double * const &solv, const double * const &solw,
       const FEAElement * const &element,
       const double * const &ectrlPts_x,
       const double * const &ectrlPts_y,

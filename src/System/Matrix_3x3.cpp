@@ -1,4 +1,5 @@
 #include "Matrix_3x3.hpp"
+#include "Vector_3.hpp"
 
 Matrix_3x3::Matrix_3x3()
 {

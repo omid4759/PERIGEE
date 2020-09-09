@@ -15,6 +15,11 @@
 #include "VisDataPrep_NS.hpp"
 #include "VTK_Writer_NS.hpp"
 
+// ==== WOMERSLEY CHANGES BEGIN ====
+#include "PostVectSolution.hpp"
+#include "Post_error_ns.hpp"
+// ==== WOMERSLEY CHANGES END ====
+
 int main( int argc, char * argv[] )
 {
   const std::string element_part_file = "epart.h5";
@@ -54,6 +59,11 @@ int main( int argc, char * argv[] )
   SYS_T::GetOptionString("-out_bname", out_bname);
   SYS_T::GetOptionBool("-xml", isXML);
   SYS_T::GetOptionBool("-restart", isRestart);
+
+  // ===== WOMERSLEY CHANGES BEGIN ===== 
+  int manu_sol_time = 0;
+  SYS_T::GetOptionInt("-manu_sol_time", manu_sol_time);
+  // ==== WOMERSLEY CHANGES END =====
   
   SYS_T::commPrint("=== Command line arguments ===\n");
   SYS_T::cmdPrint("-sol_bname:", sol_bname);
@@ -131,6 +141,30 @@ int main( int argc, char * argv[] )
 
   std::ostringstream time_index;
 
+  // ==== WOMERSLEY CHANGES BEGIN ====
+  const int nElem   = locElem->get_nlocalele();
+  const int nLocBas = GMIptr->get_nLocBas();
+
+  // Initialize velo and pres errors in L2, H1 norms
+  double err_velo_l2 = 0.0, err_velo_h1 = 0.0, err_pres_l2 = 0.0, err_pres_h1 = 0.0;
+
+  // Allocate element arrays 
+  int * IEN_e = new int [nLocBas];
+  double * R  = new double [nLocBas];
+  double * Rx = new double [nLocBas];
+  double * Ry = new double [nLocBas];
+  double * Rz = new double [nLocBas];
+
+  double * ectrl_x = new double [nLocBas];
+  double * ectrl_y = new double [nLocBas];
+  double * ectrl_z = new double [nLocBas];
+
+  double * loc_p = new double [nLocBas];
+  double * loc_u = new double [nLocBas];
+  double * loc_v = new double [nLocBas];
+  double * loc_w = new double [nLocBas];
+  // ==== WOMERSLEY CHANGES END ====
+
   for(int time = time_start; time<=time_end; time+= time_step)
   {
     std::string name_to_read(sol_bname);
@@ -146,12 +180,66 @@ int main( int argc, char * argv[] )
     visprep->get_pointArray(name_to_read, anode_mapping_file, pnode_mapping_file,
         pNode, GMIptr, dof, solArrays);
 
+    
     vtk_w->writeOutput( fNode, locIEN, locElem,
         visprep, element, quad, solArrays,
         rank, size, time * dt, sol_bname, out_bname, name_to_write, isXML );
+
+    // ==== WOMERSLEY CHANGES BEGIN ====
+    if(time == manu_sol_time)
+    {
+      PostVectSolution * pvsol = new PostVectSolution(name_to_read,
+          anode_mapping_file, pnode_mapping_file, pNode, GMIptr, dof);
+
+      for(int ee=0; ee<nElem; ++ee)
+      {
+        // Build element
+        locIEN  -> get_LIEN_e(ee, IEN_e);
+        fNode   -> get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
+        element -> buildBasis( quad, ectrl_x, ectrl_y, ectrl_z );
+
+        // Obtain element solution vector
+        pvsol -> get_esol(0, nLocBas, IEN_e, loc_p);
+        pvsol -> get_esol(1, nLocBas, IEN_e, loc_u);
+        pvsol -> get_esol(2, nLocBas, IEN_e, loc_v);
+        pvsol -> get_esol(3, nLocBas, IEN_e, loc_w);
+
+        // Compute errors
+        err_velo_l2 += POST_T_NS::get_velo_l2_error( loc_u, loc_v, loc_w,
+            element, ectrl_x, ectrl_y, ectrl_z, quad, R, time * dt);
+
+        err_velo_h1 += POST_T_NS::get_velo_h1_error( loc_u, loc_v, loc_w,
+            element, ectrl_x, ectrl_y, ectrl_z, quad, R, Rx, Ry, Rz, time * dt);
+
+        err_pres_l2 += POST_T_NS::get_pres_l2_error( loc_p,
+            element, ectrl_x, ectrl_y, ectrl_z, quad, R, time * dt );
+
+        err_pres_h1 += POST_T_NS::get_pres_h1_error( loc_p,
+            element, ectrl_x, ectrl_y, ectrl_z, quad, R, Rx, Ry, Rz, time * dt );
+      }
+
+      delete pvsol;
+    }
+    // ==== WOMERSLEY CHANGES END ====
   }
 
+  // ==== WOMERSLEY CHANGES BEGIN ====
   MPI_Barrier(PETSC_COMM_WORLD);
+  double velo_l2 = 0.0, velo_h1 = 0.0, pres_l2 = 0.0, pres_h1 = 0.0;
+  MPI_Reduce(&err_velo_l2, &velo_l2, 1, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+  MPI_Reduce(&err_velo_h1, &velo_h1, 1, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+  MPI_Reduce(&err_pres_l2, &pres_l2, 1, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+  MPI_Reduce(&err_pres_h1, &pres_h1, 1, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+
+  velo_l2 = sqrt(velo_l2); velo_h1 = sqrt(velo_h1 + velo_l2*velo_l2);
+  pres_l2 = sqrt(pres_l2); pres_h1 = sqrt(pres_h1 + pres_l2*pres_l2);
+
+  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in L2 norm of velo is : %e \n", velo_l2);
+  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in H1 norm of velo is : %e \n", velo_h1);
+
+  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in L2 norm of pres is : %e \n", pres_l2);
+  PetscPrintf(PETSC_COMM_WORLD, "Abs Error in H1 norm of pres is : %e \n", pres_h1);
+  // ==== WOMERSLEY CHANGES END ====
 
   // ===== Clean the memory =====
   for(int ii=0; ii<visprep->get_ptarray_size(); ++ii)
@@ -160,6 +248,13 @@ int main( int argc, char * argv[] )
   
   delete fNode; delete locIEN; delete GMIptr; delete PartBasic; delete locElem;
   delete pNode; delete quad; delete element; delete visprep; delete vtk_w;
+
+  // ==== WOMERSLEY CHANGES BEGIN ====
+  delete [] IEN_e; delete [] R; delete [] Rx; delete [] Ry; delete [] Rz;
+  delete [] ectrl_x; delete [] ectrl_y; delete [] ectrl_z;
+  delete [] loc_p; delete [] loc_u; delete [] loc_v; delete [] loc_w;
+  // ==== WOMERSLEY CHANGES END ====
+
   PetscFinalize();
   return EXIT_SUCCESS;
 }

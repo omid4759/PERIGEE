@@ -66,6 +66,8 @@ SET( perigee_preprocess_lib_src
 SET( perigee_analysis_lib_src
   ${perigee_source}/System/PETSc_Tools.cpp
   ${perigee_source}/System/Matrix_double_6by6_Array.cpp
+  ${perigee_source}/System/Matrix_3x3.cpp
+  ${perigee_source}/System/Vector_3.cpp
   ${perigee_source}/System/Matrix_PETSc.cpp
   ${perigee_source}/Mesh/QuadPts_Gauss_Tet.cpp
   ${perigee_source}/Analysis_Tool/AGlobal_Mesh_Info_FEM_3D.cpp
@@ -143,7 +145,6 @@ ADD_EXECUTABLE( prepost prepost_ns_tets.cpp)
 ADD_EXECUTABLE( vis_ns vis_ns.cpp)
 ADD_EXECUTABLE( vis_p1_wss vis_p1_wss.cpp)
 ADD_EXECUTABLE( vis_p2_wss vis_p2_wss.cpp)
-ADD_EXECUTABLE( post_compare_manu post_compare_manu.cpp)
 
 TARGET_LINK_LIBRARIES( gmsh_p1_IO perigee_preprocess )
 TARGET_LINK_LIBRARIES( gmsh_p2_IO perigee_preprocess )
@@ -153,5 +154,4 @@ TARGET_LINK_LIBRARIES( prepost perigee_preprocess )
 TARGET_LINK_LIBRARIES( vis_ns perigee_postprocess )
 TARGET_LINK_LIBRARIES( vis_p1_wss perigee_postprocess )
 TARGET_LINK_LIBRARIES( vis_p2_wss perigee_postprocess )
-TARGET_LINK_LIBRARIES( post_compare_manu perigee_preprocess )
 # EOF

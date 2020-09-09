@@ -52,7 +52,7 @@ void POST_T_NS::exact_grad_velo( const double &x, const double &y, const double 
 }
 
 
-double POST_T_NS::get_pres_l2_error( const std::vector<double> &sol,
+double POST_T_NS::get_pres_l2_error( const double * const &sol,
     const FEAElement * const &element,
     const double * const &ectrlPts_x,
     const double * const &ectrlPts_y,
@@ -90,7 +90,7 @@ double POST_T_NS::get_pres_l2_error( const std::vector<double> &sol,
 }
 
 
-double POST_T_NS::get_pres_h1_error( const std::vector<double> &sol,
+double POST_T_NS::get_pres_h1_error( const double * const &sol,
     const FEAElement * const &element,
     const double * const &ectrlPts_x,
     const double * const &ectrlPts_y,
@@ -135,8 +135,8 @@ double POST_T_NS::get_pres_h1_error( const std::vector<double> &sol,
 }
 
 
-double POST_T_NS::get_velo_l2_error( const std::vector<double> &solu,
-    const std::vector<double> &solv, const std::vector<double> &solw,
+double POST_T_NS::get_velo_l2_error( const double * const &solu,
+    const double * const &solv, const double * const &solw,
     const FEAElement * const &element,
     const double * const &ectrlPts_x,
     const double * const &ectrlPts_y,
@@ -180,8 +180,8 @@ double POST_T_NS::get_velo_l2_error( const std::vector<double> &solu,
 }
 
 
-double POST_T_NS::get_velo_h1_error( const std::vector<double> &solu,
-    const std::vector<double> &solv, const std::vector<double> &solw,
+double POST_T_NS::get_velo_h1_error( const double * const &solu,
+    const double * const &solv, const double * const &solw,
     const FEAElement * const &element,
     const double * const &ectrlPts_x,
     const double * const &ectrlPts_y,
