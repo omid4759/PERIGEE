@@ -5,7 +5,6 @@
 #include "Math_Tools.hpp"
 #include "Matrix_3x3.hpp"
 #include "FEAElement.hpp"
-// #include "AInt_Weight.hpp"
 
 namespace POST_T_NS
 {
