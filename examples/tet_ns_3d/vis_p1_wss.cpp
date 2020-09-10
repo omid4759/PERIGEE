@@ -13,6 +13,12 @@
 #include "QuadPts_vis_tet4.hpp"
 #include "FEAElement_Tet4.hpp"
 
+// ==== WOMERSLEY CHANGES BEGIN ====
+#include "Post_error_ns.hpp"
+#include "QuadPts_Gauss_Triangle.hpp"
+#include "FEAElement_Triangle3_3D_der0.hpp"
+// ==== WOMERSLEY CHANGES END ====
+
 void ReadNodeMapping( const char * const &node_mapping_file,
     const char * const &mapping_type, const int &node_size,
     int * const &nodemap );
@@ -61,21 +67,17 @@ int main( int argc, char * argv[] )
   // Directly read in the volumetric and wall file from the file
   // that record the preprocessor command lines.
   hid_t prepcmd_file = H5Fopen("preprocessor_cmd.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
-
   HDF5_Reader * cmd_h5r = new HDF5_Reader( prepcmd_file );
   cmd_h5r -> read_string("/", "geo_file", geo_file);
   cmd_h5r -> read_string("/", "sur_file_wall", wall_file);
   elemType = cmd_h5r -> read_intScalar("/", "elemType");
-
   delete cmd_h5r; H5Fclose(prepcmd_file);
 
-  // Now read the material properties from the solver cmd h5 file
+  // Now read solver cmd h5 file
   prepcmd_file = H5Fopen("solver_cmd.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
-  
   cmd_h5r = new HDF5_Reader( prepcmd_file );
-  
   fluid_mu = cmd_h5r -> read_doubleScalar("/", "fl_mu");
-
+  const double dt = cmd_h5r -> read_doubleScalar("/","init_step");
   delete cmd_h5r; H5Fclose(prepcmd_file);
 
   // enforce this code is for linear element only
@@ -89,6 +91,10 @@ int main( int argc, char * argv[] )
   // ==== WOMERSLEY CHANGES BEGIN ==== 
   int manu_sol_time = 0;
   SYS_T::GetOptionInt("-manu_sol_time", manu_sol_time);
+
+  // Number of quadrature points for triangles. Suggested: 4 for linear, 13 for quadratic
+  int nqp_tri = 4;
+  SYS_T::GetOptionInt("-nqp_tet", nqp_tri);
   // ==== WOMERSLEY CHANGES END ====
 
   std::string out_bname = sol_bname;
@@ -108,7 +114,9 @@ int main( int argc, char * argv[] )
   cout<<" fl_mu: "<<fluid_mu<<endl;
 
   // ==== WOMERSLEY CHANGES BEGIN ==== 
-  cout<<" manu_sol_time: " << manu_sol_time << endl;
+  cout << " dt: " << dt << endl;
+  cout << " manu_sol_time: " << manu_sol_time << endl;
+  cout << " nqp_tri: " << nqp_tri << endl;
   // ==== WOMERSLEY CHANGES END ====
 
   cout<<"==== Command Line Arguments ===="<<endl;
@@ -270,8 +278,25 @@ int main( int argc, char * argv[] )
 
   const double inv_T = 1.0 / ( static_cast<double>((time_end - time_start)/time_step) + 1.0 );
 
-  // Initialize wss error in L2 norm
-  double err_wss_l2 = 0.0;
+  // ==== WOMERSLEY CHANGES BEGIN //
+  double err_wss_l2 = 0.0;                                               // Initialize wss error in L2 norm
+
+  IQuadPts * quad_s = new QuadPts_Gauss_Triangle( nqp_tri );             // Gauss quadrature pts
+  FEAElement * element_s = new FEAElement_Triangle3_3D_der0( nqp_tri );  // surface triangle
+
+  const int snLocBas = element_s->get_nLocBas();  
+
+  // Allocate element arrays
+  double * R  = new double [snLocBas];
+
+  double * sctrl_x = new double [snLocBas];
+  double * sctrl_y = new double [snLocBas];
+  double * sctrl_z = new double [snLocBas];
+
+  double * loc_wss_x = new double [snLocBas];
+  double * loc_wss_y = new double [snLocBas];
+  double * loc_wss_z = new double [snLocBas];
+  // ==== WOMERSLEY CHANGES END //
 
   for(int time = time_start; time <= time_end; time += time_step)
   {
@@ -393,6 +418,35 @@ int main( int argc, char * argv[] )
       wss_ave[ii][2] /= node_area[ii];
     }
 
+    // ==== WOMERSLEY CHANGES BEGIN ====
+    if(time == manu_sol_time)
+    {
+      for(int ee=0; ee<nElem; ++ee)
+      {
+        double trn[3];
+
+        for(int ii=0; ii<snLocBas; ++ii)
+        {
+          trn[ii] = vecIEN[3*ee+ii];
+
+          sctrl_x[ii] = ctrlPts[3*trn[ii] + 0];
+          sctrl_y[ii] = ctrlPts[3*trn[ii] + 1];
+          sctrl_z[ii] = ctrlPts[3*trn[ii] + 2];
+
+          loc_wss_x[ii] = wss_ave[trn[ii]][0]; 
+          loc_wss_y[ii] = wss_ave[trn[ii]][1];
+          loc_wss_z[ii] = wss_ave[trn[ii]][2];
+        }
+
+        element_s -> buildBasis( quad_s, sctrl_x, sctrl_y, sctrl_z );
+
+        // Compute L2 norm of wss error
+        err_wss_l2 += POST_T_NS::get_wss_l2_error( loc_wss_x, loc_wss_y, loc_wss_z,
+            element_s, sctrl_x, sctrl_y, sctrl_z, quad_s, R, time * dt);
+      }
+    }
+    // ==== WOMERSLEY CHANGES END ====
+
     // write the wall shear stress at this time instance
     write_triangle_grid_wss( name_to_write, nFunc, nElem, ctrlPts, vecIEN, wss_ave );
 
@@ -408,7 +462,13 @@ int main( int argc, char * argv[] )
 
   }// Loop over each time instance
 
+  // ==== WOMERSLEY CHANGES BEGIN ====
   MPI_Barrier(PETSC_COMM_WORLD);
+  double wss_l2 = 0.0;
+  MPI_Reduce(&err_wss_l2, &wss_l2, 1, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+  wss_l2 = sqrt(wss_l2);
+  PetscPrintf(PETSC_COMM_WORLD, "\nAbs Error in L2 norm of wss at t=%f is : %e \n", manu_sol_time * dt, wss_l2);
+  // ==== WOMERSLEY CHANGES END ====
 
   for(int ii=0; ii<nFunc; ++ii)
   {
@@ -427,6 +487,12 @@ int main( int argc, char * argv[] )
   write_triangle_grid_tawss_osi( tawss_osi_file, nFunc, nElem, ctrlPts, vecIEN, tawss, osi );
 
   delete quad; delete element;
+
+  // ==== WOMERSLEY CHANGES BEGIN ====
+  delete quad_s; delete element_s; delete [] R;
+  delete [] sctrl_x; delete [] sctrl_y; delete [] sctrl_z;
+  delete [] loc_wss_x; delete [] loc_wss_y; delete [] loc_wss_z;
+  // ==== WOMERSLEY CHANGES END ====
   PetscFinalize();
   return EXIT_SUCCESS;
 }

@@ -17,7 +17,7 @@ void POST_T_NS::exact_velo( const double &x, const double &y, const double &z,
 
   val_x = 0.0;
   val_y = 0.0;
-  val_z = k0*(x*x + y*y - R_pipe*R_pipe) / (4.0*mu) + std::real( coef1 * exp(i1*omega*t) * (1.0 - bes_top / bes_bot ) );;
+  val_z = k0*(x*x + y*y - R_pipe*R_pipe) / (4.0*mu) + std::real( coef1 * exp(i1*omega*t) * (1.0 - bes_top / bes_bot ) );
 }
 
 
@@ -52,12 +52,15 @@ void POST_T_NS::exact_grad_velo( const double &x, const double &y, const double 
 }
 
 
-double POST_T_NS::exact_wss( const double &x, const double &y, const double &z,
-      const double &t )
+void POST_T_NS::exact_wss( const double &x, const double &y, const double &z,
+      const double &t, double &val_x, double &val_y, double &val_z )
 {
   const auto bes_top = sp_bessel::besselJ(1, Lambda);
   const auto bes_bot = sp_bessel::besselJ(0, Lambda);
-  return -k0 * R_pipe / 2.0 + std::real( k1 * R_pipe * i1_0d5 * exp(i1*omega*t) * bes_top / (Omega * bes_bot) ); 
+
+  val_x = 0.0;
+  val_y = 0.0;
+  val_z = k0 * R_pipe / 2.0 - std::real( k1 * R_pipe * i1_0d5 * exp(i1*omega*t) * bes_top / (Omega * bes_bot) ); 
 }
 
 
@@ -244,13 +247,45 @@ double POST_T_NS::get_velo_h1_error( const double * const &solu,
 
 double POST_T_NS::get_wss_l2_error( const double * const &solu,
       const double * const &solv, const double * const &solw,
-      const FEAElement * const &element,
-      const double * const &ectrlPts_x,
-      const double * const &ectrlPts_y,
-      const double * const &ectrlPts_z,
-      const IQuadPts * const &quad,
+      const FEAElement * const &element_s,
+      const double * const &sctrlPts_x,
+      const double * const &sctrlPts_y,
+      const double * const &sctrlPts_z,
+      const IQuadPts * const &quad_s,
       double * const &R,
       const double &t )
 {
-  return 0.0;
+  const int nqp = quad_s -> get_num_quadPts();
+  const int snLocBas = element_s -> get_nLocBas();
+  double error = 0.0;
+  double exa_u, exa_v, exa_w;
+
+  for(int qua=0; qua<nqp; ++qua)
+  {
+    double gwts = element_s->get_detJac(qua) * quad_s->get_qw(qua);
+    double sol_u  = 0.0, sol_v  = 0.0, sol_w  = 0.0;
+    double coor_x = 0.0, coor_y = 0.0, coor_z = 0.0;
+
+    element_s -> get_R(qua, R);
+    
+    for(int ii=0; ii<snLocBas; ++ii)
+    {
+      coor_x += sctrlPts_x[ii] * R[ii];
+      coor_y += sctrlPts_y[ii] * R[ii];
+      coor_z += sctrlPts_z[ii] * R[ii];
+
+      sol_u  += solu[ii] * R[ii];
+      sol_v  += solv[ii] * R[ii];
+      sol_w  += solw[ii] * R[ii];
+    }
+
+    exact_wss( coor_x, coor_y, coor_z, t, exa_u, exa_v, exa_w );
+    
+
+    error += (sol_u - exa_u) * (sol_u - exa_u) * gwts;
+    error += (sol_v - exa_v) * (sol_v - exa_v) * gwts;
+    error += (sol_w - exa_w) * (sol_w - exa_w) * gwts;
+  }
+
+  return error;
 }

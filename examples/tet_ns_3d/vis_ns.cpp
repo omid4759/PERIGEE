@@ -65,12 +65,9 @@ int main( int argc, char * argv[] )
   int manu_sol_time = 0;
   SYS_T::GetOptionInt("-manu_sol_time", manu_sol_time);
   
-  // Number of quadrature points for tets and triangles
-  // Suggested values: 5 / 4 for linear, 29 / 13 for quadratic
-  int nqp_tet = 5, nqp_tri = 4;
+  // Number of quadrature points for tets. Suggested: 5 for linear, 29 for quadratic
+  int nqp_tet = 5;
   SYS_T::GetOptionInt("-nqp_tet", nqp_tet);
-  SYS_T::GetOptionInt("-nqp_tri", nqp_tri);
-
   // ==== WOMERSLEY CHANGES END ====
   
   SYS_T::commPrint("=== Command line arguments ===\n");
@@ -79,11 +76,11 @@ int main( int argc, char * argv[] )
   SYS_T::cmdPrint("-time_start:", time_start);
   SYS_T::cmdPrint("-time_step:", time_step);
   SYS_T::cmdPrint("-time_end:", time_end);
-  SYS_T::cmdPrint("-dt:",dt);
+  SYS_T::cmdPrint("-dt:", dt);
+
   // ==== WOMERSLEY CHANGES BEGIN ==== 
   SYS_T::cmdPrint("-manu_sol_time:", manu_sol_time);
   SYS_T::cmdPrint("-nqp_tet:", nqp_tet);
-  SYS_T::cmdPrint("-nqp_tri:", nqp_tri);
   // ==== WOMERSLEY CHANGES END ====
 
   if(isXML) SYS_T::commPrint("-xml: true \n");
@@ -136,7 +133,6 @@ int main( int argc, char * argv[] )
    
     // ==== WOMERSLEY CHANGES BEGIN // 
     if( nqp_tet > 5 ) SYS_T::commPrint("Warning: the tet element is linear and you are using more than 5 quadrature points.\n");
-    if( nqp_tri > 4 ) SYS_T::commPrint("Warning: the tri element is linear and you are using more than 4 quadrature points.\n");
 
     quadv = new QuadPts_Gauss_Tet( nqp_tet );
     elementv = new FEAElement_Tet4( nqp_tet );
@@ -150,7 +146,6 @@ int main( int argc, char * argv[] )
 
     // ==== WOMERSLEY CHANGES BEGIN ====
     SYS_T::print_fatal_if( nqp_tet < 29, "Error: not enough quadrature points for tets.\n" );
-    SYS_T::print_fatal_if( nqp_tri < 13, "Error: not enough quadrature points for triangles.\n" );
 
     quadv = new QuadPts_Gauss_Tet( nqp_tet );
     elementv = new FEAElement_Tet10_v2( nqp_tet );

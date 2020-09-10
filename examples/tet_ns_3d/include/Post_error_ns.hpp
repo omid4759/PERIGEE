@@ -39,8 +39,8 @@ namespace POST_T_NS
   void exact_grad_velo( const double &x, const double &y, const double &z,
       const double &t, Matrix_3x3 &grad_velo );
 
-  double exact_wss( const double &x, const double &y, const double &z,
-      const double &t );
+  void exact_wss( const double &x, const double &y, const double &z,
+      const double &t, double &val_x, double &val_y, double &val_z );
 
   double get_pres_l2_error( const double * const &sol,
       const FEAElement * const &element,
@@ -88,11 +88,11 @@ namespace POST_T_NS
 
   double get_wss_l2_error( const double * const &solu,
       const double * const &solv, const double * const &solw,
-      const FEAElement * const &element,
-      const double * const &ectrlPts_x,
-      const double * const &ectrlPts_y,
-      const double * const &ectrlPts_z,
-      const IQuadPts * const &quad,
+      const FEAElement * const &element_s,
+      const double * const &sctrlPts_x,
+      const double * const &sctrlPts_y,
+      const double * const &sctrlPts_z,
+      const IQuadPts * const &quad_s,
       double * const &R,
       const double &t );
 }
