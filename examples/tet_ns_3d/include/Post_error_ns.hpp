@@ -15,6 +15,7 @@ namespace POST_T_NS
   const double R_pipe = 0.3;                                     // pipe radius
   const double omega  = MATH_T::PI * 2.0 / 1.1;                  // freqency
   const std::complex<double> i1(0.0, 1.0);
+  const std::complex<double> i1_0d5( 0.707106781186547, 0.707106781186547);
   const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
   const auto Omega    = std::sqrt(rho0 * omega / mu) * R_pipe;   // womersley number 
   const auto Lambda   = i1_1d5 * Omega;
@@ -37,6 +38,9 @@ namespace POST_T_NS
 
   void exact_grad_velo( const double &x, const double &y, const double &z,
       const double &t, Matrix_3x3 &grad_velo );
+
+  double exact_wss( const double &x, const double &y, const double &z,
+      const double &t );
 
   double get_pres_l2_error( const double * const &sol,
       const FEAElement * const &element,
@@ -80,6 +84,16 @@ namespace POST_T_NS
       double * const &Rx,
       double * const &Ry,
       double * const &Rz,
+      const double &t );
+
+  double get_wss_l2_error( const double * const &solu,
+      const double * const &solv, const double * const &solw,
+      const FEAElement * const &element,
+      const double * const &ectrlPts_x,
+      const double * const &ectrlPts_y,
+      const double * const &ectrlPts_z,
+      const IQuadPts * const &quad,
+      double * const &R,
       const double &t );
 }
 

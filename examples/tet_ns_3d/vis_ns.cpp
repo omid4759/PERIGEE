@@ -18,6 +18,7 @@
 // ==== WOMERSLEY CHANGES BEGIN ====
 #include "PostVectSolution.hpp"
 #include "Post_error_ns.hpp"
+#include "QuadPts_Gauss_Tet.hpp"
 // ==== WOMERSLEY CHANGES END ====
 
 int main( int argc, char * argv[] )
@@ -63,6 +64,13 @@ int main( int argc, char * argv[] )
   // ==== WOMERSLEY CHANGES BEGIN ==== 
   int manu_sol_time = 0;
   SYS_T::GetOptionInt("-manu_sol_time", manu_sol_time);
+  
+  // Number of quadrature points for tets and triangles
+  // Suggested values: 5 / 4 for linear, 29 / 13 for quadratic
+  int nqp_tet = 5, nqp_tri = 4;
+  SYS_T::GetOptionInt("-nqp_tet", nqp_tet);
+  SYS_T::GetOptionInt("-nqp_tri", nqp_tri);
+
   // ==== WOMERSLEY CHANGES END ====
   
   SYS_T::commPrint("=== Command line arguments ===\n");
@@ -74,6 +82,8 @@ int main( int argc, char * argv[] )
   SYS_T::cmdPrint("-dt:",dt);
   // ==== WOMERSLEY CHANGES BEGIN ==== 
   SYS_T::cmdPrint("-manu_sol_time:", manu_sol_time);
+  SYS_T::cmdPrint("-nqp_tet:", nqp_tet);
+  SYS_T::cmdPrint("-nqp_tri:", nqp_tri);
   // ==== WOMERSLEY CHANGES END ====
 
   if(isXML) SYS_T::commPrint("-xml: true \n");
@@ -111,18 +121,40 @@ int main( int argc, char * argv[] )
   SYS_T::commPrint("===> %d processor(s) are assigned for:", size);
 
   // Allocate the quadrature rule and element container
-  IQuadPts * quad = nullptr;
+  IQuadPts * quad = nullptr;                             // Sampling points for visualization (tet vertices)
   FEAElement * element = nullptr; 
+
+  // ==== WOMERSLEY CHANGES BEGIN //
+  IQuadPts * quadv = nullptr;                            // Gauss quadrature points
+  FEAElement * elementv = nullptr;
+  // ==== WOMERSLEY CHANGES END //
 
   if( GMIptr->get_elemType() == 501 )
   {
     quad = new QuadPts_vis_tet4();
     element = new FEAElement_Tet4( quad-> get_num_quadPts() );
+   
+    // ==== WOMERSLEY CHANGES BEGIN // 
+    if( nqp_tet > 5 ) SYS_T::commPrint("Warning: the tet element is linear and you are using more than 5 quadrature points.\n");
+    if( nqp_tri > 4 ) SYS_T::commPrint("Warning: the tri element is linear and you are using more than 4 quadrature points.\n");
+
+    quadv = new QuadPts_Gauss_Tet( nqp_tet );
+    elementv = new FEAElement_Tet4( nqp_tet );
+    // ==== WOMERSLEY CHANGES END // 
+
   }
   else if( GMIptr->get_elemType() == 502 )
   {
     quad = new QuadPts_vis_tet10_v2();
     element = new FEAElement_Tet10_v2( quad-> get_num_quadPts() );
+
+    // ==== WOMERSLEY CHANGES BEGIN ====
+    SYS_T::print_fatal_if( nqp_tet < 29, "Error: not enough quadrature points for tets.\n" );
+    SYS_T::print_fatal_if( nqp_tri < 13, "Error: not enough quadrature points for triangles.\n" );
+
+    quadv = new QuadPts_Gauss_Tet( nqp_tet );
+    elementv = new FEAElement_Tet10_v2( nqp_tet );
+    // ==== WOMERSLEY CHANGES END ====
   }
   else SYS_T::print_fatal( "Error: unsupported element type \n" );
 
@@ -198,9 +230,9 @@ int main( int argc, char * argv[] )
       for(int ee=0; ee<nElem; ++ee)
       {
         // Build element
-        locIEN  -> get_LIEN_e(ee, IEN_e);
-        fNode   -> get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
-        element -> buildBasis( quad, ectrl_x, ectrl_y, ectrl_z );
+        locIEN   -> get_LIEN_e(ee, IEN_e);
+        fNode    -> get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
+        elementv -> buildBasis( quadv, ectrl_x, ectrl_y, ectrl_z );
 
         // Obtain element solution vector
         pvsol -> get_esol(0, nLocBas, IEN_e, loc_p);
@@ -210,16 +242,16 @@ int main( int argc, char * argv[] )
 
         // Compute errors
         err_velo_l2 += POST_T_NS::get_velo_l2_error( loc_u, loc_v, loc_w,
-            element, ectrl_x, ectrl_y, ectrl_z, quad, R, time * dt);
+            elementv, ectrl_x, ectrl_y, ectrl_z, quadv, R, time * dt);
 
         err_velo_h1 += POST_T_NS::get_velo_h1_error( loc_u, loc_v, loc_w,
-            element, ectrl_x, ectrl_y, ectrl_z, quad, R, Rx, Ry, Rz, time * dt);
+            elementv, ectrl_x, ectrl_y, ectrl_z, quadv, R, Rx, Ry, Rz, time * dt);
 
         err_pres_l2 += POST_T_NS::get_pres_l2_error( loc_p,
-            element, ectrl_x, ectrl_y, ectrl_z, quad, R, time * dt );
+            elementv, ectrl_x, ectrl_y, ectrl_z, quadv, R, time * dt );
 
         err_pres_h1 += POST_T_NS::get_pres_h1_error( loc_p,
-            element, ectrl_x, ectrl_y, ectrl_z, quad, R, Rx, Ry, Rz, time * dt );
+            elementv, ectrl_x, ectrl_y, ectrl_z, quadv, R, Rx, Ry, Rz, time * dt );
       }
 
       delete pvsol;
@@ -254,6 +286,7 @@ int main( int argc, char * argv[] )
   delete pNode; delete quad; delete element; delete visprep; delete vtk_w;
 
   // ==== WOMERSLEY CHANGES BEGIN ====
+  delete quadv; delete elementv;
   delete [] IEN_e; delete [] R; delete [] Rx; delete [] Ry; delete [] Rz;
   delete [] ectrl_x; delete [] ectrl_y; delete [] ectrl_z;
   delete [] loc_p; delete [] loc_u; delete [] loc_v; delete [] loc_w;

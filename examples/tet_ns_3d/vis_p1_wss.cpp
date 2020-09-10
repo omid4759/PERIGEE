@@ -86,6 +86,11 @@ int main( int argc, char * argv[] )
   SYS_T::GetOptionInt("-time_step", time_step);
   SYS_T::GetOptionInt("-time_end", time_end);  
 
+  // ==== WOMERSLEY CHANGES BEGIN ==== 
+  int manu_sol_time = 0;
+  SYS_T::GetOptionInt("-manu_sol_time", manu_sol_time);
+  // ==== WOMERSLEY CHANGES END ====
+
   std::string out_bname = sol_bname;
   out_bname.append("WSS_");
 
@@ -101,6 +106,11 @@ int main( int argc, char * argv[] )
   cout<<" elemType: "<<elemType<<endl;
   cout<<" out_bname: "<<out_bname<<endl;
   cout<<" fl_mu: "<<fluid_mu<<endl;
+
+  // ==== WOMERSLEY CHANGES BEGIN ==== 
+  cout<<" manu_sol_time: " << manu_sol_time << endl;
+  // ==== WOMERSLEY CHANGES END ====
+
   cout<<"==== Command Line Arguments ===="<<endl;
 
   // Make sure the files exist on disk
@@ -259,6 +269,9 @@ int main( int argc, char * argv[] )
   }
 
   const double inv_T = 1.0 / ( static_cast<double>((time_end - time_start)/time_step) + 1.0 );
+
+  // Initialize wss error in L2 norm
+  double err_wss_l2 = 0.0;
 
   for(int time = time_start; time <= time_end; time += time_step)
   {

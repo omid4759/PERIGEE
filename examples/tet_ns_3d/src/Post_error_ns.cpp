@@ -52,6 +52,15 @@ void POST_T_NS::exact_grad_velo( const double &x, const double &y, const double 
 }
 
 
+double POST_T_NS::exact_wss( const double &x, const double &y, const double &z,
+      const double &t )
+{
+  const auto bes_top = sp_bessel::besselJ(1, Lambda);
+  const auto bes_bot = sp_bessel::besselJ(0, Lambda);
+  return -k0 * R_pipe / 2.0 + std::real( k1 * R_pipe * i1_0d5 * exp(i1*omega*t) * bes_top / (Omega * bes_bot) ); 
+}
+
+
 double POST_T_NS::get_pres_l2_error( const double * const &sol,
     const FEAElement * const &element,
     const double * const &ectrlPts_x,
@@ -232,3 +241,16 @@ double POST_T_NS::get_velo_h1_error( const double * const &solu,
   return error;
 }
 
+
+double POST_T_NS::get_wss_l2_error( const double * const &solu,
+      const double * const &solv, const double * const &solw,
+      const FEAElement * const &element,
+      const double * const &ectrlPts_x,
+      const double * const &ectrlPts_y,
+      const double * const &ectrlPts_z,
+      const IQuadPts * const &quad,
+      double * const &R,
+      const double &t )
+{
+  return 0.0;
+}
