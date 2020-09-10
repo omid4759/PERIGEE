@@ -281,7 +281,6 @@ double POST_T_NS::get_wss_l2_error( const double * const &solu,
 
     exact_wss( coor_x, coor_y, coor_z, t, exa_u, exa_v, exa_w );
     
-
     error += (sol_u - exa_u) * (sol_u - exa_u) * gwts;
     error += (sol_v - exa_v) * (sol_v - exa_v) * gwts;
     error += (sol_w - exa_w) * (sol_w - exa_w) * gwts;

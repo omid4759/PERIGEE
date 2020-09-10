@@ -77,7 +77,11 @@ int main( int argc, char * argv[] )
   prepcmd_file = H5Fopen("solver_cmd.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
   cmd_h5r = new HDF5_Reader( prepcmd_file );
   fluid_mu = cmd_h5r -> read_doubleScalar("/", "fl_mu");
+
+  // ==== WOMERSLEY CHANGES BEGIN ====
   const double dt = cmd_h5r -> read_doubleScalar("/","init_step");
+  // ==== WOMERSLEY CHANGES END ====
+
   delete cmd_h5r; H5Fclose(prepcmd_file);
 
   // enforce this code is for linear element only
@@ -94,7 +98,7 @@ int main( int argc, char * argv[] )
 
   // Number of quadrature points for triangles. Suggested: 4 for linear, 13 for quadratic
   int nqp_tri = 4;
-  SYS_T::GetOptionInt("-nqp_tet", nqp_tri);
+  SYS_T::GetOptionInt("-nqp_tri", nqp_tri);
   // ==== WOMERSLEY CHANGES END ====
 
   std::string out_bname = sol_bname;
@@ -423,11 +427,11 @@ int main( int argc, char * argv[] )
     {
       for(int ee=0; ee<nElem; ++ee)
       {
-        double trn[3];
+        double trn[snLocBas];
 
         for(int ii=0; ii<snLocBas; ++ii)
         {
-          trn[ii] = vecIEN[3*ee+ii];
+          trn[ii] = vecIEN[snLocBas*ee+ii];
 
           sctrl_x[ii] = ctrlPts[3*trn[ii] + 0];
           sctrl_y[ii] = ctrlPts[3*trn[ii] + 1];
@@ -493,6 +497,7 @@ int main( int argc, char * argv[] )
   delete [] sctrl_x; delete [] sctrl_y; delete [] sctrl_z;
   delete [] loc_wss_x; delete [] loc_wss_y; delete [] loc_wss_z;
   // ==== WOMERSLEY CHANGES END ====
+
   PetscFinalize();
   return EXIT_SUCCESS;
 }
