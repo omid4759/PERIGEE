@@ -20,8 +20,8 @@ N = 24;                              % number of samples per period
 t = linspace(0, T, N);
 
 % Fourier coefficients for pressure (including the steady 0th mode)
-% A_n = [-21.046886507506900, -33.010163920166285 + 42.933217768314500 * 1i];
-A_n = [10, 10 + 10 * 1i];
+A_n = [-21.046886507506900, -33.010163920166285 + 42.933217768314500 * 1i];
+% A_n = [10, 10 + 10 * 1i];
 
 % Number of Fourier modes (including the steady 0th mode)
 n_modes = length(A_n);
@@ -31,3 +31,7 @@ B_n = fourier_modes_p2Q(A_n, rho, mu, omega, R, t, n_modes);
 
 % Compute and plot v_z(r, t)
 womersley_velocity_reverse(B_n, nu, T, R, omega, t, n_modes);
+
+% Compute wall shear stress
+wss = womersley_wss(A_n, nu, T, R, n_modes);
+tawss = mean(wss);

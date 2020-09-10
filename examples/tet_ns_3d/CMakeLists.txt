@@ -66,6 +66,8 @@ SET( perigee_preprocess_lib_src
 SET( perigee_analysis_lib_src
   ${perigee_source}/System/PETSc_Tools.cpp
   ${perigee_source}/System/Matrix_double_6by6_Array.cpp
+  ${perigee_source}/System/Matrix_3x3.cpp
+  ${perigee_source}/System/Vector_3.cpp
   ${perigee_source}/System/Matrix_PETSc.cpp
   ${perigee_source}/Mesh/QuadPts_Gauss_Tet.cpp
   ${perigee_source}/Analysis_Tool/AGlobal_Mesh_Info_FEM_3D.cpp
@@ -105,6 +107,7 @@ SET( perigee_postprocess_lib_src
   ${perigee_source}/Postproc_Tool/PostVectSolution.cpp
   ${perigee_source}/Postproc_Tool/Vis_Tools.cpp
   ${perigee_source}/Postproc_Tool/Interpolater.cpp
+  ${perigee_SOURCE_DIR}/src/Post_error_ns.cpp
   ${perigee_SOURCE_DIR}/src/VisDataPrep_NS.cpp
   ${perigee_SOURCE_DIR}/src/VTK_Writer_NS.cpp
   )
@@ -151,5 +154,4 @@ TARGET_LINK_LIBRARIES( prepost perigee_preprocess )
 TARGET_LINK_LIBRARIES( vis_ns perigee_postprocess )
 TARGET_LINK_LIBRARIES( vis_p1_wss perigee_postprocess )
 TARGET_LINK_LIBRARIES( vis_p2_wss perigee_postprocess )
-
 # EOF

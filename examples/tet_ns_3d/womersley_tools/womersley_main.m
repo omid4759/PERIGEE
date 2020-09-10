@@ -25,3 +25,7 @@ B_n = womersley_velocity(flow / 50, nu, T, R, n_modes);
 
 % Compute corresponding Fourier coefficients for pressure
 A_n = fourier_modes_Q2p(B_n, rho, mu, omega, R, n_modes);
+
+% Compute wall shear stress
+wss = womersley_wss(A_n, nu, T, R, n_modes);
+tawss = mean(wss);

@@ -30,7 +30,7 @@
 int main(int argc, char *argv[])
 {
   // Number of quadrature points for tets and triangles
-  // Suggested values: 5 / 4 for linear, 17 / 13 for quadratic
+  // Suggested values: 5 / 4 for linear, 29 / 13 for quadratic
   int nqp_tet = 5, nqp_tri = 4;
   
   // Estimate of the nonzero per row for the sparse matrix 

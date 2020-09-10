@@ -19,6 +19,9 @@ set(METIS_DIR /home/jliu/lib/metis-5.0.3)
 
 set(HDF5_ROOT /home/jliu/lib/hdf5-1.8.20)
 
+set(BESSEL_DIR /home/jliu/lib/complex-bessel)
+MESSAGE(STATUS "Bessel fun Dir = " ${BESSEL_DIR})
+
 # ========================================================
 # Setup the libraries
 # ========================================================
@@ -34,9 +37,15 @@ include_directories(${VTK_INCLUDE_DIRS})
 include_directories(${HDF5_INCLUDE_DIRS})
 include_directories(${PETSC_INC})
 
+include_directories(${BESSEL_DIR}/include)
+include_directories(${BESSEL_DIR}/include/complex_bessel_bits)
+
 set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${VTK_LIBRARIES})
 set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${HDF5_LIBRARIES})
 set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${PETSC_LIB})
+
+LINK_DIRECTORIES( ${BESSEL_DIR}/lib )
+set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} complex_bessel)
 
 if(PETSC_METIS)
   set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${PETSC_METIS_LIB})
