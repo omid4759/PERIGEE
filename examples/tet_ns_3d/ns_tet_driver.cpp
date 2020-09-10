@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
   int nqp_tet = 5, nqp_tri = 4;
   
   // Estimate of the nonzero per row for the sparse matrix 
-  int nz_estimate = 300;
+  int nz_estimate = 600;
 
   // fluid properties
 
