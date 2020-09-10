@@ -103,7 +103,12 @@ int main( int argc, char * argv[] )
   // Generate the outlet file names and check existance
 
   // ==== WOMERSLEY CHANGES BEGIN ====
-  std::vector< std::string > sur_file_out = { "inflow_vol.vtp", "outflow_vol_000.vtp" };
+  std::vector< std::string > sur_file_out;
+  if(elemType == 501)
+    sur_file_out = { "inflow_vol.vtp", "outflow_vol_000.vtp" };
+  else
+    sur_file_out = { "inflow_vol.vtu", "outflow_vol_000.vtu" };
+  
   num_outlet = 2;
 
   for(int ii=0; ii<num_outlet; ++ii)
@@ -159,7 +164,9 @@ int main( int argc, char * argv[] )
   VEC_T::clean( vecIEN ); // clean the vector
   
   mesh -> print_info();
-  
+
+  TET_T::tetmesh_check(ctrlPts, IEN, nElem, 3.5); // print mesh statistics
+
   // Call METIS to partition the mesh 
   IGlobal_Part * global_part = nullptr;
   if(cpu_size > 1)
