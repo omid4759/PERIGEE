@@ -214,8 +214,7 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
 
       // Define pressure Fourier coefficients
       const double k0 = -21.0469;
-      // const std::complex<double> k1( -33.0102, 42.9332 );
-      const double k1 = 0.0;
+      const std::complex<double> k1( -33.0102, 42.9332 );
 
       const auto coef1 = i1 * k1 / (rho0 * omega);
       const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );

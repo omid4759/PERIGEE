@@ -288,8 +288,7 @@ void PDNSolution_NS::Init_womersley(
 
   // Define pressure Fourier coefficients
   const double k0 = -21.0469;
-  // const std::complex<double> k1( -33.0102, 42.9332 );
-  const double k1 = 0.0;
+  const std::complex<double> k1( -33.0102, 42.9332 );
 
   for(int ii=0; ii<nlocalnode; ++ii)
   {
@@ -361,8 +360,7 @@ void PDNSolution_NS::Init_womersley_dot(
 
   // Define pressure Fourier coefficients
   // const double k0 = -21.0469;
-  // const std::complex<double> k1( -33.0102, 42.9332 );
-  const double k1 = 0.0;
+  const std::complex<double> k1( -33.0102, 42.9332 );
 
   for(int ii=0; ii<nlocalnode; ++ii)
   {

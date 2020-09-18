@@ -22,8 +22,7 @@ namespace POST_T_NS
 
   // Define pressure Fourier coefficients
   const double k0 = -21.0469;
-  // const std::complex<double> k1( -33.0102, 42.9332 );
-  const double k1 = 0.0;
+  const std::complex<double> k1( -33.0102, 42.9332 );
 
   const auto coef1 = i1 * k1 / (rho0 * omega);
 
