@@ -303,14 +303,17 @@ void PDNSolution_NS::Init_womersley(
     const double r  = sqrt(x*x + y*y);
     const auto   xi = Lambda * r / R;
 
+    // Define time point of interest
+    const double t = 0.88;
+
     // pressure
-    const double pres    = k0 * z + std::real( k1*z );
+    const double pres    = k0 * z + std::real( k1 * z * exp(i1*omega*t) );
 
     // axial velocity
     const auto   bes_top = sp_bessel::besselJ(0, xi);
     const auto   bes_bot = sp_bessel::besselJ(0, Lambda);
     const auto   coef1   = i1 * k1 / (rho * omega);
-    const double vel     = k0 * (x*x + y*y - R*R) / (4.0*vis_mu) + std::real( coef1 * (1.0 - bes_top/bes_bot) );
+    const double vel     = k0 * (x*x + y*y - R*R) / (4.0*vis_mu) + std::real( coef1 * (1.0 - bes_top/bes_bot) * exp(i1*omega*t) );
     
     // -1.0 is multiplied to make the flow direction inward
     value[0] = pres;
@@ -375,14 +378,17 @@ void PDNSolution_NS::Init_womersley_dot(
     const double r  = sqrt(x*x + y*y);
     const auto   xi = Lambda * r / R;
 
+    // Define time point of interest
+    const double t = 0.88;
+
     // dot pressure
-    const double dot_pres = std::real( k1*z*i1*omega );
+    const double dot_pres = std::real( k1*z*i1*omega * exp(i1*omega*t) );
 
     // dot axial velocity
     const auto   bes_top  = sp_bessel::besselJ(0, xi);
     const auto   bes_bot  = sp_bessel::besselJ(0, Lambda);
     const auto   coef1    = i1 * k1 / (rho * omega); 
-    const double dot_vel  = std::real( coef1 * i1 * omega * (1.0 - bes_top/bes_bot) );
+    const double dot_vel  = std::real( coef1 * i1 * omega * (1.0 - bes_top/bes_bot) * exp(i1*omega*t) );
 
     // -1.0 is multiplied to make the flow direction inward
     value[0] = dot_pres; 

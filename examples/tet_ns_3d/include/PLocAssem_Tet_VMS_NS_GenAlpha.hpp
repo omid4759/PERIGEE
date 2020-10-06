@@ -216,11 +216,14 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       const double k0 = -21.0469;
       const std::complex<double> k1( -33.0102, 42.9332 );
 
+      // Define time point of interest
+      const double tt = 0.88;
+
       const auto coef1 = i1 * k1 / (rho0 * omega);
-      const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
-      const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
+      const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*tt) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
+      const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*tt) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
       const double w_z = 0.0;
-      const double p   = k0 * z + std::real( k1 * z * exp(i1*omega*t) );
+      const double p   = k0 * z + std::real( k1 * z * exp(i1*omega*tt) );
       
       gx = MATH_T::dot3d(          -p,          0.0,          vis_mu * w_x, nx, ny, nz); 
       gy = MATH_T::dot3d(         0.0,           -p,          vis_mu * w_y, nx, ny, nz); 
