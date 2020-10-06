@@ -806,7 +806,10 @@ void PLocAssem_Tet_VMS_NS_GenAlpha::Assem_Residual_EBC(
 
   const int face_nqp = quad -> get_num_quadPts();
 
-  const double curr = time + alpha_f * dt;
+  // ==== WOMERSLEY CHANGES BEGIN ====
+  // const double curr = time + alpha_f * dt;
+  const double curr = 0.88 + alpha_f * dt;
+  // ==== WOMERSLEY CHANGES END ====
 
   double gx, gy, gz, nx, ny, nz, surface_area;
 
