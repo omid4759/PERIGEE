@@ -17,7 +17,10 @@ void POST_T_NS::exact_velo( const double &x, const double &y, const double &z,
 
   val_x = 0.0;
   val_y = 0.0;
-  val_z = k0*(x*x + y*y - R_pipe*R_pipe) / (4.0*mu) + std::real( coef1 * exp(i1*omega*t) * (1.0 - bes_top / bes_bot ) );
+  // Test manu solu
+  //val_z = k0*(x*x + y*y - R_pipe*R_pipe) / (4.0*mu) + std::real( coef1 * exp(i1*omega*t) * (1.0 - bes_top / bes_bot ) );
+  val_z = x*x*x*x + y*y*y*y - R_pipe * R_pipe * R_pipe * R_pipe;
+  // End of test
 }
 
 
@@ -46,9 +49,16 @@ void POST_T_NS::exact_grad_velo( const double &x, const double &y, const double 
   grad_velo(1,1) = 0.0;
   grad_velo(1,2) = 0.0;
 
-  grad_velo(2,0) = k0 * x / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
-  grad_velo(2,1) = k0 * y / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
+  // Test manu sol
+  //grad_velo(2,0) = k0 * x / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
+  //grad_velo(2,1) = k0 * y / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
+  //grad_velo(2,2) = 0.0;
+
+
+  grad_velo(2,0) = 4.0 * x * x * x; 
+  grad_velo(2,1) = 4.0 * y * y * y; 
   grad_velo(2,2) = 0.0;
+  // End of test
 }
 
 

@@ -177,17 +177,42 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
     void get_f(const double &x, const double &y, const double &z,
         const double &t, double &fx, double &fy, double &fz ) const
     {
-      fx = 0.0; fy = 0.0; fz = 0.0;
+      fx = 0.0; fy = 0.0; 
+      
+      // Test cubic fun
+      fz = -1.0 * (vis_mu / rho0) * 12.0 * (x*x + y*y) / rho0;
+      //fz = 0.0;
+      // end test
     }
 
     void get_H1(const double &x, const double &y, const double &z,
         const double &t, const double &nx, const double &ny,
         const double &nz, double &gx, double &gy, double &gz ) const
     {
-      const double p0 = 0.0;
-      gx = p0*nx; gy = p0*ny; gz = p0*nz;
+      //const double p0 = 0.0;
+      //gx = p0*nx; gy = p0*ny; gz = p0*nz;
+    
+      // Test cubic fun
+      gx = -4.0 * (vis_mu/rho0) * x * x * x;
+      gy = -4.0 * (vis_mu/rho0) * y * y * y;
+      gz = 0.0;
+      // end test
     }
 
+    void get_H2(const double &x, const double &y, const double &z,
+        const double &t, const double &nx, const double &ny,
+        const double &nz, double &gx, double &gy, double &gz ) const
+    {
+      //const double p0 = 0.0;
+      //gx = p0*nx; gy = p0*ny; gz = p0*nz;
+    
+      // Test cubic fun
+      gx = 4.0 * (vis_mu/rho0) * x * x * x;
+      gy = 4.0 * (vis_mu/rho0) * y * y * y;
+      gz = 0.0;
+      // end test
+    }
+    
     typedef void ( PLocAssem_Tet_VMS_NS_GenAlpha::*locassem_tet_vms_ns_funs )( const double &x, const double &y, const double &z,
         const double &t, const double &nx, const double &ny,
         const double &nz, double &gx, double &gy, double &gz ) const;
@@ -199,6 +224,7 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
         const double &t, const double &nx, const double &ny,
         const double &nz, double &gx, double &gy, double &gz ) const
     {
+      /*
       // ==== WOMERSLEY CHANGES BEGIN ====
       const double R_pipe = 0.3;                                        // pipe radius
       const double omega  = MATH_T::PI * 2.0 / 1.1;                     // freqency
@@ -225,9 +251,10 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       gx = MATH_T::dot3d(          -p,          0.0,          vis_mu * w_x, nx, ny, nz); 
       gy = MATH_T::dot3d(         0.0,           -p,          vis_mu * w_y, nx, ny, nz); 
       gz = MATH_T::dot3d(vis_mu * w_x, vis_mu * w_y, -p + 2.0*vis_mu * w_z, nx, ny, nz); 
-
-      // return ((*this).*(flist[ebc_id]))(x,y,z,t,nx,ny,nz,gx,gy,gz);
+      */
       // ==== WOMERSLEY CHANGES END ====
+      
+      return ((*this).*(flist[ebc_id]))(x,y,z,t,nx,ny,nz,gx,gy,gz);
     }
 };
 
