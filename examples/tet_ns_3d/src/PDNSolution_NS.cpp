@@ -304,7 +304,7 @@ void PDNSolution_NS::Init_womersley(
     const auto   xi = Lambda * r / R;
 
     // pressure
-    const double pres    = k0 * z + std::real( k1 * z );
+    const double pres    = k0 * z + std::real( k1*z );
 
     // axial velocity
     const auto   bes_top = sp_bessel::besselJ(0, xi);
