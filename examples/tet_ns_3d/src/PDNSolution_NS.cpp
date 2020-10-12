@@ -320,10 +320,10 @@ void PDNSolution_NS::Init_womersley(
     //value[2] = vel * (-1.0) * out_ny;
     //value[3] = vel * (-1.0) * out_nz;
 
-    value[0] = 0.0;
+    value[0] = -30.0*z;
     value[1] = 0.0;
     value[2] = 0.0;
-    value[3] = x*x*x*x + y*y*y*y - R*R*R*R;
+    value[3] = x*x*x*x + y*y*y*y + 2*x*x*y*y - x*x - y*y;
     // End of test
     
     VecSetValues(solution, 4, location, value, INSERT_VALUES);

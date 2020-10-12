@@ -7,9 +7,9 @@ u = 0;
 
 v = 0;
 
-w = x*x*x*x + y*y*y*y - R*R*R*R;
-
-p = 0;
+% axial velo corresponding to w = r^4 - r^2
+w = x*x*x*x + y*y*y*y + 2*x*x*y*y - x*x - y*y;
+p = -30*z;
 
 % compute first order derivatives
 u_x = diff(u,x); u_y = diff(u,y); u_z = diff(u,z);
@@ -26,6 +26,7 @@ p_x = diff(p, x); p_y = diff(p, y); p_z = diff(p, z);
 
 div_velo = u_x + v_y + w_z; div_velo = simplify(div_velo);
 
+% Remember to divide by rho in perigee code
 fx = u_t + u * u_x + v * u_y + w * u_z + p_x - nu * (u_xx + u_yy + u_zz);
 
 fy = v_t + u * v_x + v * v_y + w * v_z + p_y - nu * (v_xx + v_yy + v_zz);

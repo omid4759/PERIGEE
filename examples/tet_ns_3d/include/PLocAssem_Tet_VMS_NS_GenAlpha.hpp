@@ -177,12 +177,11 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
     void get_f(const double &x, const double &y, const double &z,
         const double &t, double &fx, double &fy, double &fz ) const
     {
-      fx = 0.0; fy = 0.0; 
+      fx = 0.0; fy = 0.0; // fz = 0.0; 
       
-      // Test cubic fun
-      fz = -1.0 * (vis_mu / rho0) * 12.0 * (x*x + y*y) / rho0;
-      //fz = 0.0;
-      // end test
+      // ==== Test manu solu ====
+      fz = -1.0 * (vis_mu / rho0) * ( (16.0*x*x + 16.0*y*y - 4.0) - 30.0 ) / rho0;
+      // ==== End of test ====
     }
 
     void get_H1(const double &x, const double &y, const double &z,
@@ -192,11 +191,11 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       //const double p0 = 0.0;
       //gx = p0*nx; gy = p0*ny; gz = p0*nz;
     
-      // Test cubic fun
-      gx = -4.0 * (vis_mu/rho0) * x * x * x;
-      gy = -4.0 * (vis_mu/rho0) * y * y * y;
-      gz = 0.0;
-      // end test
+      // ==== Test manu solu ====
+      gx = -2.0 * (vis_mu/rho0) * x * (2.0*x*x + 2.0*y*y - 1.0);
+      gy = -2.0 * (vis_mu/rho0) * y * (2.0*x*x + 2.0*y*y - 1.0);
+      gz = -30.0 * z;
+      // ==== End of test ====
     }
 
     void get_H2(const double &x, const double &y, const double &z,
@@ -206,11 +205,11 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       //const double p0 = 0.0;
       //gx = p0*nx; gy = p0*ny; gz = p0*nz;
     
-      // Test cubic fun
-      gx = 4.0 * (vis_mu/rho0) * x * x * x;
-      gy = 4.0 * (vis_mu/rho0) * y * y * y;
-      gz = 0.0;
-      // end test
+      // ==== Test manu solu ====
+      gx = 2.0 * (vis_mu/rho0) * x * (2.0*x*x + 2.0*y*y - 1.0);
+      gy = 2.0 * (vis_mu/rho0) * y * (2.0*x*x + 2.0*y*y - 1.0);
+      gz = 30.0 * z;
+      // ==== End of test ====
     }
     
     typedef void ( PLocAssem_Tet_VMS_NS_GenAlpha::*locassem_tet_vms_ns_funs )( const double &x, const double &y, const double &z,
