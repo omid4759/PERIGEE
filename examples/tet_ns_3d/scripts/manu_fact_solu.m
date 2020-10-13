@@ -9,7 +9,7 @@ v = 0;
 
 % axial velo corresponding to w = 600 * (r^2 - 0.09) * (r^2 - 0.015625)
 w = 600 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625);
-p = -30*z;
+p = 10*z;
 
 % compute first order derivatives
 u_x = diff(u,x); u_y = diff(u,y); u_z = diff(u,z);

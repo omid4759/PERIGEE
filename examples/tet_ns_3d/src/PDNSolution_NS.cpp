@@ -319,7 +319,7 @@ void PDNSolution_NS::Init_womersley(
     // value[3] = vel * (-1.0) * out_nz;
 
     // ==== Test manu solu ====
-    value[0] = -30.0*z;
+    value[0] = 10.0*z;
     value[1] = 0.0;
     value[2] = 0.0;
     value[3] = 600.0 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625);
@@ -392,9 +392,7 @@ void PDNSolution_NS::Init_womersley_dot(
     const double dot_vel  = std::real( coef1 * i1 * omega * (1.0 - bes_top/bes_bot) );
 
     // -1.0 is multiplied to make the flow direction inward
-    value[0] = dot_pres; 
-
-    // -1.0 is multiplied to make the flow direction inward
+    // value[0] = dot_pres; 
     // value[1] = dot_vel * (-1.0) * out_nx;
     // value[2] = dot_vel * (-1.0) * out_ny;
     // value[3] = dot_vel * (-1.0) * out_nz;

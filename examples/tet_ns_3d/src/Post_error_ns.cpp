@@ -6,7 +6,7 @@ double POST_T_NS::exact_pres( const double &x, const double &y, const double &z,
   // return k0 * z + std::real( k1 * z * exp(i1*omega*t) ); 
 
   // ==== Test manu solu ====
-  return -30.0 * z;
+  return 10.0 * z;
   // ==== End of test ====
 }
 
@@ -37,7 +37,7 @@ void POST_T_NS::exact_grad_pres( const double &x, const double &y, const double 
   // val_z = k0 + std::real( k1 * exp(i1*omega*t) );
 
   // ==== Test manu solu ====
-  val_z = -30.0;
+  val_z = 10.0;
   // ==== End of test =====
 }
 

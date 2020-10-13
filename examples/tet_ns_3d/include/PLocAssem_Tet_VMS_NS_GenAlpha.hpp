@@ -180,7 +180,7 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       fx = 0.0; fy = 0.0; // fz = 0.0; 
       
       // ==== Test manu solu ====
-      fz = -1.0 * (vis_mu / rho0) * ( (9600.0*x*x + 9600.0*y*y - 253.5) - 30.0 ) / rho0;
+      fz = (10.0 - (vis_mu / rho0) * (9600.0*x*x + 9600.0*y*y - 253.5) ) / rho0;
       // ==== End of test ====
     }
 
@@ -194,7 +194,7 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       // ==== Test manu solu ====
       gx = -0.25*3.0*(vis_mu/rho0) * x * (3200.0*x*x + 3200.0*y*y - 169.0);
       gy = -0.25*3.0*(vis_mu/rho0) * y * (3200.0*x*x + 3200.0*y*y - 169.0);
-      gz = -30.0 * z;
+      gz = 10.0 * z;
       // ==== End of test ====
     }
 
@@ -206,9 +206,9 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       //gx = p0*nx; gy = p0*ny; gz = p0*nz;
     
       // ==== Test manu solu ====
-      gx = 0.25*3.0*(vis_mu/rho0) * x * (3200.0*x*x + 3200.0*y*y - 169.0);;
-      gy = 0.25*3.0*(vis_mu/rho0) * y * (3200.0*x*x + 3200.0*y*y - 169.0);;
-      gz = 30.0 * z;
+      gx = 0.25*3.0*(vis_mu/rho0) * x * (3200.0*x*x + 3200.0*y*y - 169.0);
+      gy = 0.25*3.0*(vis_mu/rho0) * y * (3200.0*x*x + 3200.0*y*y - 169.0);
+      gz = -10.0 * z;
       // ==== End of test ====
     }
     
