@@ -313,18 +313,17 @@ void PDNSolution_NS::Init_womersley(
     const double vel     = k0 * (x*x + y*y - R*R) / (4.0*vis_mu) + std::real( coef1 * (1.0 - bes_top/bes_bot) );
     
     // -1.0 is multiplied to make the flow direction inward
-    
-    // Test steady state manu solution
-    //value[0] = pres;
-    //value[1] = vel * (-1.0) * out_nx;
-    //value[2] = vel * (-1.0) * out_ny;
-    //value[3] = vel * (-1.0) * out_nz;
+    // value[0] = pres;
+    // value[1] = vel * (-1.0) * out_nx;
+    // value[2] = vel * (-1.0) * out_ny;
+    // value[3] = vel * (-1.0) * out_nz;
 
+    // ==== Test manu solu ====
     value[0] = -30.0*z;
     value[1] = 0.0;
     value[2] = 0.0;
-    value[3] = x*x*x*x + y*y*y*y + 2*x*x*y*y - x*x - y*y;
-    // End of test
+    value[3] = x*x*x*x + y*y*y*y + 2*x*x*y*y - 0.09 * x*x - 0.09 * y*y;
+    // ==== End of test ====
     
     VecSetValues(solution, 4, location, value, INSERT_VALUES);
   }
@@ -395,17 +394,17 @@ void PDNSolution_NS::Init_womersley_dot(
     // -1.0 is multiplied to make the flow direction inward
     value[0] = dot_pres; 
 
-    // Test steady state manu solution
     // -1.0 is multiplied to make the flow direction inward
-    //value[1] = dot_vel * (-1.0) * out_nx;
-    //value[2] = dot_vel * (-1.0) * out_ny;
-    //value[3] = dot_vel * (-1.0) * out_nz;
+    // value[1] = dot_vel * (-1.0) * out_nx;
+    // value[2] = dot_vel * (-1.0) * out_ny;
+    // value[3] = dot_vel * (-1.0) * out_nz;
 
+    // ==== Test manu solu ====
     value[0] = 0.0;
     value[1] = 0.0;
     value[2] = 0.0;
     value[3] = 0.0;
-    // End of test
+    // ==== End of test ====
 
     VecSetValues(solution, 4, location, value, INSERT_VALUES);
   }
