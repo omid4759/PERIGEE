@@ -322,7 +322,7 @@ void PDNSolution_NS::Init_womersley(
     value[0] = -30.0*z;
     value[1] = 0.0;
     value[2] = 0.0;
-    value[3] = x*x*x*x + y*y*y*y + 2*x*x*y*y - 0.09 * x*x - 0.09 * y*y;
+    value[3] = 600.0 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625);
     // ==== End of test ====
     
     VecSetValues(solution, 4, location, value, INSERT_VALUES);

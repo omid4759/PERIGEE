@@ -7,8 +7,8 @@ u = 0;
 
 v = 0;
 
-% axial velo corresponding to w = r^4 - 0.09 * r^2
-w = x*x*x*x + y*y*y*y + 2*x*x*y*y - 0.09*x*x - 0.09*y*y;
+% axial velo corresponding to w = 600 * (r^2 - 0.09) * (r^2 - 0.015625)
+w = 600 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625);
 p = -30*z;
 
 % compute first order derivatives
