@@ -102,6 +102,10 @@ int main( int argc, char * argv[] )
   int manu_sol_time = 0;
   SYS_T::GetOptionInt("-manu_sol_time", manu_sol_time);
 
+  // Flag for whether to compute the WSS error norm using nodal averages
+  bool is_nodal_avg = true;
+  SYS_T::GetOptionBool("-is_nodal_avg", is_nodal_avg);
+
   // Number of quadrature points for triangles. Suggested: 4 for linear, 13 for quadratic
   int nqp_tri = 13;
   SYS_T::GetOptionInt("-nqp_tri", nqp_tri);
@@ -126,6 +130,10 @@ int main( int argc, char * argv[] )
   // ==== WOMERSLEY CHANGES BEGIN ==== 
   cout << " dt: " << dt << endl;
   cout << " manu_sol_time: " << manu_sol_time << endl;
+
+  if(is_nodal_avg) cout << " is_nodal_avg: true" << endl;
+  else cout << " is_nodal_avg: false" << endl;
+
   cout << " nqp_tri: " << nqp_tri << endl;
   // ==== WOMERSLEY CHANGES END ====
 
@@ -239,7 +247,7 @@ int main( int argc, char * argv[] )
   // Container for the solution vector
   std::vector<double> sol;
 
-  // Container for (averaged) WSS
+  // Container for nodally averaged WSS
   std::vector< std::vector<double> > wss_ave;
   wss_ave.resize( nFunc );
   for(int ii=0; ii<nFunc; ++ii) wss_ave[ii].resize(3);
@@ -265,25 +273,28 @@ int main( int argc, char * argv[] )
 
   const double inv_T = 1.0 / ( static_cast<double>((time_end - time_start)/time_step) + 1.0 );
 
-  // ==== WOMERSLEY CHANGES BEGIN //
+  // ==== WOMERSLEY CHANGES BEGIN ====
   double err_wss_l2 = 0.0;                                               // Initialize wss error in L2 norm
 
   IQuadPts * quad_s = new QuadPts_Gauss_Triangle( nqp_tri );             // Gauss quadrature pts
   FEAElement * element_s = new FEAElement_Triangle6_3D_der0( nqp_tri );  // surface triangle
 
-  const int snLocBas = element_s->get_nLocBas();
+  // Container for WSS without nodal averaging
+  std::vector< std::vector<double> > wss;
+  wss.resize( nElem * nLocBas );
+  for(int ii=0; ii<nElem*nLocBas; ++ii) wss[ii].resize(3);
 
   // Allocate element arrays
-  double * R  = new double [snLocBas];
+  double * R  = new double [nLocBas];
 
-  double * sctrl_x = new double [snLocBas];
-  double * sctrl_y = new double [snLocBas];
-  double * sctrl_z = new double [snLocBas];
+  double * sctrl_x = new double [nLocBas];
+  double * sctrl_y = new double [nLocBas];
+  double * sctrl_z = new double [nLocBas];
 
-  double * loc_wss_x = new double [snLocBas];
-  double * loc_wss_y = new double [snLocBas];
-  double * loc_wss_z = new double [snLocBas];
-  // ==== WOMERSLEY CHANGES END //
+  double * loc_wss_x = new double [nLocBas];
+  double * loc_wss_y = new double [nLocBas];
+  double * loc_wss_z = new double [nLocBas];
+  // ==== WOMERSLEY CHANGES END ==== 
 
   // Loop over time
   for(int time = time_start; time <= time_end; time += time_step)
@@ -375,7 +386,7 @@ int main( int argc, char * argv[] )
         outnormal[ii][2] = nz;
       }
 
-      // Now calcualte the element surface area
+      // Now calculate the element surface area
       element_tri -> buildBasis( quad_tri_gau, ectrl_x, ectrl_y, ectrl_z );
 
       double tri_area = 0.0;
@@ -441,6 +452,11 @@ int main( int argc, char * argv[] )
 
         node_area[ tri_global_id ] += tri_area;
 
+        // Store wss without nodal averaging
+        wss[ee*nLocBas + tri_local_id][0] = wss_x;
+        wss[ee*nLocBas + tri_local_id][1] = wss_y;
+        wss[ee*nLocBas + tri_local_id][2] = wss_z;
+
       } // loop over the sampling points (on surface)
 
       delete [] ectrl_x; delete [] ectrl_y; delete [] ectrl_z;
@@ -459,19 +475,28 @@ int main( int argc, char * argv[] )
     {
       for(int ee=0; ee<nElem; ++ee)
       {
-        double trn[snLocBas];
+        double trn[nLocBas];
 
-        for(int ii=0; ii<snLocBas; ++ii)
+        for(int ii=0; ii<nLocBas; ++ii)
         {
-          trn[ii] = vecIEN[snLocBas*ee+ii];
+          trn[ii] = vecIEN[nLocBas*ee+ii];
 
           sctrl_x[ii] = ctrlPts[3*trn[ii] + 0];
           sctrl_y[ii] = ctrlPts[3*trn[ii] + 1];
           sctrl_z[ii] = ctrlPts[3*trn[ii] + 2];
 
-          loc_wss_x[ii] = wss_ave[trn[ii]][0];
-          loc_wss_y[ii] = wss_ave[trn[ii]][1];
-          loc_wss_z[ii] = wss_ave[trn[ii]][2];
+          if(is_nodal_avg)
+          {
+            loc_wss_x[ii] = wss_ave[trn[ii]][0];
+            loc_wss_y[ii] = wss_ave[trn[ii]][1];
+            loc_wss_z[ii] = wss_ave[trn[ii]][2];
+          }
+          else
+          {
+            loc_wss_x[ii] = wss[ee*nLocBas + ii][0];
+            loc_wss_y[ii] = wss[ee*nLocBas + ii][1];
+            loc_wss_z[ii] = wss[ee*nLocBas + ii][2];
+          }
         }
 
         element_s -> buildBasis( quad_s, sctrl_x, sctrl_y, sctrl_z );

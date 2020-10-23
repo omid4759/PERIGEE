@@ -96,6 +96,10 @@ int main( int argc, char * argv[] )
   int manu_sol_time = 0;
   SYS_T::GetOptionInt("-manu_sol_time", manu_sol_time);
 
+  // Flag for whether to compute the WSS error norm using nodal averages
+  bool is_nodal_avg = true;
+  SYS_T::GetOptionBool("-is_nodal_avg", is_nodal_avg);
+
   // Number of quadrature points for triangles. Suggested: 4 for linear, 13 for quadratic
   int nqp_tri = 4;
   SYS_T::GetOptionInt("-nqp_tri", nqp_tri);
@@ -120,6 +124,10 @@ int main( int argc, char * argv[] )
   // ==== WOMERSLEY CHANGES BEGIN ==== 
   cout << " dt: " << dt << endl;
   cout << " manu_sol_time: " << manu_sol_time << endl;
+  
+  if(is_nodal_avg) cout << " is_nodal_avg: true" << endl;
+  else cout << " is_nodal_avg: false" << endl;
+
   cout << " nqp_tri: " << nqp_tri << endl;
   // ==== WOMERSLEY CHANGES END ====
 
@@ -256,7 +264,7 @@ int main( int argc, char * argv[] )
   std::vector<double> sol;
   double Rx[4], Ry[4], Rz[4];
 
-  // Container for WSS averaged value
+  // Container for nodally averaged WSS
   std::vector< std::vector<double> > wss_ave;
   wss_ave.resize( nFunc );
   for(int ii=0; ii<nFunc; ++ii) wss_ave[ii].resize(3);
@@ -282,13 +290,18 @@ int main( int argc, char * argv[] )
 
   const double inv_T = 1.0 / ( static_cast<double>((time_end - time_start)/time_step) + 1.0 );
 
-  // ==== WOMERSLEY CHANGES BEGIN //
+  // ==== WOMERSLEY CHANGES BEGIN ====
   double err_wss_l2 = 0.0;                                               // Initialize wss error in L2 norm
 
   IQuadPts * quad_s = new QuadPts_Gauss_Triangle( nqp_tri );             // Gauss quadrature pts
   FEAElement * element_s = new FEAElement_Triangle3_3D_der0( nqp_tri );  // surface triangle
 
   const int snLocBas = element_s->get_nLocBas();  
+
+  // Container for WSS without nodal averaging
+  std::vector< std::vector<double> > wss;
+  wss.resize( nElem * snLocBas );
+  for(int ii=0; ii<nElem*snLocBas; ++ii) wss[ii].resize(3);
 
   // Allocate element arrays
   double * R  = new double [snLocBas];
@@ -300,7 +313,7 @@ int main( int argc, char * argv[] )
   double * loc_wss_x = new double [snLocBas];
   double * loc_wss_y = new double [snLocBas];
   double * loc_wss_z = new double [snLocBas];
-  // ==== WOMERSLEY CHANGES END //
+  // ==== WOMERSLEY CHANGES END ====
 
   for(int time = time_start; time <= time_end; time += time_step)
   {
@@ -411,6 +424,12 @@ int main( int argc, char * argv[] )
         wss_ave[ trn[qua] ][2] += wss_z * tri_area[ee];
 
         node_area[ trn[qua] ] += tri_area[ee]; 
+
+        // Store wss without nodal averaging
+        wss[ee*snLocBas + qua][0] = wss_x;
+        wss[ee*snLocBas + qua][1] = wss_y;
+        wss[ee*snLocBas + qua][2] = wss_z;
+
       } // Loop over the three surface points  
     } // Loop over surface elements
 
@@ -437,9 +456,18 @@ int main( int argc, char * argv[] )
           sctrl_y[ii] = ctrlPts[3*trn[ii] + 1];
           sctrl_z[ii] = ctrlPts[3*trn[ii] + 2];
 
-          loc_wss_x[ii] = wss_ave[trn[ii]][0]; 
-          loc_wss_y[ii] = wss_ave[trn[ii]][1];
-          loc_wss_z[ii] = wss_ave[trn[ii]][2];
+          if(is_nodal_avg)
+          {
+            loc_wss_x[ii] = wss_ave[trn[ii]][0]; 
+            loc_wss_y[ii] = wss_ave[trn[ii]][1];
+            loc_wss_z[ii] = wss_ave[trn[ii]][2];
+          }
+          else
+          {
+            loc_wss_x[ii] = wss[ee*snLocBas + ii][0];
+            loc_wss_y[ii] = wss[ee*snLocBas + ii][1];
+            loc_wss_z[ii] = wss[ee*snLocBas + ii][2];
+          }
         }
 
         element_s -> buildBasis( quad_s, sctrl_x, sctrl_y, sctrl_z );
