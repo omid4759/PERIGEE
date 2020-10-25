@@ -64,6 +64,19 @@ void POST_T_NS::exact_wss( const double &x, const double &y, const double &z,
 }
 
 
+void POST_T_NS::exact_traction( const double &x, const double &y, const double &z,
+    const double &t, const double &nx, const double &ny, const double &nz,
+    double &val_x, double &val_y, double &val_z )
+{
+  Matrix_3x3 grad_velo; grad_velo.gen_zero();
+  exact_grad_velo( x, y, z, t, grad_velo );
+
+  val_x = mu * ( 2.0*grad_velo(0,0)*nx + ( grad_velo(0,1) + grad_velo(1,0) )*ny + ( grad_velo(0,2) + grad_velo(2,0) )*nz );
+  val_y = mu * ( ( grad_velo(1,0) + grad_velo(0,1) )*nx + 2.0*grad_velo(1,1)*ny + ( grad_velo(1,2) + grad_velo(2,1) )*nz );
+  val_z = mu * ( ( grad_velo(2,0) + grad_velo(0,2) )*nx + ( grad_velo(2,1) + grad_velo(1,2) )*ny + 2.0*grad_velo(2,2)*nz );
+}
+
+
 double POST_T_NS::get_pres_l2_error( const double * const &sol,
     const FEAElement * const &element,
     const double * const &ectrlPts_x,
@@ -281,6 +294,53 @@ double POST_T_NS::get_wss_l2_error( const double * const &solu,
 
     exact_wss( coor_x, coor_y, coor_z, t, exa_u, exa_v, exa_w );
     
+    error += (sol_u - exa_u) * (sol_u - exa_u) * gwts;
+    error += (sol_v - exa_v) * (sol_v - exa_v) * gwts;
+    error += (sol_w - exa_w) * (sol_w - exa_w) * gwts;
+  }
+
+  return error;
+}
+
+
+double POST_T_NS::get_traction_l2_error( const double * const &solu,
+      const double * const &solv, const double * const &solw,
+      const FEAElement * const &element_s,
+      const double * const &sctrlPts_x,
+      const double * const &sctrlPts_y,
+      const double * const &sctrlPts_z,
+      const IQuadPts * const &quad_s,
+      double * const &R,
+      const double &t )
+{
+  const int nqp = quad_s -> get_num_quadPts();
+  const int snLocBas = element_s -> get_nLocBas();
+  double error = 0.0;
+  double nx, ny, nz, surface_area; 
+  double exa_u, exa_v, exa_w; 
+
+  for(int qua=0; qua<nqp; ++qua)
+  {
+    double gwts = element_s->get_detJac(qua) * quad_s->get_qw(qua);
+    double sol_u  = 0.0, sol_v  = 0.0, sol_w  = 0.0;
+    double coor_x = 0.0, coor_y = 0.0, coor_z = 0.0;
+
+    element_s -> get_R(qua, R);
+    element_s -> get_2d_normal_out(qua, nx, ny, nz, surface_area);
+
+    for(int ii=0; ii<snLocBas; ++ii)
+    {
+      coor_x += sctrlPts_x[ii] * R[ii];
+      coor_y += sctrlPts_y[ii] * R[ii];
+      coor_z += sctrlPts_z[ii] * R[ii];
+
+      sol_u  += solu[ii] * R[ii];
+      sol_v  += solv[ii] * R[ii];
+      sol_w  += solw[ii] * R[ii];
+    }
+
+    exact_traction( coor_x, coor_y, coor_z, t, nx, ny, nz, exa_u, exa_v, exa_w);
+
     error += (sol_u - exa_u) * (sol_u - exa_u) * gwts;
     error += (sol_v - exa_v) * (sol_v - exa_v) * gwts;
     error += (sol_w - exa_w) * (sol_w - exa_w) * gwts;

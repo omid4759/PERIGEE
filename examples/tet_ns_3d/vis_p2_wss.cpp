@@ -275,6 +275,7 @@ int main( int argc, char * argv[] )
 
   // ==== WOMERSLEY CHANGES BEGIN ====
   double err_wss_l2 = 0.0;                                               // Initialize wss error in L2 norm
+  double err_traction_l2 = 0.0;                                          // Initialize traction error in L2 norm
 
   IQuadPts * quad_s = new QuadPts_Gauss_Triangle( nqp_tri );             // Gauss quadrature pts
   FEAElement * element_s = new FEAElement_Triangle6_3D_der0( nqp_tri );  // surface triangle
@@ -283,6 +284,11 @@ int main( int argc, char * argv[] )
   std::vector< std::vector<double> > wss;
   wss.resize( nElem * nLocBas );
   for(int ii=0; ii<nElem*nLocBas; ++ii) wss[ii].resize(3);
+
+  // Container for surface traction wthout nodal averaging
+  std::vector< std::vector<double> > traction;
+  traction.resize( nElem * nLocBas );
+  for(int ii=0; ii<nElem*nLocBas; ++ii) traction[ii].resize(3);
 
   // Allocate element arrays
   double * R  = new double [nLocBas];
@@ -294,6 +300,10 @@ int main( int argc, char * argv[] )
   double * loc_wss_x = new double [nLocBas];
   double * loc_wss_y = new double [nLocBas];
   double * loc_wss_z = new double [nLocBas];
+
+  double * loc_traction_x = new double [nLocBas];
+  double * loc_traction_y = new double [nLocBas];
+  double * loc_traction_z = new double [nLocBas];
   // ==== WOMERSLEY CHANGES END ==== 
 
   // Loop over time
@@ -457,6 +467,11 @@ int main( int argc, char * argv[] )
         wss[ee*nLocBas + tri_local_id][1] = wss_y;
         wss[ee*nLocBas + tri_local_id][2] = wss_z;
 
+        // Store surface traction without nodal averaging
+        traction[ee*nLocBas + tri_local_id][0] = fluid_mu * ax;
+        traction[ee*nLocBas + tri_local_id][1] = fluid_mu * ay;
+        traction[ee*nLocBas + tri_local_id][2] = fluid_mu * az;
+
       } // loop over the sampling points (on surface)
 
       delete [] ectrl_x; delete [] ectrl_y; delete [] ectrl_z;
@@ -497,12 +512,20 @@ int main( int argc, char * argv[] )
             loc_wss_y[ii] = wss[ee*nLocBas + ii][1];
             loc_wss_z[ii] = wss[ee*nLocBas + ii][2];
           }
+
+          loc_traction_x[ii] = traction[ee*nLocBas + ii][0];
+          loc_traction_y[ii] = traction[ee*nLocBas + ii][1];
+          loc_traction_z[ii] = traction[ee*nLocBas + ii][2];
         }
 
         element_s -> buildBasis( quad_s, sctrl_x, sctrl_y, sctrl_z );
 
         // Compute L2 norm of wss error
         err_wss_l2 += POST_T_NS::get_wss_l2_error( loc_wss_x, loc_wss_y, loc_wss_z,
+            element_s, sctrl_x, sctrl_y, sctrl_z, quad_s, R, time * dt);
+
+        // Compute L2 norm of traction error
+        err_traction_l2 += POST_T_NS::get_traction_l2_error( loc_traction_x, loc_traction_y, loc_traction_z,
             element_s, sctrl_x, sctrl_y, sctrl_z, quad_s, R, time * dt);
       }
     }
@@ -525,10 +548,15 @@ int main( int argc, char * argv[] )
 
   // ==== WOMERSLEY CHANGES BEGIN ====
   MPI_Barrier(PETSC_COMM_WORLD);
-  double wss_l2 = 0.0;
-  MPI_Reduce(&err_wss_l2, &wss_l2, 1, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
-  wss_l2 = sqrt(wss_l2);
-  PetscPrintf(PETSC_COMM_WORLD, "\nAbs Error in L2 norm of wss at t=%f is : %e \n", manu_sol_time * dt, wss_l2);
+  double wss_l2 = 0.0, traction_l2 = 0.0;
+  MPI_Reduce(&err_wss_l2,      &wss_l2,      1, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+  MPI_Reduce(&err_traction_l2, &traction_l2, 1, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+
+  wss_l2      = sqrt(wss_l2);
+  traction_l2 = sqrt(traction_l2);
+
+  PetscPrintf(PETSC_COMM_WORLD, "\nAbs Error in L2 norm of wss      at t=%f is : %e \n", manu_sol_time * dt, wss_l2);
+  PetscPrintf(PETSC_COMM_WORLD,   "Abs Error in L2 norm of traction at t=%f is : %e \n", manu_sol_time * dt, traction_l2);
   // ==== WOMERSLEY CHANGES END ====
 
   for(int ii=0; ii<nFunc; ++ii)
@@ -557,6 +585,7 @@ int main( int argc, char * argv[] )
   delete quad_s; delete element_s; delete [] R;
   delete [] sctrl_x; delete [] sctrl_y; delete [] sctrl_z;
   delete [] loc_wss_x; delete [] loc_wss_y; delete [] loc_wss_z;
+  delete [] loc_traction_x; delete [] loc_traction_y; delete [] loc_traction_z;
   // ==== WOMERSLEY CHANGES END ====
 
   PetscFinalize();

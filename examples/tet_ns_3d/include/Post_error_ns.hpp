@@ -42,6 +42,10 @@ namespace POST_T_NS
   void exact_wss( const double &x, const double &y, const double &z,
       const double &t, double &val_x, double &val_y, double &val_z );
 
+  void exact_traction( const double &x, const double &y, const double &z,
+      const double &t, const double &nx, const double &ny, const double &nz,
+      double &val_x, double &val_y, double &val_z );
+
   double get_pres_l2_error( const double * const &sol,
       const FEAElement * const &element,
       const double * const &ectrlPts_x,
@@ -87,6 +91,16 @@ namespace POST_T_NS
       const double &t );
 
   double get_wss_l2_error( const double * const &solu,
+      const double * const &solv, const double * const &solw,
+      const FEAElement * const &element_s,
+      const double * const &sctrlPts_x,
+      const double * const &sctrlPts_y,
+      const double * const &sctrlPts_z,
+      const IQuadPts * const &quad_s,
+      double * const &R,
+      const double &t );
+
+  double get_traction_l2_error( const double * const &solu,
       const double * const &solv, const double * const &solw,
       const FEAElement * const &element_s,
       const double * const &sctrlPts_x,
