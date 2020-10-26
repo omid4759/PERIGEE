@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
   // ==== WOMERSLEY CHANGES END ====
 
   double c_tauc = 1.0; // scaling factor for tau_c, take 0.0, 0.125, or 1.0
+  double c_ct = 4.0; // C_T parameter for defining tau_M
 
   // inflow file
   std::string inflow_file("inflow_fourier_series.txt");
@@ -105,6 +106,7 @@ int main(int argc, char *argv[])
   SYS_T::GetOptionReal("-fl_density", fluid_density);
   SYS_T::GetOptionReal("-fl_mu", fluid_mu);
   SYS_T::GetOptionReal("-c_tauc", c_tauc);
+  SYS_T::GetOptionReal("-c_ct", c_ct);
   SYS_T::GetOptionString("-inflow_file", inflow_file);
   SYS_T::GetOptionReal("-inflow_thd_time", inflow_thd_time);
   SYS_T::GetOptionReal("-inflow_tgt_rate", inflow_tgt_rate);
@@ -138,6 +140,7 @@ int main(int argc, char *argv[])
   SYS_T::cmdPrint("-fl_density:", fluid_density);
   SYS_T::cmdPrint("-fl_mu:", fluid_mu);
   SYS_T::cmdPrint("-c_tauc:", c_tauc);
+  SYS_T::cmdPrint("-c_ct:", c_ct);
  
   // if inflow file exists, print the file name
   // otherwise, print the parameter for linear2steady inflow setting 
@@ -293,7 +296,7 @@ int main(int argc, char *argv[])
   IPLocAssem * locAssem_ptr = new PLocAssem_Tet_VMS_NS_GenAlpha(
       tm_galpha_ptr, GMIptr->get_nLocBas(),
       quadv->get_num_quadPts(), elements->get_nLocBas(),
-      fluid_density, fluid_mu, bs_beta, c_tauc, GMIptr->get_elemType() );
+      fluid_density, fluid_mu, bs_beta, c_ct, c_tauc, GMIptr->get_elemType() );
 
   // ===== Initial condition =====
   PDNSolution * base = new PDNSolution_NS( pNode, fNode, locinfnbc, 1 );
