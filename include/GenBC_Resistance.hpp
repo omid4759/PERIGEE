@@ -37,10 +37,10 @@ class GenBC_Resistance : public IGenBC
     {
       return 0.0;
     }
-    
+
     // We do not perform boundary check. Users are responsible to
     // make sure 0 <= ii < num_ebc;
-    virtual double get_P( const int &ii, const double &dot_Q, const double &Q ) const
+    virtual double get_P( const int &ii, const double &dot_Q, const double &Q )const
     {
       return resis[ii] * Q + pres_offset[ii];
     }
@@ -51,7 +51,7 @@ class GenBC_Resistance : public IGenBC
     }
 
     virtual void reset_initial_sol( const int &ii, const double &in_Q_0,
-        const double &in_P_0 )
+        const double &in_P_0, const double &curr_time  )
     {
       Q0[ii] = in_Q_0;
       P0[ii] = in_P_0;
@@ -59,7 +59,8 @@ class GenBC_Resistance : public IGenBC
 
   private:
     int num_ebc; // number of elemental boundary faces
-    
+
+
     // vector storing the resistance and pressure offset values
     // on the faces, with length num_ebc
     std::vector<double> resis, pres_offset;

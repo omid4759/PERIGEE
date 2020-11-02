@@ -1,6 +1,6 @@
 // ==================================================================
 // ale_ns_tet4_driver.cpp
-// 
+//
 // 4-node tetrahedral finite element analysis code for 3D Navier-Stokes
 // equations with variational multiscale analysis.
 //
@@ -30,14 +30,14 @@ int main(int argc, char *argv[])
 {
   // Number of quadrature points for tets and triangles
   int nqp_tet = 5, nqp_tri = 4;
-  
-  // Estimate of the nonzero per row for the sparse matrix 
+
+  // Estimate of the nonzero per row for the sparse matrix
   int nz_estimate = 60;
 
   // fluid properties
   double fluid_density = 1.065;
   double fluid_mu = 3.5e-2;
-  
+
   // inflow file
   std::string inflow_file("inflow_fourier_series.txt");
 
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     SYS_T::cmdPrint("-restart_name:", restart_name);
   }
   else PetscPrintf(PETSC_COMM_WORLD, "-is_restart: false \n");
-  
+
   if(is_ale) PetscPrintf(PETSC_COMM_WORLD, "-is_ale: true \n");
   else PetscPrintf(PETSC_COMM_WORLD, "-is_ale: false \n");
 
@@ -250,15 +250,15 @@ int main(int argc, char *argv[])
     // Read sol file
     SYS_T::file_check(restart_name.c_str());
     sol->ReadBinary(restart_name.c_str());
-   
-    // generate the corresponding dot_sol file name 
+
+    // generate the corresponding dot_sol file name
     std::string restart_dot_name = "dot_";
     restart_dot_name.append(restart_name);
 
     // Read dot_sol file
     SYS_T::file_check(restart_dot_name.c_str());
     dot_sol->ReadBinary(restart_dot_name.c_str());
-    
+
     PetscPrintf(PETSC_COMM_WORLD, "===> Read sol from disk as a restart run... \n");
     PetscPrintf(PETSC_COMM_WORLD, "     restart_name: %s \n", restart_name.c_str());
     PetscPrintf(PETSC_COMM_WORLD, "     restart_dot_name: %s \n", restart_dot_name.c_str());
@@ -268,11 +268,11 @@ int main(int argc, char *argv[])
   }
 
   // Initialize the time info class
-  PDNTimeStep * timeinfo = new PDNTimeStep(initial_index, initial_time, initial_step); 
+  PDNTimeStep * timeinfo = new PDNTimeStep(initial_index, initial_time, initial_step);
 
   // ===== GenBC RCR ====
   IGenBC * gbc = NULL;
-  
+
   if( SYS_T::get_genbc_file_type( lpn_file.c_str() ) == 1  )
     gbc = new GenBC_Resistance( lpn_file.c_str() );
   else if( SYS_T::get_genbc_file_type( lpn_file.c_str() ) == 2  )
@@ -289,11 +289,11 @@ int main(int argc, char *argv[])
 
   // ===== Global Assembly Routine ====
   SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
-  IPGAssem * gloAssem_ptr = new PGAssem_ALE_NS_FEM( locAssem_ptr, elements, quads, 
+  IPGAssem * gloAssem_ptr = new PGAssem_ALE_NS_FEM( locAssem_ptr, elements, quads,
       GMIptr, locElem, locIEN, pNode, locnbc, locebc, gbc, nz_estimate );
 
   SYS_T::commPrint("===> Assembly nonzero estimate matrix ... \n");
-  gloAssem_ptr->Assem_nonzero_estimate( locElem, locAssem_ptr, 
+  gloAssem_ptr->Assem_nonzero_estimate( locElem, locAssem_ptr,
       elements, quads, locIEN, pNode, locnbc, locebc, gbc );
 
   SYS_T::commPrint("===> Matrix nonzero structure fixed. \n");
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
   // ===== Global Assemlby for Mesh motion =====
   IPGAssem * gloAssem_mesh_ptr = NULL;
   if( is_ale == true )
-  { 
+  {
     SYS_T::commPrint("===> Initializing Mat K_mesh and Vec G_mesh ... \n");
     gloAssem_mesh_ptr = new PGAssem_ALE_NS_FEM( locAssem_mesh_ptr,
         GMIptr, locElem, locIEN, pNode, mesh_locnbc, mesh_locebc );
@@ -360,13 +360,13 @@ int main(int argc, char *argv[])
   // ===== Mesh motion solver =====
   PLinear_Solver_PETSc * mesh_lsolver = NULL;
   if( is_ale == true )
-  { 
+  {
     mesh_lsolver = new PLinear_Solver_PETSc(
         1.0e-12, 1.0e-55, 1.0e30, 500, "ls_mesh_", "pc_mesh_" );
     KSPSetType( mesh_lsolver->ksp, KSPGMRES );
 
-    gloAssem_mesh_ptr->Assem_tangent_residual( dot_sol, sol, 
-        locElem, locAssem_mesh_ptr, elementv, elements, quadv, quads, 
+    gloAssem_mesh_ptr->Assem_tangent_residual( dot_sol, sol,
+        locElem, locAssem_mesh_ptr, elementv, elements, quadv, quads,
         locIEN, pNode, fNode, mesh_locnbc, mesh_locebc );
 
     mesh_lsolver -> SetOperator( gloAssem_mesh_ptr->K );
@@ -391,17 +391,17 @@ int main(int argc, char *argv[])
   // ===== Outlet flowrate recording files =====
   for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
   {
-    const double dot_face_flrate = gloAssem_ptr -> Assem_surface_flowrate( 
+    const double dot_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
         dot_sol, locAssem_ptr, elements, quads, pNode, locebc, ff );
 
-    const double face_flrate = gloAssem_ptr -> Assem_surface_flowrate( 
+    const double face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
         sol, locAssem_ptr, elements, quads, pNode, locebc, ff );
 
-    const double face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure( 
+    const double face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
         sol, locAssem_ptr, elements, quads, pNode, locebc, ff );
 
     // set the gbc initial conditions using the 3D data
-    gbc -> reset_initial_sol( ff, face_flrate, face_avepre );
+    gbc -> reset_initial_sol( ff, face_flrate, face_avepre,initial_time );
 
     const double dot_lpn_flowrate = dot_face_flrate;
     const double lpn_flowrate = face_flrate;
@@ -411,7 +411,7 @@ int main(int argc, char *argv[])
     if(rank == 0)
     {
       std::ofstream ofile;
-      
+
       // If this is NOT a restart run, generate a new file, otherwise append to
       // existing file
       if( !is_restart )
@@ -422,7 +422,7 @@ int main(int argc, char *argv[])
       // If this is NOT a restart, then record the initial values
       if( !is_restart )
         ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<face_flrate<<'\t'<<face_avepre<<'\t'<<lpn_pressure<<'\n';
-      
+
       ofile.close();
     }
   }
@@ -430,7 +430,7 @@ int main(int argc, char *argv[])
   // ===== FEM analysis =====
   SYS_T::commPrint("===> Start Finite Element Analysis:\n");
 
-  tsolver->TM_ALE_NS_GenAlpha(is_restart, is_ale, base, dot_sol, sol, 
+  tsolver->TM_ALE_NS_GenAlpha(is_restart, is_ale, base, dot_sol, sol,
       tm_galpha_ptr, timeinfo, inflow_rate_ptr, locElem, locIEN, pNode, fNode,
       locnbc, locinfnbc, mesh_locnbc, locebc, mesh_locebc, gbc, pmat, mmat,
       elementv, elements, quadv, quads,
@@ -446,10 +446,10 @@ int main(int argc, char *argv[])
   delete locAssem_ptr; delete locAssem_mesh_ptr; delete tm_galpha_ptr;
   delete pmat; delete mmat; delete locinfnbc; delete inflow_rate_ptr;
   delete elementv; delete elements; delete quadv; delete quads;
-  delete fNode; delete locIEN; delete GMIptr; delete PartBasic; 
+  delete fNode; delete locIEN; delete GMIptr; delete PartBasic;
   delete locElem; delete locnbc; delete locebc; delete pNode;
   delete mesh_locnbc; delete mesh_locebc; delete gbc;
-  
+
   if( is_ale == true )
   {
     delete mesh_lsolver;
@@ -460,4 +460,4 @@ int main(int argc, char *argv[])
   return EXIT_SUCCESS;
 }
 
-// EOF 
+// EOF

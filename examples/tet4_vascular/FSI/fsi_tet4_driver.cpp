@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
   // back flow stabilization
   double bs_beta = 0.2;
-  
+
   // part file location
   std::string part_file("part");
 
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
   MPI_Comm_size(PETSC_COMM_WORLD, &size);
   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
-  
+
   // ===== Command Line Argument =====
   SYS_T::commPrint("===> Reading arguments from Command line ... \n");
 
@@ -183,27 +183,27 @@ int main(int argc, char *argv[])
 
   // ===== Main Data Strucutre =====
   FEANode * fNode = new FEANode(part_file, rank);
-  
+
   ALocal_IEN * locIEN = new ALocal_IEN(part_file, rank);
-  
+
   IAGlobal_Mesh_Info * GMIptr = new AGlobal_Mesh_Info_FEM_3D(part_file,rank);
-  
+
   APart_Basic_Info * PartBasic = new APart_Basic_Info(part_file, rank);
-  
+
   ALocal_Elem * locElem = new ALocal_Elem_wTag(part_file, rank);
-  
+
   ALocal_NodalBC * locnbc = new ALocal_NodalBC(part_file, rank);
- 
+
   ALocal_Inflow_NodalBC * locinfnbc = new ALocal_Inflow_NodalBC(part_file, rank);
-   
+
   ALocal_NodalBC * mesh_locnbc = new ALocal_NodalBC(part_file, rank, "mesh_nbc");
-  
+
   ALocal_EBC * locebc = new ALocal_EBC_outflow(part_file, rank);
-  
+
   ALocal_EBC * mesh_locebc = new ALocal_EBC(part_file, rank, "mesh_ebc");
-  
+
   APart_Node * pNode = new APart_Node_FSI(part_file, rank, locElem, locIEN);
-  
+
   SYS_T::commPrint("===> Mesh HDF5 files are read from disk.\n");
 
   // ===== Basic Checking =====
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 
   // ===== Inflow rate function =====
   SYS_T::commPrint("===> Setup inflow flow rate. \n");
-  
+
   ICVFlowRate * inflow_rate_ptr = new CVFlowRate_Unsteady( inflow_file.c_str() );
 
   inflow_rate_ptr->print_info();
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
   else
     SYS_T::print_fatal( "Error: GenBC input file %s format cannot be recongnized.\n", lpn_file.c_str() );
 
-  gbc -> print_info(); 
+  gbc -> print_info();
 
   SYS_T::print_fatal_if(gbc->get_num_ebc() != locebc->get_num_ebc(),
       "Error: GenBC number of faces does not match with that in ALocal_EBC.\n");
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
   // ===== Global assembly routine =====
   SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
   IPGAssem * gloAssem_ptr = new PGAssem_FSI_FEM( locAssem_fluid_ptr,
-      locAssem_solid_ptr, elements, quads, GMIptr, locElem, locIEN, 
+      locAssem_solid_ptr, elements, quads, GMIptr, locElem, locIEN,
       pNode, locnbc, locebc, gbc, nz_estimate );
 
   SYS_T::commPrint("===> Assembly nonzero estimate matrix ... \n");
@@ -433,7 +433,7 @@ int main(int argc, char *argv[])
         sol, locAssem_fluid_ptr, elements, quads, pNode, locebc, ff );
 
     // set the gbc initial conditions using the 3D data
-    gbc -> reset_initial_sol( ff, face_flrate, face_avepre );
+    gbc -> reset_initial_sol( ff, face_flrate, face_avepre ,initial_time);
 
     const double dot_lpn_flowrate = dot_face_flrate;
     const double lpn_flowrate = face_flrate;
@@ -462,8 +462,8 @@ int main(int argc, char *argv[])
   SYS_T::commPrint("===> Start Finite Element Analysis:\n");
   tsolver->TM_FSI_GenAlpha(is_restart, base, dot_sol, sol, tm_galpha_ptr,
       timeinfo, inflow_rate_ptr, locElem, locIEN, pNode, fNode, locnbc,
-      locinfnbc, mesh_locnbc, locebc, mesh_locebc, gbc, pmat, mmat, 
-      elementv, elements, quadv, quads, 
+      locinfnbc, mesh_locnbc, locebc, mesh_locebc, gbc, pmat, mmat,
+      elementv, elements, quadv, quads,
       locAssem_fluid_ptr, locAssem_solid_ptr, locAssem_mesh_ptr,
       gloAssem_ptr, gloAssem_mesh_ptr, lsolver, mesh_lsolver, nsolver);
 

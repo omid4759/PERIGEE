@@ -23,6 +23,7 @@
 #include "GenBC_Resistance.hpp"
 #include "GenBC_RCR.hpp"
 #include "GenBC_Inductance.hpp"
+#include "GenBC_Coronary.hpp"
 #include "PLocAssem_Tet_VMS_NS_GenAlpha.hpp"
 #include "PGAssem_NS_FEM.hpp"
 #include "PTime_NS_Solver.hpp"
@@ -32,8 +33,8 @@ int main(int argc, char *argv[])
   // Number of quadrature points for tets and triangles
   // Suggested values: 5 / 4 for linear, 17 / 13 for quadratic
   int nqp_tet = 5, nqp_tri = 4;
-  
-  // Estimate of the nonzero per row for the sparse matrix 
+
+  // Estimate of the nonzero per row for the sparse matrix
   int nz_estimate = 300;
 
   // fluid properties
@@ -55,7 +56,7 @@ int main(int argc, char *argv[])
 
   // generalized-alpha rho_inf
   double genA_rho_inf = 0.5;
-  
+
   // part file location
   std::string part_file("part");
 
@@ -134,9 +135,9 @@ int main(int argc, char *argv[])
   SYS_T::cmdPrint("-fl_density:", fluid_density);
   SYS_T::cmdPrint("-fl_mu:", fluid_mu);
   SYS_T::cmdPrint("-c_tauc:", c_tauc);
- 
+
   // if inflow file exists, print the file name
-  // otherwise, print the parameter for linear2steady inflow setting 
+  // otherwise, print the parameter for linear2steady inflow setting
   if( SYS_T::file_exist( inflow_file ) )
     SYS_T::cmdPrint("-inflow_file:", inflow_file);
   else
@@ -251,8 +252,8 @@ int main(int argc, char *argv[])
 
   // ===== Finite Element Container =====
   SYS_T::commPrint("===> Setup element container. \n");
-  FEAElement * elementv = nullptr; 
-  FEAElement * elements = nullptr; 
+  FEAElement * elementv = nullptr;
+  FEAElement * elements = nullptr;
 
   if( GMIptr->get_elemType() == 501 )
   {
@@ -260,7 +261,7 @@ int main(int argc, char *argv[])
     if( nqp_tri > 4 ) SYS_T::commPrint("Warning: the tri element is linear and you are using more than 4 quadrature points.\n");
 
     elementv = new FEAElement_Tet4( nqp_tet ); // elem type 501
-    elements = new FEAElement_Triangle3_3D_der0( nqp_tri ); 
+    elements = new FEAElement_Triangle3_3D_der0( nqp_tri );
   }
   else if( GMIptr->get_elemType() == 502 )
   {
@@ -268,7 +269,7 @@ int main(int argc, char *argv[])
     SYS_T::print_fatal_if( nqp_tri < 13, "Error: not enough quadrature points for triangles.\n" );
 
     elementv = new FEAElement_Tet10_v2( nqp_tet ); // elem type 502
-    elements = new FEAElement_Triangle6_3D_der0( nqp_tri ); 
+    elements = new FEAElement_Triangle6_3D_der0( nqp_tri );
   }
   else SYS_T::print_fatal("Error: Element type not supported.\n");
 
@@ -308,7 +309,7 @@ int main(int argc, char *argv[])
     SYS_T::file_check(restart_name.c_str());
     sol->ReadBinary(restart_name.c_str());
 
-    // generate the corresponding dot_sol file name 
+    // generate the corresponding dot_sol file name
     std::string restart_dot_name = "dot_";
     restart_dot_name.append(restart_name);
 
@@ -336,6 +337,8 @@ int main(int argc, char *argv[])
     gbc = new GenBC_RCR( lpn_file.c_str(), 1000, initial_step );
   else if( SYS_T::get_genbc_file_type( lpn_file.c_str() ) == 3  )
     gbc = new GenBC_Inductance( lpn_file.c_str() );
+  else if( SYS_T::get_genbc_file_type( lpn_file.c_str() ) == 4  )
+    gbc = new GenBC_Coronary( lpn_file.c_str(),100, initial_step );
   else
     SYS_T::print_fatal( "Error: GenBC input file %s format cannot be recongnized.\n", lpn_file.c_str() );
 
@@ -397,7 +400,7 @@ int main(int argc, char *argv[])
   PCFieldSplitSetFields(upc,"p",1,pfield,pfield);
 
   // ===== Nonlinear solver context =====
-  PNonlinear_NS_Solver * nsolver = new PNonlinear_NS_Solver( pNode, fNode, 
+  PNonlinear_NS_Solver * nsolver = new PNonlinear_NS_Solver( pNode, fNode,
       nl_rtol, nl_atol, nl_dtol, nl_maxits, nl_refreq, nl_threshold );
 
   nsolver->print_info();
@@ -421,7 +424,7 @@ int main(int argc, char *argv[])
         sol, locAssem_ptr, elements, quads, locebc, ff );
 
     // set the gbc initial conditions using the 3D data
-    gbc -> reset_initial_sol( ff, face_flrate, face_avepre );
+    gbc -> reset_initial_sol( ff, face_flrate, face_avepre,initial_time );
 
     const double dot_lpn_flowrate = dot_face_flrate;
     const double lpn_flowrate = face_flrate;
@@ -467,7 +470,7 @@ int main(int argc, char *argv[])
     else
       ofile.open( locinfnbc->gen_flowfile_name().c_str(), std::ofstream::out | std::ofstream::app );
 
-    if( !is_restart ) 
+    if( !is_restart )
     {
       ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\n';
       ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<inlet_face_avepre<<'\n';

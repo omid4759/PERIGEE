@@ -64,7 +64,7 @@ void PTime_Seg_Solver::Write_restart_file(const PDNTimeStep * const &timeinfo,
 }
 
 
-void PTime_Seg_Solver::TM_ALE_NS_GenAlpha( 
+void PTime_Seg_Solver::TM_ALE_NS_GenAlpha(
     const bool &restart_init_assembly_flag,
     const bool &is_ale_flag,
     const PDNSolution * const &sol_base,
@@ -110,7 +110,7 @@ void PTime_Seg_Solver::TM_ALE_NS_GenAlpha(
   {
     sol_name = Name_Generator(time_info->get_index());
     cur_disp->WriteBinary(sol_name.c_str());
-    
+
     sol_dot_name = Name_dot_Generator(time_info->get_index());
     cur_velo->WriteBinary(sol_dot_name.c_str());
   }
@@ -135,11 +135,11 @@ void PTime_Seg_Solver::TM_ALE_NS_GenAlpha(
     else renew_flag = false;
 
     // Inoke the nonlinear equation solver
-    nsolver_ptr->GenAlpha_Seg_solve_ALE_NS( renew_flag, is_ale_flag, 
-        time_info->get_time(), time_info->get_step(), 
+    nsolver_ptr->GenAlpha_Seg_solve_ALE_NS( renew_flag, is_ale_flag,
+        time_info->get_time(), time_info->get_step(),
         sol_base, pre_velo, pre_disp, tmga_ptr, flr_ptr,
         alelem_ptr, lien_ptr, anode_ptr, feanode_ptr, nbc_part, infnbc_part,
-        nbc_mesh_part, ebc_part, ebc_mesh_part, gbc, bc_mat, bc_mesh_mat, 
+        nbc_mesh_part, ebc_part, ebc_mesh_part, gbc, bc_mat, bc_mesh_mat,
         elementv, elements, quad_v, quad_s, lassem_fluid_ptr, lassem_mesh_ptr,
         gassem_ptr, gassem_mesh_ptr, lsolver_ptr, lsolver_mesh_ptr,
         cur_velo, cur_disp, conv_flag, nl_counter );
@@ -165,15 +165,15 @@ void PTime_Seg_Solver::TM_ALE_NS_GenAlpha(
     for(int face=0; face<ebc_part -> get_num_ebc(); ++face)
     {
       // Calculate the 3D dot flow rate on the outlet
-      const double dot_face_flrate = gassem_ptr -> Assem_surface_flowrate( 
-          cur_velo, lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face); 
+      const double dot_face_flrate = gassem_ptr -> Assem_surface_flowrate(
+          cur_velo, lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face);
 
       // Calculate the 3D flow rate on the outlet
-      const double face_flrate = gassem_ptr -> Assem_surface_flowrate( 
-          cur_disp, lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face); 
+      const double face_flrate = gassem_ptr -> Assem_surface_flowrate(
+          cur_disp, lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face);
 
       // Calculate the 3D averaged pressure on the outlet
-      const double face_avepre = gassem_ptr -> Assem_surface_ave_pressure( 
+      const double face_avepre = gassem_ptr -> Assem_surface_ave_pressure(
           cur_disp, lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face);
 
       // Calculate the 0D pressure from LPN model
@@ -182,7 +182,7 @@ void PTime_Seg_Solver::TM_ALE_NS_GenAlpha(
       const double lpn_pressure = gbc -> get_P( face, dot_lpn_flowrate, lpn_flowrate );
 
       // Update the initial values in genbc
-      gbc -> reset_initial_sol( face, lpn_flowrate, lpn_pressure );
+      gbc -> reset_initial_sol( face, lpn_flowrate, lpn_pressure,time_info->get_time() );
 
       // On the CPU 0, write the time, flow rate, averaged pressure, and 0D
       // calculated pressure into the txt file, which is first generated in the
@@ -207,7 +207,7 @@ void PTime_Seg_Solver::TM_ALE_NS_GenAlpha(
 }
 
 
-void PTime_Seg_Solver::TM_FSI_GenAlpha( 
+void PTime_Seg_Solver::TM_FSI_GenAlpha(
     const bool &restart_init_assembly_flag,
     const PDNSolution * const &sol_base,
     const PDNSolution * const &init_velo,
@@ -246,9 +246,9 @@ void PTime_Seg_Solver::TM_FSI_GenAlpha(
   PDNSolution * cur_velo = new PDNSolution(*init_velo);
 
   std::string sol_name ("");
-  std::string sol_dot_name (""); 
+  std::string sol_dot_name ("");
 
-  // Do not overwrite solution if this is a restart 
+  // Do not overwrite solution if this is a restart
   if( restart_init_assembly_flag == false )
   {
     sol_name = Name_Generator(time_info->get_index());
@@ -275,7 +275,7 @@ void PTime_Seg_Solver::TM_FSI_GenAlpha(
     nsolver_ptr->GenAlpha_Seg_solve_FSI( renew_flag, time_info->get_time(),
         time_info->get_step(), sol_base, pre_velo, pre_disp, tmga_ptr, flr_ptr,
         alelem_ptr, lien_ptr, anode_ptr, feanode_ptr, nbc_part, infnbc_part,
-        nbc_mesh_part, ebc_part, ebc_mesh_part, gbc, bc_mat, bc_mesh_mat, 
+        nbc_mesh_part, ebc_part, ebc_mesh_part, gbc, bc_mat, bc_mesh_mat,
         elementv, elements, quad_v, quad_s, lassem_fluid_ptr,
         lassem_solid_ptr, lassem_mesh_ptr,
         gassem_ptr, gassem_mesh_ptr, lsolver_ptr, lsolver_mesh_ptr,
@@ -301,23 +301,23 @@ void PTime_Seg_Solver::TM_FSI_GenAlpha(
     {
       // Calculate 3D dot flow rate on the outlets
       const double dot_face_flrate = gassem_ptr -> Assem_surface_flowrate( cur_velo,
-          lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face); 
-     
+          lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face);
+
       // Calculate 3D flow rate on the outlets
       const double face_flrate = gassem_ptr -> Assem_surface_flowrate( cur_disp,
-          lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face); 
-     
+          lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face);
+
       // Calculate 3D averaged pressure on outlets
       const double face_avepre = gassem_ptr -> Assem_surface_ave_pressure(
           cur_disp, lassem_fluid_ptr, elements, quad_s, anode_ptr, ebc_part, face);
-      
+
       // Calculate 0D pressure from LPN model
       const double dot_lpn_flowrate = dot_face_flrate;
       const double lpn_flowrate = face_flrate;
       const double lpn_pressure = gbc -> get_P( face, dot_lpn_flowrate, lpn_flowrate );
 
       // Update the initial values in genbc
-      gbc -> reset_initial_sol( face, lpn_flowrate, lpn_pressure );
+      gbc -> reset_initial_sol( face, lpn_flowrate, lpn_pressure ,time_info->get_time());
 
       PetscMPIInt rank;
       MPI_Comm_rank(PETSC_COMM_WORLD, &rank);

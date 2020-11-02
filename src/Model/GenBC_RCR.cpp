@@ -31,15 +31,15 @@ GenBC_RCR::GenBC_RCR( const char * const &lpn_filename, const int &in_N,
   }
 
   // Check the file's bc_type matches RCR
-  if( bc_type.compare("RCR") ==0 
-      || bc_type.compare("rcr") == 0 
+  if( bc_type.compare("RCR") ==0
+      || bc_type.compare("rcr") == 0
       || bc_type.compare("Rcr") == 0 )
   {
-    Rd.resize( num_ebc ); C.resize( num_ebc ); 
+    Rd.resize( num_ebc ); C.resize( num_ebc );
     Rp.resize( num_ebc ); Pd.resize( num_ebc );
     Q0.resize( num_ebc ); Pi0.resize( num_ebc );
   }
-  else SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Resistance.\n", lpn_filename);
+  else SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_RCR.\n", lpn_filename);
 
   // Read files for each ebc to set the values of Rp, C, and Rd
   int counter = 0;
@@ -77,7 +77,7 @@ GenBC_RCR::GenBC_RCR( const char * const &lpn_filename, const int &in_N,
   {
     Q0[ii] = 0.0; Pi0[ii] = 0.0;
 
-    // Make sure C and Rd are nonzero  
+    // Make sure C and Rd are nonzero
     SYS_T::print_fatal_if(C[ii]==0.0, "Error: GenBC_RCR C cannot be zero.\n");
     SYS_T::print_fatal_if(Rd[ii]==0.0, "Error: GenBC_RCR Rd cannot be zero.\n");
   }
@@ -100,7 +100,7 @@ double GenBC_RCR::get_m( const int &ii, const double &in_dot_Q,
 {
   double diff = std::abs(in_Q) * relTol;
 
-  if( diff < absTol ) diff = absTol;  
+  if( diff < absTol ) diff = absTol;
 
   const double left  = get_P(ii, in_dot_Q, in_Q + 0.5 * diff);
   const double right = get_P(ii, in_dot_Q, in_Q - 0.5 * diff);
@@ -118,12 +118,12 @@ double GenBC_RCR::get_P( const int &ii, const double &in_dot_Q,
   const double fac38 = 3.0 / 8.0;
 
   double pi_m = Pi0[ii]; // Pi_m
-  
+
   // in_Q gives Q_N = Q_n+1, and Q0[ii] gives Q_0 = Q_n
   for(int mm=0; mm<N; ++mm)
   {
     const double Q_m = Q0[ii] + static_cast<double>(mm) * ( in_Q - Q0[ii] ) / static_cast<double>(N);
-    
+
     const double Q_mp1 = Q0[ii] + static_cast<double>(mm+1) * ( in_Q - Q0[ii] ) / static_cast<double>(N);
 
     const double K1 = F(ii, pi_m, Q_m );
@@ -131,10 +131,10 @@ double GenBC_RCR::get_P( const int &ii, const double &in_dot_Q,
     const double K2 = F(ii, pi_m + fac13 * K1 * h, fac23 * Q_m + fac13 * Q_mp1 );
 
     const double K3 = F(ii, pi_m - fac13 * K1 * h + K2 * h, fac13 * Q_m + fac23 * Q_mp1);
-  
+
     const double K4 = F(ii, pi_m + K1 * h - K2 * h + K3 * h, Q_mp1);
 
-    pi_m = pi_m + fac18 * K1 * h + fac38 * K2 * h + fac38 * K3 * h + fac18 * K4 * h; 
+    pi_m = pi_m + fac18 * K1 * h + fac38 * K2 * h + fac38 * K3 * h + fac18 * K4 * h;
   }
 
   return pi_m + Rp[ii] * in_Q + Pd[ii];
@@ -142,7 +142,7 @@ double GenBC_RCR::get_P( const int &ii, const double &in_dot_Q,
 
 
 void GenBC_RCR::reset_initial_sol( const int &ii, const double &in_Q_0,
-    const double &in_P_0 )
+    const double &in_P_0, const double &curr_time )
 {
   Q0[ii]  = in_Q_0;
 

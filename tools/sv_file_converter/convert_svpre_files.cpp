@@ -3,11 +3,11 @@
 // to locate the volumetric vtu, the inlet vtp, the wall vtp, and
 // the outlets' vtp files, and then make their indices strarting from
 // zero.
-// 
+//
 // This drive will read in the files listed in svpre_file.
 // The svpre_file will have 1 + 1 + 1 + num_outlet lines
 //
-// The following is very IMPORTANT!! 
+// The following is very IMPORTANT!!
 // Make sure the first line is the vtu volume file
 // the second line is the exterior wall vtp file
 // the third line is the inlet face vtp file
@@ -30,14 +30,14 @@ int main( int argc, char * argv[] )
   std::string wal_out_name("wall_vol.vtp");
   std::string inl_out_name("inflow_vol.vtp");
   std::string out_out_base("outflow_vol_");
-  
+
   PetscMPIInt size;
   PetscInitialize(&argc, &argv, (char *)0, PETSC_NULL);
 
   MPI_Comm_size(PETSC_COMM_WORLD, &size);
   SYS_T::print_fatal_if(size!=1,"ERROR: converter is a serial routine! \n");
-  
-  SYS_T::GetOptionString("-svpre_file", svpre_file); 
+
+  SYS_T::GetOptionString("-svpre_file", svpre_file);
   SYS_T::GetOptionString("-vol_geo_name", geo_out_name);
   SYS_T::GetOptionString("-inl_geo_name", inl_out_name);
   SYS_T::GetOptionString("-wal_geo_name", wal_out_name);
@@ -62,7 +62,7 @@ int main( int argc, char * argv[] )
   std::string sline;
 
   std::string column_1, column_2;
-  
+
   // Read vtu file
   std::getline(reader, sline);
   sstrm.str( sline );
@@ -90,7 +90,7 @@ int main( int argc, char * argv[] )
     SYS_T::print_fatal("Error: svpre 2nd line should be vtp file.\n");
 
   SYS_T::file_check(sur_file_wall);
- 
+
   // Read inlet vtp file
   std::getline(reader, sline);
   sstrm.str( sline );
@@ -103,8 +103,8 @@ int main( int argc, char * argv[] )
   else
     SYS_T::print_fatal("Error: svpre 3rd line should be vtp file.\n");
 
-  SYS_T::file_check(sur_file_in); 
-  
+  SYS_T::file_check(sur_file_in);
+
   // Read outlet files
   int num_outlet = 0;
   while( std::getline(reader, sline) )
@@ -115,12 +115,11 @@ int main( int argc, char * argv[] )
       sstrm >> column_1;
       sstrm >> column_2;
       sstrm.clear();
-
       if( column_1.compare("set_surface_id_vtp") == 0 )
       {
         sur_file_out.push_back( column_2 );
         num_outlet += 1;
-        SYS_T::file_check(column_2); 
+        SYS_T::file_check(column_2);
       }
       else
         SYS_T::print_fatal("Error: svpre line should be vtp file.\n");
