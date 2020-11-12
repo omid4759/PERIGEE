@@ -15,7 +15,7 @@ GenBC_Coronary::GenBC_Coronary( const char * const &lpn_filename, const int &in_
   std::istringstream sstrm;
   std::string sline;
   std::string bc_type;
-
+  //const PetscMPIInt rank = SYS_T::get_MPI_rank();
   tstart=0.0;
   tend=N*h;
   // The first non-commented lien should be
@@ -45,7 +45,7 @@ GenBC_Coronary::GenBC_Coronary( const char * const &lpn_filename, const int &in_
     tdata.resize(num_ebc);Pimdata.resize(num_ebc);
     Pimderdata.resize(num_ebc);prev_0D_sol.resize(num_ebc);
     dPimdt_k1.resize(num_ebc);dPimdt_k2.resize(num_ebc);dPimdt_k3.resize(num_ebc);
-    for(int ii =0;ii<2;++ii){
+    for(int ii =0;ii<num_ebc;++ii){
       prev_0D_sol[ii].resize(2);
       Pi0[ii].resize(2);
     }
@@ -60,6 +60,9 @@ GenBC_Coronary::GenBC_Coronary( const char * const &lpn_filename, const int &in_
 
   }
   else SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Coronary.\n", lpn_filename);
+
+
+
 
   // Read files for each ebc to set the values of Ra, Ca, Ra_micro, Cim,Rv, and Pd
   int counter = 0;
@@ -84,7 +87,7 @@ GenBC_Coronary::GenBC_Coronary( const char * const &lpn_filename, const int &in_
       sstrm >> Pd[ counter ];
       sstrm >> num_Pimdata[counter];
       sstrm >> alpha_Pim[counter];
-      printf("reading coronary outlet=%d Ra=%lf, Ca=%lf, Ramicro=%lf Cim=%lf RV=%lf Pd=%lf numPim=%d \n",counter,Ra[counter],Ca[counter],Ra_micro[counter],Cim[counter],Rv[counter],Pd[counter],num_Pimdata[counter]);
+     // printf("reading coronary outlet=%d Ra=%lf, Ca=%lf, Ramicro=%lf Cim=%lf RV=%lf Pd=%lf numPim=%d \n",counter,Ra[counter],Ca[counter],Ra_micro[counter],Cim[counter],Rv[counter],Pd[counter],num_Pimdata[counter]);
       SYS_T::print_fatal_if(num_Pimdata[counter]<=2 && num_Pimdata[counter]!=0, "Error: num of Pim data needs to be 0 for RCR or >2 for coronary  \n");
       if(num_Pimdata[counter]>0){
        data_size=num_Pimdata[counter];
@@ -106,7 +109,7 @@ GenBC_Coronary::GenBC_Coronary( const char * const &lpn_filename, const int &in_
         sstrm>>Pimdata[counter][ii];
         Pimdata[counter][ii]=Pimdata[counter][ii]*alpha_Pim[counter];
         sstrm.clear();
-        printf("Pim t=%lf Pim*alpha_Pim=%lf \n",tdata[counter][ii],Pimdata[counter][ii]);
+      //  printf("Pim t=%lf Pim*alpha_Pim=%lf \n",tdata[counter][ii],Pimdata[counter][ii]);
 
       }
       if(num_Pimdata[counter]>0){
@@ -121,6 +124,7 @@ GenBC_Coronary::GenBC_Coronary( const char * const &lpn_filename, const int &in_
     }
   }
 
+
   if(counter != num_ebc ) SYS_T::print_fatal("Error: GenBC_Coronary the input file %s does not contain complete data for outlet faces. \n", lpn_filename);
 
   reader.close();
@@ -131,6 +135,7 @@ GenBC_Coronary::GenBC_Coronary( const char * const &lpn_filename, const int &in_
   // 3D solutions.
   for(int ii=0; ii<num_ebc; ++ii)
   {
+
 
     Q0[ii] = 0.0;
     Pi0[ii][0] = 0.0;
@@ -147,6 +152,7 @@ GenBC_Coronary::GenBC_Coronary( const char * const &lpn_filename, const int &in_
 
 
   }
+
 
 }
 
@@ -185,6 +191,9 @@ double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
   const double fac18 = 1.0 / 8.0;
   const double fac38 = 3.0 / 8.0;
 
+  clock_t clock_start = clock();
+  clock_t clock_stop;
+  double tsec;
   //num_Pimdata indicates this is a rcr outlet
   if(num_Pimdata[ii]==0){
 
@@ -209,6 +218,9 @@ double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
   }
   prev_0D_sol[ii][0]=pi_m;
 
+   clock_stop = clock();
+  tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+  printf("RCR outlet=%d CPU time: %lf secs\n",ii, tsec);
 
   return pi_m + Ra[ii] * in_Q ;
   //return pi_m + Ra[ii] * in_Q + Pd[ii];
@@ -275,6 +287,9 @@ double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
   prev_0D_sol[ii][0]=pi_m[0];
   prev_0D_sol[ii][1]=pi_m[1];
 
+  clock_stop = clock();
+  tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+  printf("coronary outlet=%d CPU time: %lf secs\n",ii, tsec);
 
   return pi_m[0] + Ra[ii] * in_Q;
 
@@ -286,6 +301,12 @@ double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
 void GenBC_Coronary::reset_initial_sol( const int &ii, const double &in_Q_0,
     const double &in_P_0, const double &curr_time )
 {
+
+
+  clock_t clock_start = clock();
+  clock_t clock_stop;
+  double tsec;
+
   Q0[ii]  = in_Q_0;
 
   //when reset_initial_sol is called, use the last converged 0D solition as initial solutions.
@@ -307,7 +328,9 @@ void GenBC_Coronary::reset_initial_sol( const int &ii, const double &in_Q_0,
      get_dPimdt(ii);
     }
 
-
+    clock_stop = clock();
+  tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+  printf("reset initial_sol =%d CPU time: %lf secs\n",ii, tsec);
 }
 
 double GenBC_Coronary:: F(const int &ii, const double *pi, const double &q, const double &dPimdt, double * K)const
