@@ -84,6 +84,60 @@ class IGenBC
     {
       SYS_T::print_fatal("Error: IGenBC::reset_initial_sol is not implemented.\n");
     }
+    virtual void get_m( double * const &dot_Q, double * const &Q, double * const &m) const
+    {
+    // --------------------------------------------------------------
+    // Get the dP/d(dot_Q) for all outlet surfaces
+    // for implicit BC's, this value is defined via a difference quotient
+    // that is, (get_P(dot_Q+epsilon) - get_P(dot_Q)) / epsilon
+    // for simple models, e.g. inductance type bc, this value is just
+    // the inductance value on this bc.
+    // --------------------------------------------------------------
+      SYS_T::print_fatal("Error: IGenBC::get_m is not implemented.\n");
+    }
+
+    virtual void get_n( double * const &dot_Q, double * const &Q, double * const &m ) const
+    {
+    // --------------------------------------------------------------
+    // Get the P value for all outlet surfaces, the traction on the surface is
+    // modeled as h = P I
+    // for resistance bc, for example, this value is
+    // Resistance x Q + P_offset
+    // --------------------------------------------------------------
+
+    SYS_T::print_fatal("Error: IGenBC::get_n is not implemented.\n");
+    }
+    virtual void get_P(double * const &dot_Q, double * const &Q, double * const &P)const
+    {
+    // --------------------------------------------------------------
+    // Return the outlet pressures at the time step n, which is used as the
+    // initial value for ODE integration.
+    // For Resistance bc, it is Resistance x Q_previous + P_offset
+    SYS_T::print_fatal("Error: IGenBC::get_P is not implemented.\n");
+    }
+    virtual void get_P0( double * const &P0 )const
+    {
+
+    // --------------------------------------------------------------
+    // Record solution values as initial conditions for the next time step
+    // para ii : the outlet face id, ranging from 0 to num_ebc - 1
+    // in_Q_0 : the initial value for the ODE integration of flow rate
+    // in_P_0 : the initial value for the ODE integration of averaged Pressure
+    // For problems like RCR, it is often convenient to integrate the
+    // ODE for Pi, the pressure over the capacitor. So, there can be
+    // more data to be initialized. Check the details of each class
+    // implementation.
+    // --------------------------------------------------------------
+    SYS_T::print_fatal("Error: IGenBC::get_P0 is not implemented.\n");
+    }
+    virtual void reset_initial_sol( double * const &in_Q_0,
+       double * const &in_P_0, const double &curr_time )
+    {
+      SYS_T::print_fatal("Error: IGenBC::reset_initial_sol is not implemented.\n");
+    }
+
+
+
 };
 
 #endif

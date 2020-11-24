@@ -62,6 +62,55 @@ class GenBC_Inductance : public IGenBC
       P0[ii] = in_P_0;
     }
 
+
+    virtual void get_m( double * const &dot_Q, double * const&Q , double * const &m ) const
+    {
+      for(int ii=0;ii<num_ebc;++ii){
+        m[ii]=0.0;
+      }
+    }
+
+    // We do not perform boundary check. Users are responsible to
+    // make sure 0 <= ii < num_ebc;
+    virtual void get_n( double * const &dot_Q, double * const &Q, double * const & n ) const
+    {
+      for(int ii=0;ii<num_ebc;++ii){
+        n[ii]= induct[ii];
+      }
+    }
+
+
+    // We do not perform boundary check. Users are responsible to
+    // make sure 0 <= ii < num_ebc;
+    virtual void get_P( double * const &dot_Q, double *const &Q, double * const &P )const
+    {
+      for(int ii=0;ii<num_ebc;++ii){
+       P[ii]=induct[ii] * dot_Q[ii] + pres_offset[ii];
+      }
+    }
+
+    virtual void get_P0( double * const &Pn ) const
+    {
+      for (int ii=0;ii<num_ebc;++ii){
+        Pn[ii]= P0[ii];
+      }
+    }
+
+    virtual void reset_initial_sol( const int &ii,  double * const &in_Q_0,
+      double *  const &in_P_0,const double &curr_time )
+    {
+      for (int ii=0;ii<num_ebc;++ii){
+       Q0[ii] = in_Q_0[ii];
+       P0[ii] = in_P_0[ii];
+      }
+    }
+
+
+
+
+
+
+
   private:
     int num_ebc; // number of elemental boundary faces
 

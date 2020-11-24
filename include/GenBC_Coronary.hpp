@@ -46,6 +46,33 @@ class GenBC_Coronary : public IGenBC
     virtual void reset_initial_sol( const int &ii, const double &in_Q_0,
         const double &in_P_0, const double & curr_time );
 
+    virtual void get_m( double * const &in_dot_Q,
+       double * const &in_Q, double * const &m ) const ;
+
+    virtual void get_n( double * const &in_dot_Q,
+       double * const &in_Q, double * const &n ) const
+    {
+      for(int ii=0;ii<num_ebc;++ii){
+       n[ii]=0.0;
+      }
+    }
+
+    // Obtain P in order to the define the outlet traction for the ii-th
+    // outlet surface
+
+    virtual void get_P( double * const &in_dot_Q,
+       double * const &in_Q, double * const &P ) const;
+
+
+    virtual void get_P0( double * const &Pn ) const
+    {
+      for (int ii=0;ii<num_ebc;++ii){
+       Pn[ii]= Q0[ii] * Ra[ii] + Pi0[ii][0]  ;
+      }
+    }
+
+    virtual void reset_initial_sol( double * const &in_Q_0,
+        double * const &in_P_0, const double & curr_time );
   private:
     const int N;
 

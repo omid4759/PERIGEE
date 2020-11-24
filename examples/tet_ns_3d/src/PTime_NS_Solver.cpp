@@ -109,6 +109,12 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
 
   bool rest_flag = restart_init_assembly_flag;
 
+  double * dot_face_flrate=new double[ebc_part -> get_num_ebc()];
+  double * face_flrate=new double[ebc_part -> get_num_ebc()];
+  double * face_avepre=new double[ebc_part -> get_num_ebc()];
+  double * lpn_pressure=new double[ebc_part -> get_num_ebc()];
+
+
   SYS_T::commPrint("Time = %e, dt = %e, index = %d, %s \n",
       time_info->get_time(), time_info->get_step(), time_info->get_index(),
       SYS_T::get_time().c_str());
@@ -156,25 +162,28 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
     for(int face=0; face<ebc_part -> get_num_ebc(); ++face)
     {
       // Calculate the 3D dot flow rate on the outlet
-      const double dot_face_flrate = gassem_ptr -> Assem_surface_flowrate(
+         dot_face_flrate[face] = gassem_ptr -> Assem_surface_flowrate(
           cur_dot_sol, lassem_fluid_ptr, elements, quad_s, ebc_part, face);
 
       // Calculate the 3D flow rate on the outlet
-      const double face_flrate = gassem_ptr -> Assem_surface_flowrate(
+         face_flrate[face] = gassem_ptr -> Assem_surface_flowrate(
           cur_sol, lassem_fluid_ptr, elements, quad_s, ebc_part, face);
 
       // Calculate the 3D averaged pressure on the outlet
-      const double face_avepre = gassem_ptr -> Assem_surface_ave_pressure(
+         face_avepre[face] = gassem_ptr -> Assem_surface_ave_pressure(
           cur_sol, lassem_fluid_ptr, elements, quad_s, ebc_part, face);
-
+    }
       // Calculate the 0D pressure from LPN model
-      const double dot_lpn_flowrate = dot_face_flrate;
-      const double lpn_flowrate = face_flrate;
-      const double lpn_pressure = gbc -> get_P( face, dot_lpn_flowrate, lpn_flowrate );
+
+      gbc -> get_P( dot_face_flrate, face_flrate,lpn_pressure );
 
       // Update the initial values in genbc
-      gbc -> reset_initial_sol( face, lpn_flowrate, lpn_pressure,time_info->get_time());
+      gbc -> reset_initial_sol(face_flrate, lpn_pressure,time_info->get_time());
 
+
+
+    for(int face=0; face<ebc_part -> get_num_ebc(); ++face)
+    {
       // On the CPU 0, write the time, flow rate, averaged pressure, and 0D
       // calculated pressure into the txt file, which is first generated in the
       // driver
@@ -184,7 +193,7 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
       {
         std::ofstream ofile;
         ofile.open( ebc_part->gen_flowfile_name(face).c_str(), std::ofstream::out | std::ofstream::app );
-        ofile<<time_info->get_index()<<'\t'<<time_info->get_time()<<'\t'<<dot_face_flrate<<'\t'<<face_flrate<<'\t'<<face_avepre<<'\t'<<lpn_pressure<<'\n';
+        ofile<<time_info->get_index()<<'\t'<<time_info->get_time()<<'\t'<<dot_face_flrate[face]<<'\t'<<face_flrate[face]<<'\t'<<face_avepre[face]<<'\t'<<lpn_pressure[face]<<'\n';
         ofile.close();
       }
       MPI_Barrier(PETSC_COMM_WORLD);
@@ -214,6 +223,12 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
   }
 
   delete pre_sol; delete cur_sol; delete pre_dot_sol; delete cur_dot_sol;
+
+  delete [] dot_face_flrate; dot_face_flrate=nullptr;
+  delete [] face_flrate; face_flrate=nullptr;
+  delete [] face_avepre; face_avepre=nullptr;
+  delete [] lpn_pressure; lpn_pressure=nullptr;
+
 }
 
 // EOF

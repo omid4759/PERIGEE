@@ -109,6 +109,46 @@ double GenBC_RCR::get_m( const int &ii, const double &in_dot_Q,
 }
 
 
+
+void GenBC_RCR::get_m( double * const &in_dot_Q, double * const &in_Q,
+ double * const &m ) const
+{
+
+
+  double * in_Q_1=new double[num_ebc];
+  double * in_Q_2=new double[num_ebc];
+  double * left=new double[num_ebc];
+  double * right=new double[num_ebc];
+  double * diff=new double[num_ebc];
+  for (int ii=0;ii<num_ebc;ii++){
+   diff[ii] = std::abs(in_Q[ii]) * relTol;
+   if( diff[ii] < absTol ) diff[ii] = absTol;
+   in_Q_1[ii]=in_Q[ii]+0.5*diff[ii];
+   in_Q_2[ii]=in_Q[ii]-0.5*diff[ii];
+  }
+   get_P(in_dot_Q,in_Q_1,left);
+   get_P(in_dot_Q,in_Q_2,right);
+
+  for(int ii =0; ii<num_ebc;++ii){
+
+   m[ii]=(left[ii] - right[ii]) / diff[ii];
+  }
+
+  delete [] in_Q_1;
+  in_Q_1=nullptr;
+  delete [] in_Q_2;
+  in_Q_2=nullptr;
+  delete [] left;
+  left=nullptr;
+  delete [] right;
+  right=nullptr;
+  delete [] diff;
+  diff=nullptr;
+
+}
+
+
+
 double GenBC_RCR::get_P( const int &ii, const double &in_dot_Q,
    const double &in_Q ) const
 {
@@ -141,12 +181,61 @@ double GenBC_RCR::get_P( const int &ii, const double &in_dot_Q,
 }
 
 
+void GenBC_RCR::get_P( double * const &in_dot_Q,
+   double * const &in_Q, double * const & P ) const
+{
+  const double fac13 = 1.0 / 3.0;
+  const double fac23 = 2.0 / 3.0;
+  const double fac18 = 1.0 / 8.0;
+  const double fac38 = 3.0 / 8.0;
+
+  double pi_m;
+  for (int ii=0;ii<num_ebc;++ii){
+     pi_m = Pi0[ii]; // Pi_m
+
+  // in_Q gives Q_N = Q_n+1, and Q0[ii] gives Q_0 = Q_n
+  for(int mm=0; mm<N; ++mm)
+  {
+    const double Q_m = Q0[ii] + static_cast<double>(mm) * ( in_Q[ii] - Q0[ii] ) / static_cast<double>(N);
+
+    const double Q_mp1 = Q0[ii] + static_cast<double>(mm+1) * ( in_Q[ii] - Q0[ii] ) / static_cast<double>(N);
+
+    const double K1 = F(ii, pi_m, Q_m );
+
+    const double K2 = F(ii, pi_m + fac13 * K1 * h, fac23 * Q_m + fac13 * Q_mp1 );
+
+    const double K3 = F(ii, pi_m - fac13 * K1 * h + K2 * h, fac13 * Q_m + fac23 * Q_mp1);
+
+    const double K4 = F(ii, pi_m + K1 * h - K2 * h + K3 * h, Q_mp1);
+
+    pi_m = pi_m + fac18 * K1 * h + fac38 * K2 * h + fac38 * K3 * h + fac18 * K4 * h;
+  }
+    P[ii]=pi_m + Rp[ii] * in_Q[ii] + Pd[ii];;
+
+ }
+
+}
+
+
+
+
 void GenBC_RCR::reset_initial_sol( const int &ii, const double &in_Q_0,
     const double &in_P_0, const double &curr_time )
 {
   Q0[ii]  = in_Q_0;
 
   Pi0[ii] = in_P_0 - in_Q_0 * Rp[ii] - Pd[ii];
+}
+
+
+void GenBC_RCR::reset_initial_sol( double * const &in_Q_0,
+    double * const &in_P_0, const double &curr_time )
+{
+  for(int ii=0;ii<num_ebc;++ii){
+  Q0[ii]  = in_Q_0[ii];
+
+  Pi0[ii] = in_P_0[ii] - in_Q_0[ii] * Rp[ii] - Pd[ii];
+  }
 }
 
 // EOF

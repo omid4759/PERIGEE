@@ -182,6 +182,44 @@ double GenBC_Coronary::get_m( const int &ii, const double &in_dot_Q,
 }
 
 
+void GenBC_Coronary::get_m( double * const &in_dot_Q,
+ double * const &in_Q, double * const &m ) const
+{
+
+
+  double * in_Q_1=new double[num_ebc];
+  double * in_Q_2=new double[num_ebc];
+  double * left=new double[num_ebc];
+  double * right=new double[num_ebc];
+  double * diff =new double[num_ebc];
+  for (int ii=0;ii<num_ebc;ii++){
+   diff[ii] = std::abs(in_Q[ii]) * relTol;
+   if( diff[ii] < absTol ) diff[ii] = absTol;
+   in_Q_1[ii]=in_Q[ii]+0.5*diff[ii];
+   in_Q_2[ii]=in_Q[ii]-0.5*diff[ii];
+  }
+   get_P(in_dot_Q,in_Q_1,left);
+   get_P(in_dot_Q,in_Q_2,right);
+
+  for(int ii =0; ii<num_ebc;++ii){
+   m[ii]=(left[ii] - right[ii]) / diff[ii];
+  }
+
+  delete [] in_Q_1;
+  in_Q_1=nullptr;
+  delete [] in_Q_2;
+  in_Q_2=nullptr;
+  delete [] left;
+  left=nullptr;
+  delete [] right;
+  right=nullptr;
+  delete[] diff;
+  diff=nullptr;
+}
+
+
+
+
 double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
    const double &in_Q ) const
 {
@@ -191,9 +229,9 @@ double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
   const double fac18 = 1.0 / 8.0;
   const double fac38 = 3.0 / 8.0;
 
-  clock_t clock_start = clock();
-  clock_t clock_stop;
-  double tsec;
+  //clock_t clock_start = clock();
+  //clock_t clock_stop;
+  //double tsec;
   //num_Pimdata indicates this is a rcr outlet
   if(num_Pimdata[ii]==0){
 
@@ -218,9 +256,9 @@ double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
   }
   prev_0D_sol[ii][0]=pi_m;
 
-   clock_stop = clock();
-  tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
-  printf("RCR outlet=%d CPU time: %lf secs\n",ii, tsec);
+  //clock_stop = clock();
+  //tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+  //printf("RCR outlet=%d CPU time: %lf secs\n",ii, tsec);
 
   return pi_m + Ra[ii] * in_Q ;
   //return pi_m + Ra[ii] * in_Q + Pd[ii];
@@ -287,9 +325,9 @@ double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
   prev_0D_sol[ii][0]=pi_m[0];
   prev_0D_sol[ii][1]=pi_m[1];
 
-  clock_stop = clock();
-  tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
-  printf("coronary outlet=%d CPU time: %lf secs\n",ii, tsec);
+  //clock_stop = clock();
+  //tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+  //printf("coronary outlet=%d CPU time: %lf secs\n",ii, tsec);
 
   return pi_m[0] + Ra[ii] * in_Q;
 
@@ -297,15 +335,139 @@ double GenBC_Coronary::get_P( const int &ii, const double &in_dot_Q,
 
 }
 
+void GenBC_Coronary::get_P( double * const &in_dot_Q,
+   double * const &in_Q, double * const &P ) const
+{
+
+  const double fac13 = 1.0 / 3.0;
+  const double fac23 = 2.0 / 3.0;
+  const double fac18 = 1.0 / 8.0;
+  const double fac38 = 3.0 / 8.0;
+
+  //clock_t clock_start = clock();
+  //clock_t clock_stop;
+  //double tsec;
+  //num_Pimdata indicates this is a rcr outlet
+
+
+
+  for(int ii=0;ii<num_ebc;++ii){
+
+   if(num_Pimdata[ii]==0){
+
+    double pi_m = Pi0[ii][0]; // Pi_m
+
+  // in_Q gives Q_N = Q_n+1, and Q0[ii] gives Q_0 = Q_n
+   for(int mm=0; mm<N; ++mm)
+   {
+    const double Q_m = Q0[ii] + static_cast<double>(mm) * ( in_Q[ii] - Q0[ii] ) / static_cast<double>(N);
+
+    const double Q_mp1 = Q0[ii] + static_cast<double>(mm+1) * ( in_Q[ii] - Q0[ii] ) / static_cast<double>(N);
+
+    const double K1 = F(ii, pi_m, Q_m );
+
+    const double K2 = F(ii, pi_m + fac13 * K1 * h, fac23 * Q_m + fac13 * Q_mp1 );
+
+    const double K3 = F(ii, pi_m - fac13 * K1 * h + K2 * h, fac13 * Q_m + fac23 * Q_mp1);
+
+    const double K4 = F(ii, pi_m + K1 * h - K2 * h + K3 * h, Q_mp1);
+
+    pi_m = pi_m + fac18 * K1 * h + fac38 * K2 * h + fac38 * K3 * h + fac18 * K4 * h;
+   }
+   prev_0D_sol[ii][0]=pi_m;
+
+  //clock_stop = clock();
+  //tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+  //printf("RCR outlet=%d CPU time: %lf secs\n",ii, tsec);
+
+   P[ii]= pi_m + Ra[ii] * in_Q[ii] ;
+  //return pi_m + Ra[ii] * in_Q + Pd[ii];
+    }else{
+
+      double pi_m[2];
+
+    //initial Pressures at Ca and Cim
+     pi_m[0]= Pi0[ii][0];
+     pi_m[1]= Pi0[ii][1];
+
+  // in_Q gives Q_N = Q_n+1, and Q0[ii] gives Q_0 = Q_n
+
+
+
+     double K1[2],K2[2],K3[2],K4[2];
+     double pi_tmp[2];
+
+
+     for(int mm=0; mm<N; ++mm)
+     {
+       const double Q_m = Q0[ii] + static_cast<double>(mm) * ( in_Q[ii] - Q0[ii] ) / static_cast<double>(N);
+
+       const double Q_mp1 = Q0[ii] + static_cast<double>(mm+1) * ( in_Q[ii] - Q0[ii] ) / static_cast<double>(N);
+
+
+       F(ii, pi_m, Q_m, dPimdt_k1[ii][mm],K1 );
+
+
+      for(int j =0; j<2; ++j){
+         pi_tmp[j]=pi_m[j]+fac13*K1[j]*h;
+         }
+
+      F(ii, pi_tmp , fac23 * Q_m + fac13 * Q_mp1,dPimdt_k2[ii][mm],K2);
+
+
+      for(int j =0; j<2; ++j){
+        pi_tmp[j]=pi_m[j]-fac13*K1[j]*h+K2[j]*h;
+
+       }
+
+
+      F(ii, pi_tmp , fac13 * Q_m + fac23 * Q_mp1,dPimdt_k3[ii][mm],K3 );
+
+
+      for(int j =0; j<2; ++j){
+       pi_tmp[j]=pi_m[j] + K1[j] * h - K2[j] * h + K3[j] * h;
+      }
+
+
+       F(ii, pi_tmp, Q_mp1, dPimdt_k1[ii][mm+1],K4);
+
+
+
+      for(int j =0; j<2; ++j){
+        pi_m[j] = pi_m[j] + fac18 * K1[j] * h + fac38 * K2[j] * h + fac38 * K3[j] * h + fac18 * K4[j] * h;
+       }
+     }
+
+
+
+     prev_0D_sol[ii][0]=pi_m[0];
+     prev_0D_sol[ii][1]=pi_m[1];
+
+  //clock_stop = clock();
+  //tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+  //printf("coronary outlet=%d CPU time: %lf secs\n",ii, tsec);
+
+     P[ii]= pi_m[0] + Ra[ii] * in_Q[ii];
+
+
+
+    }
+
+  }
+
+
+  //return pi_m[0] + Ra[ii] * in_Q + Pd[ii];
+
+}
 
 void GenBC_Coronary::reset_initial_sol( const int &ii, const double &in_Q_0,
     const double &in_P_0, const double &curr_time )
 {
 
 
-  clock_t clock_start = clock();
-  clock_t clock_stop;
-  double tsec;
+  //clock_t clock_start = clock();
+  //clock_t clock_stop;
+  //double tsec;
 
   Q0[ii]  = in_Q_0;
 
@@ -328,10 +490,52 @@ void GenBC_Coronary::reset_initial_sol( const int &ii, const double &in_Q_0,
      get_dPimdt(ii);
     }
 
-    clock_stop = clock();
-  tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
-  printf("reset initial_sol =%d CPU time: %lf secs\n",ii, tsec);
+ // clock_stop = clock();
+ // tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+ // printf("reset initial_sol =%d CPU time: %lf secs\n",ii, tsec);
 }
+
+
+
+void GenBC_Coronary::reset_initial_sol( double * const &in_Q_0,
+    double * const &in_P_0, const double &curr_time )
+{
+
+
+  //clock_t clock_start = clock();
+  //clock_t clock_stop;
+  //double tsec;
+
+ for(int ii=0;ii<num_ebc;++ii){
+  Q0[ii]  = in_Q_0[ii];
+
+  //when reset_initial_sol is called, use the last converged 0D solition as initial solutions.
+  Pi0[ii][0] = prev_0D_sol[ii][0];
+  //Pi0[ii][0] = in_P_0-in_Q_0*Ra[ii];
+
+  Pi0[ii][1] = prev_0D_sol[ii][1];
+
+
+  //Pi0[ii][0] = in_P_0 - in_Q_0 * Ra[ii] - Pd[ii];
+
+
+  if(ii==0){
+  tstart=curr_time;
+  tend=curr_time+N*h;
+   }
+
+  if(num_Pimdata[ii]>2){
+     get_dPimdt(ii);
+    }
+}
+ // clock_stop = clock();
+ // tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+ // printf("reset initial_sol =%d CPU time: %lf secs\n",ii, tsec);
+}
+
+
+
+
 
 double GenBC_Coronary:: F(const int &ii, const double *pi, const double &q, const double &dPimdt, double * K)const
 {

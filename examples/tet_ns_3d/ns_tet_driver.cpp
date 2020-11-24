@@ -411,24 +411,34 @@ int main(int argc, char *argv[])
 
   tsolver->print_info();
 
+  double * dot_face_flrate=new double[locebc->get_num_ebc()];
+  double * face_flrate=new double[locebc->get_num_ebc()];
+  double * face_avepre=new double[locebc->get_num_ebc()];
+  double * lpn_pressure=new double[locebc->get_num_ebc()];
+
+
   // ===== Outlet data recording files =====
   for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
   {
-    const double dot_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
+     dot_face_flrate[ff] = gloAssem_ptr -> Assem_surface_flowrate(
         dot_sol, locAssem_ptr, elements, quads, locebc, ff );
 
-    const double face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
+     face_flrate[ff] = gloAssem_ptr -> Assem_surface_flowrate(
         sol, locAssem_ptr, elements, quads, locebc, ff );
 
-    const double face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
+     face_avepre[ff] = gloAssem_ptr -> Assem_surface_ave_pressure(
         sol, locAssem_ptr, elements, quads, locebc, ff );
+   }
 
     // set the gbc initial conditions using the 3D data
-    gbc -> reset_initial_sol( ff, face_flrate, face_avepre,initial_time );
+    gbc -> reset_initial_sol(face_flrate, face_avepre,initial_time );
 
-    const double dot_lpn_flowrate = dot_face_flrate;
-    const double lpn_flowrate = face_flrate;
-    const double lpn_pressure = gbc -> get_P( ff, dot_lpn_flowrate, lpn_flowrate );
+    gbc -> get_P( dot_face_flrate, face_flrate,lpn_pressure );
+
+
+  for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
+  {
+
 
     // Create the txt files and write the initial flow rates
     if(rank == 0)
@@ -446,12 +456,18 @@ int main(int argc, char *argv[])
       if( !is_restart )
       {
         ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"dot Flow rate"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\t'<<"Reduced model pressure"<<'\n';
-        ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<dot_face_flrate<<'\t'<<face_flrate<<'\t'<<face_avepre<<'\t'<<lpn_pressure<<'\n';
+        ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<dot_face_flrate[ff]<<'\t'<<face_flrate[ff]<<'\t'<<face_avepre[ff]<<'\t'<<lpn_pressure[ff]<<'\n';
       }
 
       ofile.close();
     }
   }
+
+
+  delete [] dot_face_flrate; dot_face_flrate=nullptr;
+  delete [] face_flrate; face_flrate=nullptr;
+  delete [] face_avepre; face_avepre=nullptr;
+  delete [] lpn_pressure; lpn_pressure=nullptr;
 
   MPI_Barrier(PETSC_COMM_WORLD);
 

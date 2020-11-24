@@ -14,7 +14,7 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
     const int &in_nz_estimate )
 : nLocBas( agmi_ptr->get_nLocBas() ),
   dof_sol( pnode_ptr->get_dof() ),
-  dof_mat_v( locassem_ptr->get_dof_mat_0() ), 
+  dof_mat_v( locassem_ptr->get_dof_mat_0() ),
   dof_mat_p( locassem_ptr->get_dof_mat_1() ),
   num_ebc( part_ebc->get_num_ebc() ),
   nlgn( pnode_ptr->get_nlocghonode() ),
@@ -35,28 +35,28 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
     SYS_T::print_fatal_if(snLocBas != part_ebc->get_cell_nLocBas(ebc_id),
         "Error: in PGAssem_NS_FEM, snLocBas has to be uniform. \n");
 
-  const int nlocrow_v  = dof_mat_v * pnode_ptr->get_nlocalnode(); 
+  const int nlocrow_v  = dof_mat_v * pnode_ptr->get_nlocalnode();
   const int nlocrow_p  = dof_mat_p * pnode_ptr->get_nlocalnode();
 
   // Allocate the block matrices
   // D matrix
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_p, nlocrow_p, PETSC_DETERMINE,
-      PETSC_DETERMINE, dof_mat_p*in_nz_estimate, NULL, 
+      PETSC_DETERMINE, dof_mat_p*in_nz_estimate, NULL,
       dof_mat_p*in_nz_estimate, NULL, &subK[0]);
-  
+
   // C matrix
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_p, nlocrow_v, PETSC_DETERMINE,
-      PETSC_DETERMINE, dof_mat_p*in_nz_estimate, NULL, 
+      PETSC_DETERMINE, dof_mat_p*in_nz_estimate, NULL,
       dof_mat_v*in_nz_estimate, NULL, &subK[1]);
 
   // B matrix
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_v, nlocrow_p, PETSC_DETERMINE,
-      PETSC_DETERMINE, dof_mat_v*in_nz_estimate, NULL, 
+      PETSC_DETERMINE, dof_mat_v*in_nz_estimate, NULL,
       dof_mat_p*in_nz_estimate, NULL, &subK[2]);
 
   // A matrix
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_v, nlocrow_v, PETSC_DETERMINE,
-      PETSC_DETERMINE, dof_mat_v*in_nz_estimate, NULL, 
+      PETSC_DETERMINE, dof_mat_v*in_nz_estimate, NULL,
       dof_mat_v*in_nz_estimate, NULL, &subK[3]);
 
   // Allocate the sub-vectors
@@ -71,7 +71,7 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
 
   VecSet(subG[0], 0.0);
   VecSet(subG[1], 0.0);
-  
+
   VecSetOption(subG[0], VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetOption(subG[1], VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
 
@@ -88,17 +88,17 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
 
   // Reallocate matrices with precise preallocation
   std::vector<int> Kdnz, Konz;
-  
+
   PETSc_T::Get_dnz_onz(subK[0], Kdnz, Konz);
   MatDestroy(&subK[0]);
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_p, nlocrow_p, PETSC_DETERMINE,
       PETSC_DETERMINE, 0, &Kdnz[0], 0, &Konz[0], &subK[0]);
-  
+
   PETSc_T::Get_dnz_onz(subK[1], Kdnz, Konz);
   MatDestroy(&subK[1]);
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_p, nlocrow_v, PETSC_DETERMINE,
       PETSC_DETERMINE, 0, &Kdnz[0], 0, &Konz[0], &subK[1]);
-  
+
   PETSc_T::Get_dnz_onz(subK[2], Kdnz, Konz);
   MatDestroy(&subK[2]);
   MatCreateAIJ(PETSC_COMM_WORLD, nlocrow_v, nlocrow_p, PETSC_DETERMINE,
@@ -111,15 +111,15 @@ PGAssem_2x2Block_NS_FEM::PGAssem_2x2Block_NS_FEM(
 
   // Put them together as a nested matrix
   MatCreateNest(PETSC_COMM_WORLD, 2, NULL, 2, NULL, subK, &K);
- 
-  // Get the index set for the nest matrix 
+
+  // Get the index set for the nest matrix
   MatNestGetISs(K, is, NULL);
 }
 
 
 PGAssem_2x2Block_NS_FEM::~PGAssem_2x2Block_NS_FEM()
 {
-  VecDestroy(&subG[0]); VecDestroy(&subG[1]); 
+  VecDestroy(&subG[0]); VecDestroy(&subG[1]);
   VecDestroy(&G);
   MatDestroy(&subK[0]); MatDestroy(&subK[1]);
   MatDestroy(&subK[2]); MatDestroy(&subK[3]);
@@ -264,7 +264,7 @@ void PGAssem_2x2Block_NS_FEM::Assem_nonzero_estimate(
       row_idx_v[3*ii]   = 3 * nbc_part->get_LID( 1, loc_index );
       row_idx_v[3*ii+1] = 3 * nbc_part->get_LID( 2, loc_index ) + 1;
       row_idx_v[3*ii+2] = 3 * nbc_part->get_LID( 3, loc_index ) + 2;
-      
+
       row_idx_p[ii] = nbc_part->get_LID( 0, loc_index );
     }
 
@@ -428,7 +428,7 @@ void PGAssem_2x2Block_NS_FEM::Assem_residual(
 
     lassem_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
         elementv, ectrl_x, ectrl_y, ectrl_z, quad_v);
-  
+
     for(int ii=0; ii<nLocBas; ++ii)
     {
       const int loc_index  = lien_ptr->get_LIEN(ee, ii);
@@ -513,9 +513,9 @@ void PGAssem_2x2Block_NS_FEM::Assem_tangent_residual(
     GetLocal(array_a, IEN_e, local_a);
     GetLocal(array_b, IEN_e, local_b);
     fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_e, ectrl_x, ectrl_y, ectrl_z);
- 
+
     lassem_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
-        elementv, ectrl_x, ectrl_y, ectrl_z, quad_v); 
+        elementv, ectrl_x, ectrl_y, ectrl_z, quad_v);
 
     for(int ii=0; ii<nLocBas; ++ii)
     {
@@ -610,7 +610,7 @@ void PGAssem_2x2Block_NS_FEM::NatBC_G( const double &curr_time, const double &dt
 }
 
 
-void PGAssem_2x2Block_NS_FEM::BackFlow_G( 
+void PGAssem_2x2Block_NS_FEM::BackFlow_G(
     const PDNSolution * const &dot_sol,
     const PDNSolution * const &sol,
     IPLocAssem_2x2Block * const &lassem_ptr,
@@ -959,23 +959,39 @@ void PGAssem_2x2Block_NS_FEM::NatBC_Resis_G(
   double * sctrl_z = new double [snLocBas];
   PetscInt * srow_index_v = new PetscInt [snLocBas * 3];
 
+
+
+  double * dot_flrate=new double[num_ebc];
+  double * flrate=new double[num_ebc];
+  double * P_n=new double[num_ebc];
+  double * P_np1=new double[num_ebc];
+
+
+
+
   for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
   {
     // Calculate dot flow rate for face with ebc_id from solution vector dot_sol
-    const double dot_flrate = Assem_surface_flowrate( dot_sol, lassem_ptr, 
-        element_s, quad_s, ebc_part, ebc_id ); 
-
-    // Calculate flow rate for face with ebc_id from solution vector sol
-    const double flrate = Assem_surface_flowrate( sol, lassem_ptr,
+     dot_flrate[ebc_id] = Assem_surface_flowrate( dot_sol, lassem_ptr,
         element_s, quad_s, ebc_part, ebc_id );
 
-    // Get the (pressure) value on the outlet surface for traction evaluation    
-    const double P_n   = gbc -> get_P0( ebc_id );
-    const double P_np1 = gbc -> get_P( ebc_id, dot_flrate, flrate );
+    // Calculate flow rate for face with ebc_id from solution vector sol
+     flrate[ebc_id] = Assem_surface_flowrate( sol, lassem_ptr,
+        element_s, quad_s, ebc_part, ebc_id );
+
+
+   }
+    // Get the (pressure) value on the outlet surface for traction evaluation
+    gbc -> get_P0(P_n);
+    gbc -> get_P(dot_flrate, flrate,P_np1);
+
+
+   for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
+  {
 
     // P_n+alpha_f
-    // lassem_ptr->get_model_para_1() gives alpha_f 
-    const double val = P_n + lassem_ptr->get_model_para_1() * (P_np1 - P_n);
+    // lassem_ptr->get_model_para_1() gives alpha_f
+    const double val = P_n[ebc_id] + lassem_ptr->get_model_para_1() * (P_np1[ebc_id] - P_n[ebc_id]);
 
     const int num_sele = ebc_part -> get_num_local_cell(ebc_id);
     for(int ee=0; ee<num_sele; ++ee)
@@ -983,7 +999,7 @@ void PGAssem_2x2Block_NS_FEM::NatBC_Resis_G(
       ebc_part -> get_SIEN(ebc_id, ee, LSIEN);
       ebc_part -> get_ctrlPts_xyz(ebc_id, ee, sctrl_x, sctrl_y, sctrl_z);
 
-      // Here, val is Pressure, and is used as the surface traction h = P I 
+      // Here, val is Pressure, and is used as the surface traction h = P I
       // to calculate the boundary integral
       lassem_ptr->Assem_Residual_EBC_Resistance(ebc_id, val,
           element_s, sctrl_x, sctrl_y, sctrl_z, quad_s);
@@ -1004,6 +1020,12 @@ void PGAssem_2x2Block_NS_FEM::NatBC_Resis_G(
   delete [] sctrl_y; sctrl_y = nullptr;
   delete [] sctrl_z; sctrl_z = nullptr;
   delete [] srow_index_v; srow_index_v = nullptr;
+
+  delete [] dot_flrate; dot_flrate=nullptr;
+  delete [] flrate; flrate=nullptr;
+  delete [] P_n; P_n=nullptr;
+  delete [] P_np1; P_np1=nullptr;
+
 }
 
 
@@ -1037,34 +1059,55 @@ void PGAssem_2x2Block_NS_FEM::NatBC_Resis_KG(
   double * sctrl_y = new double [snLocBas];
   double * sctrl_z = new double [snLocBas];
 
+
+  double * dot_flrate=new double[num_ebc];
+  double * flrate=new double[num_ebc];
+  double * P_n=new double[num_ebc];
+  double * P_np1=new double[num_ebc];
+  double * m_val=new double[num_ebc];
+  double * n_val=new double[num_ebc];
+
   for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
   {
     // Calculate dot flow rate for face with ebc_id and MPI_Allreduce them
     // Here, dot_sol is the solution at time step n+1 (not n+alpha_f!)
-    const double dot_flrate = Assem_surface_flowrate( dot_sol, lassem_ptr, 
-        element_s, quad_s, ebc_part, ebc_id ); 
+   // const double dot_flrate = Assem_surface_flowrate( dot_sol, lassem_ptr,
+   //     element_s, quad_s, ebc_part, ebc_id );
+      dot_flrate[ebc_id] = Assem_surface_flowrate( dot_sol, lassem_ptr,
+        element_s, quad_s, ebc_part, ebc_id );
+
 
     // Calculate flow rate for face with ebc_id and MPI_Allreduce them
     // Here, sol is the solution at time step n+1 (not n+alpha_f!)
-    const double flrate = Assem_surface_flowrate( sol, lassem_ptr,
+  //  const double flrate = Assem_surface_flowrate( sol, lassem_ptr,
+   //     element_s, quad_s, ebc_part, ebc_id );
+
+      flrate[ebc_id] = Assem_surface_flowrate( sol, lassem_ptr,
         element_s, quad_s, ebc_part, ebc_id );
 
-    // Get the (pressure) value on the outlet surface for traction evaluation    
-    const double P_n   = gbc -> get_P0( ebc_id );
-    const double P_np1 = gbc -> get_P( ebc_id, dot_flrate, flrate );
+   }
 
-    // P_n+alpha_f 
-    const double resis_val = P_n + a_f * (P_np1 - P_n);
+    // Get the (pressure) value on the outlet surface for traction evaluation
+    gbc->get_P0(P_n);
+    gbc->get_P(dot_flrate,flrate,P_np1);
 
     // Get the (potentially approximated) m := dP/dQ
-    const double m_val = gbc -> get_m( ebc_id, dot_flrate, flrate );
-
+    gbc->get_m(dot_flrate,flrate,m_val);
     // Get the (potentially approximated) n := dP/d(dot_Q)
-    const double n_val = gbc -> get_n( ebc_id, dot_flrate, flrate );
+    gbc->get_n(dot_flrate,flrate,n_val);
+
+
+ for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
+  {
+
+    // P_n+alpha_f
+    const double resis_val = P_n[ebc_id] + a_f * (P_np1[ebc_id] - P_n[ebc_id]);
+
 
     // Define alpha_f * n + alpha_f * gamma * dt * m
     // coef a^t a enters as the consistent tangent for the resistance-type bc
-    const double coef = a_f * n_val + dd_dv * m_val;
+
+    const double coef = a_f * n_val[ebc_id] + dd_dv * m_val[ebc_id];
 
     const int num_face_nodes = ebc_part -> get_num_face_nodes(ebc_id);
     if(num_face_nodes > 0)
@@ -1132,7 +1175,7 @@ void PGAssem_2x2Block_NS_FEM::NatBC_Resis_KG(
       VecSetValues(subG[1], snLocBas*3, srow_idx, Res, ADD_VALUES);
     }
 
-    if( num_face_nodes > 0 ) 
+    if( num_face_nodes > 0 )
     {
       delete [] Tan; Tan = nullptr;
       delete [] scol_idx; scol_idx = nullptr;
@@ -1144,6 +1187,15 @@ void PGAssem_2x2Block_NS_FEM::NatBC_Resis_KG(
   delete [] sctrl_x; sctrl_x = nullptr;
   delete [] sctrl_y; sctrl_y = nullptr;
   delete [] sctrl_z; sctrl_z = nullptr;
+
+  delete [] dot_flrate; dot_flrate=nullptr;
+  delete [] flrate; flrate=nullptr;
+  delete [] P_n; P_n=nullptr;
+  delete [] P_np1; P_np1=nullptr;
+  delete [] m_val; m_val=nullptr;
+  delete [] n_val; n_val=nullptr;
+
+
 }
 
 // EOF
