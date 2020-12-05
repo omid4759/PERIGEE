@@ -152,6 +152,7 @@ void GenBC_RCR::get_m( double * const &in_dot_Q, double * const &in_Q,
 double GenBC_RCR::get_P( const int &ii, const double &in_dot_Q,
    const double &in_Q ) const
 {
+
   const double fac13 = 1.0 / 3.0;
   const double fac23 = 2.0 / 3.0;
   const double fac18 = 1.0 / 8.0;
@@ -184,6 +185,12 @@ double GenBC_RCR::get_P( const int &ii, const double &in_dot_Q,
 void GenBC_RCR::get_P( double * const &in_dot_Q,
    double * const &in_Q, double * const & P ) const
 {
+
+
+//  clock_t clock_start = clock();
+//  clock_t clock_stop;
+//  double tsec;
+
   const double fac13 = 1.0 / 3.0;
   const double fac23 = 2.0 / 3.0;
   const double fac18 = 1.0 / 8.0;
@@ -214,6 +221,9 @@ void GenBC_RCR::get_P( double * const &in_dot_Q,
 
  }
 
+//   clock_stop = clock();
+//   tsec = ((double) (clock_stop-clock_start)/CLOCKS_PER_SEC );
+//   printf("RCR CPU time: %lf secs\n", tsec);
 }
 
 

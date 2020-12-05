@@ -56,11 +56,17 @@ int SYS_T::get_genbc_file_type( const char * const &lpn_filename )
   {
     return 3;
   }
-    else if( bc_type.compare("Coronary") ==0
+  else if( bc_type.compare("Coronary") ==0
       || bc_type.compare("coronary") == 0
       || bc_type.compare("CORONARY") == 0 )
   {
     return 4;
+  }
+  else if( bc_type.compare("UserLPM") ==0
+      || bc_type.compare("userlpm") == 0
+      || bc_type.compare("USERLPM") == 0 )
+  {
+    return 5;
   }
   else
   {

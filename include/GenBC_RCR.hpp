@@ -65,9 +65,11 @@ class GenBC_RCR : public IGenBC
 
     virtual void get_P0( double * const  & Pn ) const
     {
+
       for (int ii =0; ii<num_ebc;++ii){
        Pn[ii]= Q0[ii] * Rp[ii] + Pi0[ii] + Pd[ii];
       }
+
     }
 
     virtual void reset_initial_sol( double * const &in_Q_0,

@@ -39,7 +39,12 @@ class IGenBC
     // the resistance value on this bc.
     // --------------------------------------------------------------
     virtual double get_m( const int &ii, const double &dot_Q,
-       const double &Q ) const = 0;
+       const double &Q )
+
+    {
+      SYS_T::print_fatal("Error: IGenBC::get_m is not implemented.\n");
+      return 0;
+    }
 
     // --------------------------------------------------------------
     // Get the dP/d(dot_Q) for surface ii
@@ -49,7 +54,11 @@ class IGenBC
     // the inductance value on this bc.
     // --------------------------------------------------------------
     virtual double get_n( const int &ii, const double &dot_Q,
-       const double &Q ) const = 0;
+       const double &Q )
+    {
+      SYS_T::print_fatal("Error: IGenBC::get_n is not implemented.\n");
+      return 0;
+    }
 
     // --------------------------------------------------------------
     // Get the P value for surface ii, the traction on the surface is
@@ -58,7 +67,11 @@ class IGenBC
     // Resistance x Q + P_offset
     // --------------------------------------------------------------
     virtual double get_P( const int &ii, const double &dot_Q,
-       const double &Q ) const = 0;
+       const double &Q )
+    {
+      SYS_T::print_fatal("Error: IGenBC::get_P is not implemented.\n");
+      return 0;
+    }
 
     // --------------------------------------------------------------
     // Return the pressure at the time step n, which is used as the
@@ -67,7 +80,11 @@ class IGenBC
     // For RCR, it is get_P(ii, Q_previous), which is also stored
     // as Pi_0 + Q_0 x Rp
     // --------------------------------------------------------------
-    virtual double get_P0( const int &ii ) const = 0;
+    virtual double get_P0( const int &ii )
+    {
+      SYS_T::print_fatal("Error: IGenBC::get_P0 is not implemented.\n");
+      return 0;
+    }
 
     // --------------------------------------------------------------
     // Record solution values as initial conditions for the next time step
