@@ -74,7 +74,7 @@ void POST_T_NS::exact_wss( const double &x, const double &y, const double &z,
 
   // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
   const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
-  val_z = 1200.0*R_pipe*(R_pipe*R_pipe - 0.015625)*t_cubic + 2.0*R_pipe*(600.0*R_pipe*R_pipe - 54.0)*t_cubic;
+  val_z = 1200.0*mu*R_pipe*(R_pipe*R_pipe - 0.015625)*t_cubic + 2.0*mu*R_pipe*(600.0*R_pipe*R_pipe - 54.0)*t_cubic;
 }
 
 

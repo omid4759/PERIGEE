@@ -88,7 +88,7 @@ H_rig = H * [0;  1;  0]; H_rig = simplify(H_rig);
 H_lef = H * [0; -1;  0]; H_lef = simplify(H_lef);
 
 % WSS - r to be replaced by R_pipe
-w = 600 * (r*r - 0.09) * (r*r - 0.015625) * (t + 1)^3;
+w = mu * ( 600 * (r*r - 0.09) * (r*r - 0.015625) * (t + 1)^3 );
 w_r = diff(w, r);
 
 % EOF
