@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
   double fluid_mu = 3.5e-2;
   double c_tauc = 1.0; // scaling factor for tau_c, take 0.0, 0.125, or 1.0
 
+  // ==== TODO: input wall properties (density, shear correction factor, poisson ratio) ====
+
   // inflow file
   std::string inflow_file("inflow_fourier_series.txt");
 
@@ -93,6 +95,7 @@ int main(int argc, char *argv[])
   // ===== Read Command Line Arguments =====
   SYS_T::commPrint("===> Reading arguments from Command line ... \n");
 
+  // ==== TODO: read in & print wall properties ====
   SYS_T::GetOptionInt("-nqp_tet", nqp_tet);
   SYS_T::GetOptionInt("-nqp_tri", nqp_tri);
   SYS_T::GetOptionInt("-nz_estimate", nz_estimate);
@@ -177,6 +180,7 @@ int main(int argc, char *argv[])
         H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     HDF5_Writer * cmdh5w = new HDF5_Writer(cmd_file_id);
 
+    // ==== TODO: record wall properties ====
     cmdh5w->write_doubleScalar("fl_density", fluid_density);
     cmdh5w->write_doubleScalar("fl_mu", fluid_mu);
     cmdh5w->write_doubleScalar("init_step", initial_step);
@@ -220,6 +224,8 @@ int main(int argc, char *argv[])
   // Local sub-domain's elemental bc
   ALocal_EBC * locebc = new ALocal_EBC_outflow(part_file, rank);
 
+  // ==== TODO: wall_locebc = new ALocal_EBC_wall ====
+
   // Local sub-domain's nodal indices
   APart_Node * pNode = new APart_Node(part_file, rank);
 
@@ -260,6 +266,8 @@ int main(int argc, char *argv[])
     if( nqp_tri > 4 ) SYS_T::commPrint("Warning: the tri element is linear and you are using more than 4 quadrature points.\n");
 
     elementv = new FEAElement_Tet4( nqp_tet ); // elem type 501
+
+    // ==== TODO: Evaluate global-to-local transformation matrix in element class ====
     elements = new FEAElement_Triangle3_3D_der0( nqp_tri ); 
   }
   else if( GMIptr->get_elemType() == 502 )
@@ -268,6 +276,8 @@ int main(int argc, char *argv[])
     SYS_T::print_fatal_if( nqp_tri < 13, "Error: not enough quadrature points for triangles.\n" );
 
     elementv = new FEAElement_Tet10_v2( nqp_tet ); // elem type 502
+
+    // ==== TODO: Evaluate global-to-local transformation matrix in element class ====
     elements = new FEAElement_Triangle6_3D_der0( nqp_tri ); 
   }
   else SYS_T::print_fatal("Error: Element type not supported.\n");
@@ -292,6 +302,7 @@ int main(int argc, char *argv[])
       fluid_density, fluid_mu, bs_beta, c_tauc, GMIptr->get_elemType() );
 
   // ===== Initial condition =====
+  // ===== TODO: initialize PDNSolution for disp, dot_disp for wall =====
   PDNSolution * base = new PDNSolution_NS( pNode, fNode, locinfnbc, 1 );
 
   PDNSolution * sol = new PDNSolution_NS( pNode, 0 );
@@ -347,6 +358,8 @@ int main(int argc, char *argv[])
 
   // ===== Global assembly =====
   SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
+
+  // ==== TODO: Pass wall_locebc into gloAssem_ptr ====
   IPGAssem * gloAssem_ptr = new PGAssem_NS_FEM( locAssem_ptr, elements, quads,
       GMIptr, locElem, locIEN, pNode, locnbc, locebc, gbc, nz_estimate );
 
@@ -374,9 +387,11 @@ int main(int argc, char *argv[])
     PCSetType( preproc, PCHYPRE );
     PCHYPRESetType( preproc, "boomeramg" );
 
+    // ==== TODO: Pass in wall_locebc ====
     gloAssem_ptr->Assem_mass_residual( sol, locElem, locAssem_ptr, elementv,
         elements, quadv, quads, locIEN, pNode, fNode, locnbc, locebc );
 
+    // ==== TODO: Initialize & solve for dot_pres_velo solution. Set dot_disp to velo ====
     lsolver_acce->Solve( gloAssem_ptr->K, gloAssem_ptr->G, dot_sol );
 
     dot_sol -> ScaleValue(-1.0);
@@ -481,6 +496,7 @@ int main(int argc, char *argv[])
   // ===== FEM analysis =====
   SYS_T::commPrint("===> Start Finite Element Analysis:\n");
 
+  // ==== TODO: Pass in wall_locebc ====
   tsolver->TM_NS_GenAlpha(is_restart, base, dot_sol, sol,
       tm_galpha_ptr, timeinfo, inflow_rate_ptr, locElem, locIEN, pNode, fNode,
       locnbc, locinfnbc, locebc, gbc, pmat, elementv, elements, quadv, quads,

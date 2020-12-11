@@ -3,7 +3,7 @@
 // ==================================================================
 // ALocal_IEN.hpp
 // Local IEN for Analysis code.
-// This class stores the IEN double array for each elements. The IEN
+// This class stores the IEN double array for all elements. The IEN
 // array is stored in a one-dimensional vector, with stride length
 // nLocBas.
 //
@@ -26,18 +26,18 @@ class ALocal_IEN
 
     // --------------------------------------------------------------
     // Get stride length
-    // This returns the stride length of the IEN array. For certain problems
-    // the results is different from the nLocBas stored in AGlobal_Mesh_Info.
-    // The logic is this: the one in AGlobal_Mesh_Info is related to the
-    // original data in the preprocessor, i.e. the geometry. The one stroed
-    // in this class is the number of basis functions for the physics 
-    // interpolation. In non-isoparametric elements, the two can be different. 
+    // This returns the stride length of the IEN array. For problems with
+    // non-isoparametric elements, this result is different from the nLocBas
+    // stored in AGlobal_Mesh_Info. The nLocBas stored in AGlobal_Mesh_Info
+    // is related to the original data in the preprocessor, i.e. the geometry.
+    // The one stored in this class is the number of basis functions for the 
+    // physics interpolation.
     // --------------------------------------------------------------
     virtual int get_stride() const {return nLocBas;}
 
     // --------------------------------------------------------------
-    // Get the number of local element. This should be compatible
-    // with the one stored in ALocal_Elem.
+    // Get the number of local elements. This value should be compatible
+    // with the one stored in the ALocal_Elem class.
     // --------------------------------------------------------------
     virtual int get_nlocalele() const {return nlocalele;}
 
@@ -55,9 +55,9 @@ class ALocal_IEN
     }
 
     // --------------------------------------------------------------
-    // ! get the element e's ien array in an int array: elem_ien.
-    //   user is responsible for allocating memory space for elem_ien and
-    //   delete it after usage.
+    // get the element e's ien array in an int array: elem_ien.
+    // Users are responsible for allocating and deallocating memory
+    // for elem_ien.
     // --------------------------------------------------------------
     virtual void get_LIEN_e(const int &elem, int * const &elem_ien) const
     {
@@ -67,11 +67,11 @@ class ALocal_IEN
     }
 
     // --------------------------------------------------------------
-    // ! isNode_in_Elem returns a bool value that tells if the node ii
-    //   is in the element ee.
-    //   Input
-    //   ee : the local processor's index for element
-    //   ii : the local processor's index for node
+    // isNode_in_Elem returns a bool value that tells if the node ii
+    // is in the element ee.
+    // Input
+    // ee : the local processor's index for element
+    // ii : the local processor's index for node
     // --------------------------------------------------------------
     virtual bool isNode_in_Elem(const int &elem, const int &node) const
     {

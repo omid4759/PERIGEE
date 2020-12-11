@@ -50,8 +50,8 @@ SET( perigee_preprocess_lib_src
   ${perigee_source}/Mesh/ElemBC_3D_tet.cpp
   ${perigee_source}/Mesh/ElemBC_3D_tet_wall.cpp
   ${perigee_source}/Mesh/ElemBC_3D_tet_outflow.cpp
-  ${perigee_source}/Mesh/NodalBC_3D_vtp.cpp
-  ${perigee_source}/Mesh/NodalBC_3D_vtu.cpp
+  ${perigee_SOURCE_DIR}/src/NodalBC_3D_vtp.cpp
+  ${perigee_SOURCE_DIR}/src/NodalBC_3D_vtu.cpp
   ${perigee_source}/Mesh/NodalBC_3D_inflow.cpp
   ${perigee_source}/Mesh/QuadPts_Gauss_Triangle.cpp
   ${perigee_source}/Mesh/NBC_Partition_3D.cpp
@@ -93,6 +93,7 @@ SET( perigee_analysis_lib_src
   ${perigee_source}/Solver/PDNTimeStep.cpp
   ${perigee_source}/Solver/TimeMethod_GenAlpha.cpp
   ${perigee_source}/Solver/PLinear_Solver_PETSc.cpp
+  ${perigee_SOURCE_DIR}/src/PLocAssem_Tet_VMS_NS_GenAlpha.cpp
   )
 
 SET( perigee_postprocess_lib_src
@@ -104,6 +105,7 @@ SET( perigee_postprocess_lib_src
   ${perigee_source}/Postproc_Tool/Interpolater.cpp
   )
 
+INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ../../include )
 
 # -------------------------------------------------------------------
@@ -130,7 +132,7 @@ INCLUDE(../../conf/message_compiler_setup.cmake)
 # ===================================================================
 ADD_EXECUTABLE( gmsh_p1_IO gmsh_p1_process.cpp )
 ADD_EXECUTABLE( preprocess3d preprocess_sv_tets.cpp)
-#ADD_EXECUTABLE( ns_tet_3d ns_tet_driver.cpp)
+ADD_EXECUTABLE( cmm_tet_3d cmm_driver.cpp)
 #ADD_EXECUTABLE( prepost prepost_ns_tets.cpp)
 #ADD_EXECUTABLE( vis_ns vis_ns.cpp)
 #ADD_EXECUTABLE( vis_p1_wss vis_p1_wss.cpp)
@@ -139,7 +141,7 @@ ADD_EXECUTABLE( test test.cpp )
 
 TARGET_LINK_LIBRARIES( gmsh_p1_IO perigee_preprocess )
 TARGET_LINK_LIBRARIES( preprocess3d perigee_preprocess )
-#TARGET_LINK_LIBRARIES( ns_tet_3d perigee_analysis )
+TARGET_LINK_LIBRARIES( cmm_tet_3d perigee_analysis )
 #TARGET_LINK_LIBRARIES( prepost perigee_preprocess )
 #TARGET_LINK_LIBRARIES( vis_ns perigee_postprocess )
 #TARGET_LINK_LIBRARIES( vis_p1_wss perigee_postprocess )

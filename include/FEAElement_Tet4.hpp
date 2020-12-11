@@ -2,12 +2,12 @@
 #define FEAELEMENT_TET4_HPP
 // ==================================================================
 // FEAElement_Tet4.hpp
-// This is an implementation of the element routine for linear
-// tetrahedral element, with derivatives evaluated.
+// Element routine for the linear tetrahedral element, with evaluation
+// of shape functions and their derivatives.
 // 
-// Tet4 means 4-node element, aka, linear tets.
+// Tet4 means 4-node tet, aka linear tets.
 //
-// This class is designed for the volume integration in model assembly.
+// This class is designed for volumetric integration in model assembly.
 //
 // Date Created: Jan 19 2017
 // ==================================================================
@@ -23,6 +23,7 @@ class FEAElement_Tet4 : public FEAElement
 
     virtual int get_elemDim() const {return 3;}
 
+    // A unique number for this element.
     virtual int get_Type() const {return 501;}
 
     virtual int get_numType() const {return 1;}
@@ -37,18 +38,22 @@ class FEAElement_Tet4 : public FEAElement
 
     virtual double get_memory_usage() const;
 
+    // Given the quadrature points and nodal coordinates, evaluate
+    // the basis functions and their derivatives up to second order
     virtual void buildBasis( const IQuadPts * const &quad_rule,
         const double * const &ctrl_x,
         const double * const &ctrl_y,
         const double * const &ctrl_z );
 
-    // Returns the element size.
-    // For the linear tets element, we calculate the DIAMETER of the
+    // Return the element size.
+    // For the linear tet element, we calculate the DIAMETER of the
     // circumscribing sphere
     virtual double get_h( const double * const &ctrl_x,
         const double * const &ctrl_y,
         const double * const &ctrl_z ) const;
 
+    // get_xxx functions give access to function evaluations at the
+    // quadrature point corresponding to quaindex
     virtual void get_R( const int &quaindex, double * const &basis ) const;
 
     virtual void get_gradR( const int &quaindex, double * const &basis_x,
@@ -98,10 +103,10 @@ class FEAElement_Tet4 : public FEAElement
 
     double detJac;
 
-    // Free the space of dynamic array
+    // Deallocate memory for dynamic array R
     virtual void clearBasisCache();
 
-    // resize the R array if the quadrature rule is changed
+    // Resize the R array if the quadrature rule is changed
     void resize_container();
 };
 
