@@ -16,18 +16,12 @@ PLocAssem_Tet_VMS_NS_GenAlpha::PLocAssem_Tet_VMS_NS_GenAlpha(
   {
     // 501 is linear element
     CI = 36.0;
-    // ==== WOMERSLEY CHANGES BEGIN ====
-    CT = 0.0;
-    // ==== WOMERSLEY CHANGES END ====
     nLocBas = 4; snLocBas = 3;
   }
   else if(elemtype == 502)
   {
     // 502 is quadratic element
     CI = 60.0;
-    // ==== WOMERSLEY CHANGES BEGIN ====
-    CT = 0.0;
-    // ==== WOMERSLEY CHANGES END ====
     nLocBas = 10; snLocBas = 6;
   }
   else SYS_T::print_fatal("Error: unknown elem type.\n");

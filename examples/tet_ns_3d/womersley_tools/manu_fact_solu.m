@@ -1,20 +1,23 @@
 % manufactured solution for incompressible Navier-Stokes 3D
 clear all; clc;
 
-syms x y z t mu rho0 R k omega;
+syms x y r z t mu rho0 R k0 k1 omega;
 
 % Given analytic manufactured solution
 u = 0.0;
 
 v = 0.0;
 
-Omega = sqrt(rho0 * omega/mu) * R;
-coef = 1i * k / (rho0 * omega);
-xi = (1i^1.5)*Omega*sqrt(x*x+y*y) / R;
+% Omega = sqrt(rho0 * omega/mu) * R;
+% coef = 1i * k / (rho0 * omega);
+% xi = (1i^1.5)*Omega*sqrt(x*x+y*y) / R;
 
-w = coef * (1.0 - besselj(0,xi)/besselj(0,1i^1.5*Omega))*exp(1i*omega*t); %k*(x*x+y*y - R*R)/(4*mu);
+% w = coef * (1.0 - besselj(0,xi)/besselj(0,1i^1.5*Omega))*exp(1i*omega*t); %k*(x*x+y*y - R*R)/(4*mu);
 
-p = k * z * exp(1i*omega*t);
+% TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
+w = 600 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625) * (t + 1)^3;
+
+p = k0*z + k1 * z * exp(1i*omega*t);
 
 % Compute first order derivatives
 u_x = diff(u,x); u_y = diff(u,y); u_z = diff(u,z);
@@ -52,21 +55,22 @@ p_t_y = simplify(p_t_y);
 p_t_z = simplify(p_t_z);
 
 % -------------------------------------------------------------------------
-% Navier-Stokes force
+% Navier-Stokes body force per unit mass
 fx = rho0 * ( u_t + u * u_x + v * u_y + w * u_z ) + p_x - mu * (u_xx + u_yy + u_zz);
 
 fy = rho0 * ( v_t + u * v_x + v * v_y + w * v_z ) + p_y - mu * (v_xx + v_yy + v_zz);
 
 fz = rho0 * ( w_t + u * w_x + v * w_y + w * w_z ) + p_z - mu * (w_xx + w_yy + w_zz);
 % -------------------------------------------------------------------------
-% Stokes force
+
+% Stokes body force per unit mass
 %fx = rho0 * u_t + p_x - mu * (u_xx + u_yy + u_zz);
 
 %fy = rho0 * v_t + p_y - mu * (v_xx + v_yy + v_zz);
 
 %fz = rho0 * w_t + p_z - mu * (w_xx + w_yy + w_zz);
 
-% simplify and divide by density
+% body force per unit volume
 fx = simplify(fx); fx = fx / rho0;
 fy = simplify(fy); fy = fy / rho0;
 fz = simplify(fz); fz = fz / rho0;
@@ -82,5 +86,9 @@ H_fro = H * [1;  0;  0]; H_fro = simplify(H_fro);
 H_bac = H * [-1; 0;  0]; H_bac = simplify(H_bac);
 H_rig = H * [0;  1;  0]; H_rig = simplify(H_rig);
 H_lef = H * [0; -1;  0]; H_lef = simplify(H_lef);
+
+% WSS - r to be replaced by R_pipe
+w = 600 * (r*r - 0.09) * (r*r - 0.015625) * (t + 1)^3;
+w_r = diff(w, r);
 
 % EOF

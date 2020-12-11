@@ -180,7 +180,18 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
     void get_f(const double &x, const double &y, const double &z,
         const double &t, double &fx, double &fy, double &fz ) const
     {
-      fx = 0.0; fy = 0.0; fz = 0.0;
+      fx = 0.0; fy = 0.0; // fz = 0.0;
+
+      // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
+      const double omega = MATH_T::PI * 2.0 / 1.1;                  // freqency
+      const std::complex<double> i1(0.0, 1.0);
+      const double k0 = -21.0469;
+      const std::complex<double> k1( -33.0102, 42.9332 );
+
+      const double t_quadr = (t + 1.0)*(t + 1.0);
+      const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
+      fz = ( k0 + std::real(k1*exp(omega*t*i1)) - (3.0*vis_mu*t_cubic*(6400.0*x*x + 6400.0*y*y - 169.0))/2.0 + 
+             3*rho0*t_quadr*(x*x + y*y - 0.015625)*(600*x*x + 600*y*y - 54.0) ) / rho0;
     }
 
     void get_H1(const double &x, const double &y, const double &z,
@@ -220,8 +231,14 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       const std::complex<double> k1( -33.0102, 42.9332 );
 
       const auto coef1 = i1 * k1 / (rho0 * omega);
-      const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
-      const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
+      // const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
+      // const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
+      // const double w_z = 0.0;
+
+      // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
+      const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
+      const double w_x = 1200.0*x*t_cubic*(x*x + y*y - 0.015625) + 2.0*x*t_cubic*(600.0*x*x + 600.0*y*y - 54.0); 
+      const double w_y = 1200.0*y*t_cubic*(x*x + y*y - 0.015625) + 2.0*y*t_cubic*(600.0*x*x + 600.0*y*y - 54.0);
       const double w_z = 0.0;
       const double p   = k0 * z + std::real( k1 * z * exp(i1*omega*t) );
       

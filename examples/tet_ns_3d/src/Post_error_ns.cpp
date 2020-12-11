@@ -17,7 +17,11 @@ void POST_T_NS::exact_velo( const double &x, const double &y, const double &z,
 
   val_x = 0.0;
   val_y = 0.0;
-  val_z = k0*(x*x + y*y - R_pipe*R_pipe) / (4.0*mu) + std::real( coef1 * exp(i1*omega*t) * (1.0 - bes_top / bes_bot ) );
+  // val_z = k0*(x*x + y*y - R_pipe*R_pipe) / (4.0*mu) + std::real( coef1 * exp(i1*omega*t) * (1.0 - bes_top / bes_bot ) );
+
+  // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
+  const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
+  val_z = 600.0 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625) * t_cubic;
 }
 
 
@@ -46,8 +50,14 @@ void POST_T_NS::exact_grad_velo( const double &x, const double &y, const double 
   grad_velo(1,1) = 0.0;
   grad_velo(1,2) = 0.0;
 
-  grad_velo(2,0) = k0 * x / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
-  grad_velo(2,1) = k0 * y / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
+  // grad_velo(2,0) = k0 * x / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
+  // grad_velo(2,1) = k0 * y / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
+  // grad_velo(2,2) = 0.0;
+
+  // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
+  const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
+  grad_velo(2,0) = 1200.0*x*t_cubic*(x*x + y*y - 0.015625) + 2.0*x*t_cubic*(600.0*x*x + 600.0*y*y - 54.0);
+  grad_velo(2,1) = 1200.0*y*t_cubic*(x*x + y*y - 0.015625) + 2.0*y*t_cubic*(600.0*x*x + 600.0*y*y - 54.0); 
   grad_velo(2,2) = 0.0;
 }
 
@@ -60,7 +70,11 @@ void POST_T_NS::exact_wss( const double &x, const double &y, const double &z,
 
   val_x = 0.0;
   val_y = 0.0;
-  val_z = k0 * R_pipe / 2.0 - std::real( k1 * R_pipe * i1_0d5 * exp(i1*omega*t) * bes_top / (Omega * bes_bot) ); 
+  // val_z = k0 * R_pipe / 2.0 - std::real( k1 * R_pipe * i1_0d5 * exp(i1*omega*t) * bes_top / (Omega * bes_bot) ); 
+
+  // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
+  const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
+  val_z = 1200.0*R_pipe*(R_pipe*R_pipe - 0.015625)*t_cubic + 2.0*R_pipe*(600.0*R_pipe*R_pipe - 54.0)*t_cubic;
 }
 
 
