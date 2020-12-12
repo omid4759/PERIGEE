@@ -300,7 +300,7 @@ void PDNSolution_NS::Init_womersley(
     const double x  = fNode_ptr->get_ctrlPts_x(ii);
     const double y  = fNode_ptr->get_ctrlPts_y(ii);
     const double z  = fNode_ptr->get_ctrlPts_z(ii);
-    const double r  = sqrt(x*x + y*y);
+    const double r  = std::sqrt(x*x + y*y);
     const auto   xi = Lambda * r / R;
 
     // pressure
@@ -312,8 +312,8 @@ void PDNSolution_NS::Init_womersley(
     const auto   coef1   = i1 * k1 / (rho * omega);
     // const double vel     = k0 * (x*x + y*y - R*R) / (4.0*vis_mu) + std::real( coef1 * (1.0 - bes_top/bes_bot) );
 
-    // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
-    const double vel = 600.0 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625);
+    // TEST: Womersley axial velo, but cubic in time (instead of exponential) 
+    const double vel = k0 * (x*x + y*y - R*R) / (4.0*vis_mu) + std::real( coef1 * (1.0 - bes_top/bes_bot) );
     
     // -1.0 is multiplied to make the flow direction inward
     value[0] = pres;
@@ -375,7 +375,7 @@ void PDNSolution_NS::Init_womersley_dot(
     const double x  = fNode_ptr->get_ctrlPts_x(ii);
     const double y  = fNode_ptr->get_ctrlPts_y(ii);
     const double z  = fNode_ptr->get_ctrlPts_z(ii);
-    const double r  = sqrt(x*x + y*y);
+    const double r  = std::sqrt(x*x + y*y);
     const auto   xi = Lambda * r / R;
 
     // dot pressure
@@ -387,8 +387,8 @@ void PDNSolution_NS::Init_womersley_dot(
     const auto   coef1    = i1 * k1 / (rho * omega); 
     // const double dot_vel  = std::real( coef1 * i1 * omega * (1.0 - bes_top/bes_bot) );
 
-    // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
-    const double dot_vel = 3.0*(x*x + y*y - 0.015625)*(600.0*x*x + 600.0*y*y - 54.0);
+    // TEST: Womersley axial velo, but cubic in time (instead of exponential) 
+    const double dot_vel  = 3.0 * std::real( coef1 * (1.0 - bes_top/bes_bot) );
 
     // -1.0 is multiplied to make the flow direction inward
     value[0] = dot_pres; 

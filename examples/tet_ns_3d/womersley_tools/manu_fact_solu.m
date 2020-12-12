@@ -8,14 +8,17 @@ u = 0.0;
 
 v = 0.0;
 
-% Omega = sqrt(rho0 * omega/mu) * R;
-% coef = 1i * k / (rho0 * omega);
-% xi = (1i^1.5)*Omega*sqrt(x*x+y*y) / R;
+Omega = sqrt(rho0 * omega/mu) * R;
+coef = 1i * k1 / (rho0 * omega);
+xi = (1i^1.5)*Omega*sqrt(x*x+y*y) / R;
 
-% w = coef * (1.0 - besselj(0,xi)/besselj(0,1i^1.5*Omega))*exp(1i*omega*t); %k*(x*x+y*y - R*R)/(4*mu);
+% w = k0*(x*x+y*y - R*R)/(4*mu) + coef * (1.0 - besselj(0,xi)/besselj(0,1i^1.5*Omega))*exp(1i*omega*t); %;
 
-% TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
-w = 600 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625) * (t + 1)^3;
+% % TEST #1: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
+% w = 600 * (x*x + y*y - 0.09) * (x*x + y*y - 0.015625) * (t + 1)^3;
+
+% TEST #2: Womersley axial velo, but cubic in time (instead of exponential)
+w = k0*(x*x+y*y - R*R)/(4*mu) + coef * (1.0 - besselj(0,xi)/besselj(0,1i^1.5*Omega)) * (t + 1)^3;
 
 p = k0*z + k1 * z * exp(1i*omega*t);
 

@@ -182,16 +182,24 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
     {
       fx = 0.0; fy = 0.0; // fz = 0.0;
 
-      // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
-      const double omega = MATH_T::PI * 2.0 / 1.1;                  // freqency
+      // TEST: Womersley axial velo, but cubic in time (instead of exponential).
+      const double R_pipe = 0.3;                                        // pipe radius
+      const double omega  = MATH_T::PI * 2.0 / 1.1;                     // freqency
       const std::complex<double> i1(0.0, 1.0);
+      const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
+      const auto Omega    = std::sqrt(rho0 * omega / vis_mu) * R_pipe;  // womersley number 
+      const auto Lambda   = i1_1d5 * Omega;
+      const double r      = std::sqrt(x*x+y*y);                         // radial coord
+
+      const auto bes_bot  = sp_bessel::besselJ(0, Lambda);
+
       const double k0 = -21.0469;
       const std::complex<double> k1( -33.0102, 42.9332 );
 
       const double t_quadr = (t + 1.0)*(t + 1.0);
-      const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
-      fz = ( k0 + std::real(k1*exp(omega*t*i1)) - (3.0*vis_mu*t_cubic*(6400.0*x*x + 6400.0*y*y - 169.0))/2.0 + 
-             3*rho0*t_quadr*(x*x + y*y - 0.015625)*(600*x*x + 600*y*y - 54.0) ) / rho0;
+      fz = std::real( ( k0 + k1*exp(omega*t*i1) + ( bes_bot*(k1*t*t*3.0*i1 + k1*t*6.0*i1 + k1*3.0*i1 - k0*omega) - 
+             k1*t_quadr*sp_bessel::besselJ(0, i1_1d5*r*std::sqrt(omega*rho0/vis_mu)) * (omega + omega*t + 3.0*i1) ) / 
+             (omega*bes_bot) ) / rho0 );
     }
 
     void get_H1(const double &x, const double &y, const double &z,
@@ -220,7 +228,7 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
       const auto Omega    = std::sqrt(rho0 * omega / vis_mu) * R_pipe;  // womersley number 
       const auto Lambda   = i1_1d5 * Omega;
-      const double r      = sqrt(x*x+y*y);                              // radial coord
+      const double r      = std::sqrt(x*x+y*y);                         // radial coord
       const auto   xi     = Lambda * r / R_pipe;
 
       const auto bes_top  = sp_bessel::besselJ(1, xi);
@@ -235,10 +243,10 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       // const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
       // const double w_z = 0.0;
 
-      // TEST: axial velo now quartic in space, cubic in time. IC corresponds to Womersley t=0.88s solution.
+      // TEST: Womersley axial velo, but cubic in time (instead of exponential).
       const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
-      const double w_x = 1200.0*x*t_cubic*(x*x + y*y - 0.015625) + 2.0*x*t_cubic*(600.0*x*x + 600.0*y*y - 54.0); 
-      const double w_y = 1200.0*y*t_cubic*(x*x + y*y - 0.015625) + 2.0*y*t_cubic*(600.0*x*x + 600.0*y*y - 54.0);
+      const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * t_cubic * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
+      const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * t_cubic * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
       const double w_z = 0.0;
       const double p   = k0 * z + std::real( k1 * z * exp(i1*omega*t) );
       
