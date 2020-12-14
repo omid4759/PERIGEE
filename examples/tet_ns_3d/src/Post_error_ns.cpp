@@ -3,7 +3,10 @@
 double POST_T_NS::exact_pres( const double &x, const double &y, const double &z,
           const double &t )
 {
-  return k0 * z + std::real( k1 * z * exp(i1*omega*t) ); 
+  // return k0 * z + std::real( k1 * z * exp(i1*omega*t) ); 
+
+  // TEST: axial velo bessel, cubic in time (instead of exponential). zero pres.
+  return 0.0; 
 }
 
 
@@ -19,9 +22,9 @@ void POST_T_NS::exact_velo( const double &x, const double &y, const double &z,
   val_y = 0.0;
   // val_z = k0*(x*x + y*y - R_pipe*R_pipe) / (4.0*mu) + std::real( coef1 * exp(i1*omega*t) * (1.0 - bes_top / bes_bot ) );
 
-  // TEST: Womersley axial velo, but cubic in time (instead of exponential).
+  // TEST: axial velo bessel, cubic in time (instead of exponential). zero pres.
   const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
-  val_z = k0*(x*x + y*y - R_pipe*R_pipe) / (4.0*mu) + std::real( coef1 * t_cubic * (1.0 - bes_top / bes_bot ) );
+  val_z = std::real( coef1 * t_cubic * (1.0 - bes_top / bes_bot ) );
 }
 
 
@@ -30,7 +33,10 @@ void POST_T_NS::exact_grad_pres( const double &x, const double &y, const double 
 {
   val_x = 0.0;
   val_y = 0.0;
-  val_z = k0 + std::real( k1 * exp(i1*omega*t) );
+  // val_z = k0 + std::real( k1 * exp(i1*omega*t) );
+
+  // TEST: axial velo bessel, cubic in time (instead of exponential). zero pres.
+  val_z = 0.0;
 }
 
 
@@ -54,10 +60,10 @@ void POST_T_NS::exact_grad_velo( const double &x, const double &y, const double 
   // grad_velo(2,1) = k0 * y / (2.0*mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
   // grad_velo(2,2) = 0.0;
 
-  // TEST: Womersley axial velo, but cubic in time (instead of exponential).
+  // TEST: axial velo bessel, cubic in time (instead of exponential). zero pres.
   const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
-  grad_velo(2,0) = k0 * x / (2.0*mu) + std::real( coef1 * t_cubic * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
-  grad_velo(2,1) = k0 * y / (2.0*mu) + std::real( coef1 * t_cubic * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) ); 
+  grad_velo(2,0) = std::real( coef1 * t_cubic * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
+  grad_velo(2,1) = std::real( coef1 * t_cubic * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) ); 
   grad_velo(2,2) = 0.0;
 }
 
@@ -72,9 +78,9 @@ void POST_T_NS::exact_wss( const double &x, const double &y, const double &z,
   val_y = 0.0;
   // val_z = k0 * R_pipe / 2.0 - std::real( k1 * R_pipe * i1_0d5 * exp(i1*omega*t) * bes_top / (Omega * bes_bot) ); 
 
-  // TEST: Womersley axial velo, but cubic in time (instead of exponential).
+  // TEST: axial velo bessel, cubic in time (instead of exponential). zero pres.
   const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
-  val_z = k0 * R_pipe / 2.0 - std::real( k1 * R_pipe * i1_0d5 * t_cubic * bes_top / (Omega * bes_bot) ); 
+  val_z = -std::real( k1 * R_pipe * i1_0d5 * t_cubic * bes_top / (Omega * bes_bot) ); 
 }
 
 
