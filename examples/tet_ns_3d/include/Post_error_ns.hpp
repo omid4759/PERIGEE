@@ -9,8 +9,7 @@
 namespace POST_T_NS
 {
   // Define some constants
-  // const double mu = 4.0e-2;
-  const double mu = 1.0e-1;
+  const double mu = 4.0e-2;
   const double rho0 = 1.0;
 
   const double R_pipe = 0.3;                                     // pipe radius

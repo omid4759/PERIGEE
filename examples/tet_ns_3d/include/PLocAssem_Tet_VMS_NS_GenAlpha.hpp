@@ -180,26 +180,7 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
     void get_f(const double &x, const double &y, const double &z,
         const double &t, double &fx, double &fy, double &fz ) const
     {
-      fx = 0.0; fy = 0.0; // fz = 0.0;
-
-      // TEST: axial velo bessel, cubic in time (instead of exponential). zero pres.
-      const double R_pipe = 0.3;                                        // pipe radius
-      const double omega  = MATH_T::PI * 2.0 / 1.1;                     // freqency
-      const std::complex<double> i1(0.0, 1.0);
-      const std::complex<double> i1_1d5(-0.707106781186547, 0.707106781186547);
-      const auto Omega    = std::sqrt(rho0 * omega / vis_mu) * R_pipe;  // womersley number 
-      const auto Lambda   = i1_1d5 * Omega;
-      const double r      = std::sqrt(x*x+y*y);                         // radial coord
-
-      const auto bes_bot  = sp_bessel::besselJ(0, Lambda);
-
-      const double k0 = -21.0469;
-      const std::complex<double> k1( -33.0102, 42.9332 );
-
-      const double t_quadr = (t + 1.0)*(t + 1.0);
-      fz = std::real( -( k1*(t*i1 + i1)*(t*i1 + i1)*bes_bot*3.0*i1 + 
-                         k1*t_quadr*sp_bessel::besselJ(0, i1_1d5*r*std::sqrt(omega*rho0/vis_mu))*(omega + omega*t + 3.0*i1) ) / 
-                      (omega*rho0*bes_bot) );
+      fx = 0.0; fy = 0.0; fz = 0.0;
     }
 
     void get_H1(const double &x, const double &y, const double &z,
@@ -239,18 +220,11 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       const std::complex<double> k1( -33.0102, 42.9332 );
 
       const auto coef1 = i1 * k1 / (rho0 * omega);
-      // const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
-      // const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
-      // const double w_z = 0.0;
-      // const double p   = k0 * z + std::real( k1 * z * exp(i1*omega*t) );
-
-      // TEST: axial velo bessel, cubic in time (instead of exponential). zero pres.
-      const double t_cubic = (t + 1.0)*(t + 1.0)*(t + 1.0);
-      const double w_x = std::real( coef1 * t_cubic * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
-      const double w_y = std::real( coef1 * t_cubic * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
+      const double w_x = k0 * x / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * x / (bes_bot * r * R_pipe) );
+      const double w_y = k0 * y / (2.0*vis_mu) + std::real( coef1 * exp(i1*omega*t) * bes_top * i1_1d5 * Omega * y / (bes_bot * r * R_pipe) );
       const double w_z = 0.0;
-      const double p   = 0.0;
-      
+      const double p   = k0 * z + std::real( k1 * z * exp(i1*omega*t) );
+
       gx = MATH_T::dot3d(          -p,          0.0,          vis_mu * w_x, nx, ny, nz); 
       gy = MATH_T::dot3d(         0.0,           -p,          vis_mu * w_y, nx, ny, nz); 
       gz = MATH_T::dot3d(vis_mu * w_x, vis_mu * w_y, -p + 2.0*vis_mu * w_z, nx, ny, nz); 
