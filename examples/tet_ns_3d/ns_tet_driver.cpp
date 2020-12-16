@@ -456,8 +456,8 @@ int main(int argc, char *argv[])
     }
 
     gbc-> reset_initial_sol(face_flrate,lpn_pressure,lpn_Dirichlet_flrate,lpn_Dirichlet_pressure,initial_time);
-
-    gbc->get_P_Q(dot_face_flrate, face_flrate,lpn_Dirichlet_pressure,lpn_pressure,lpn_Dirichlet_flrate);
+    const bool output_alldata_flag=true;
+    gbc->get_P_Q(dot_face_flrate, face_flrate,lpn_Dirichlet_pressure,lpn_pressure,lpn_Dirichlet_flrate,output_alldata_flag);
 
   }
 

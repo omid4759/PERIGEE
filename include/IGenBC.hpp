@@ -179,7 +179,7 @@ class IGenBC
     }
 
     virtual void get_P_Q( double * const &in_dot_Q,
-       double * const &in_Q, double * const &in_P, double * const &P_Neumann, double * const &Q_Dirichlet)const
+       double * const &in_Q, double * const &in_P, double * const &P_Neumann, double * const &Q_Dirichlet,const bool & output_alldata_flag)const
     {
       SYS_T::print_fatal("Error: IGenBC::get_GenBC_P_Q is not implemented.\n");
     }

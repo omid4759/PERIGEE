@@ -447,8 +447,9 @@ void GenBC_UserLPM::get_m( double * const &in_dot_Q, double * const &in_Q, doubl
    in_Q_1[ii]=in_Q[ii]+0.5*diff[ii];
    in_Q_2[ii]=in_Q[ii]-0.5*diff[ii];
   }
-   get_P_Q(in_dot_Q,in_Q_1,in_P,left,Q_Dirichlet);
-   get_P_Q(in_dot_Q,in_Q_2,in_P,right,Q_Dirichlet);
+   const bool output_alldata_flag=false;
+   get_P_Q(in_dot_Q,in_Q_1,in_P,left,Q_Dirichlet,output_alldata_flag);
+   get_P_Q(in_dot_Q,in_Q_2,in_P,right,Q_Dirichlet,output_alldata_flag);
 
   for(int ii =0; ii<num_ebc;++ii){
 
@@ -470,7 +471,8 @@ void GenBC_UserLPM::get_m( double * const &in_dot_Q, double * const &in_Q, doubl
 }
 
 void GenBC_UserLPM::get_P_Q( double * const &in_dot_Q,
-       double * const &in_Q, double * const &in_P, double * const &P_Neumann, double * const &Q_Dirichlet)const
+       double * const &in_Q, double * const &in_P, double * const &P_Neumann,
+       double * const &Q_Dirichlet, const bool & output_alldata_flag)const
 {
 
 
@@ -498,8 +500,12 @@ void GenBC_UserLPM::get_P_Q( double * const &in_dot_Q,
      in_P0[ii]=P0_Dirichlet[ii];
     }
 
-    std::string str = "./GenBC_User &";
-
+    std::string str;
+    if(output_alldata_flag==true && myrank==0){
+      str = "./GenBC_User 1 &";
+    }else{
+      str = "./GenBC_User &";
+    }
     // Convert string to const char * as system requires
     // parameter of type const char *
     const char *command = str.c_str();

@@ -382,8 +382,8 @@ void PNonlinear_NS_Solver::get_gbc_pressure_flow( const double &stime,
   }
 
   gbc->get_Q0(inlet_flrate_curr);
-
-  gbc->get_P_Q(dot_flrate, flrate,inlet_avepre,P_np1,inlet_flrate_new);
+  const bool output_alldata_flag=false;
+  gbc->get_P_Q(dot_flrate, flrate,inlet_avepre,P_np1,inlet_flrate_new,output_alldata_flag);
 
 
   for(int ii=0;ii<num_Neumann_faces;++ii){

@@ -82,8 +82,8 @@ class GenBC_UserLPM : public IGenBC
 
     virtual void set_curr_n(const int &ii, const double &ni);
 
-    virtual void get_P_Q( double * const &in_dot_Q,
-       double * const &in_Q, double * const &in_P, double * const &P_Neumann, double * const &Q_Dirichlet)const;
+    virtual void get_P_Q(double * const &in_dot_Q,
+       double * const &in_Q, double * const &in_P, double * const &P_Neumann, double * const &Q_Dirichlet, const bool & output_alldata_flag)const;
 
     virtual void get_Q0(double * const &Qn) const;
     double get_Q0( const int &ii ) const;
