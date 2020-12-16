@@ -418,7 +418,8 @@ int main(int argc, char *argv[])
   double * face_flrate=new double[locebc->get_num_ebc()];
   double * face_avepre=new double[locebc->get_num_ebc()];
   double * lpn_pressure=new double[locebc->get_num_ebc()];
-
+  double * lpn_Dirichlet_flrate= new double[gbc->get_num_Dirichlet_faces()];
+  double * lpn_Dirichlet_pressure= new double[gbc->get_num_Dirichlet_faces()];
 
   // ===== Outlet data recording files =====
   for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
@@ -433,10 +434,34 @@ int main(int argc, char *argv[])
         sol, locAssem_ptr, elements, quads, locebc, ff );
    }
 
+     // ===== Inlet data recording files =====
+  const double inlet_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
+      sol, locAssem_ptr, elements, quads, locinfnbc );
+
+  const double inlet_face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
+      sol, locAssem_ptr, elements, quads, locinfnbc );
+
+
+
+  if(gbc-> UserLPM_Dirichlet_flag==false){
     // set the gbc initial conditions using the 3D data
     gbc -> reset_initial_sol(face_flrate, face_avepre,initial_time );
 
     gbc -> get_P( dot_face_flrate, face_flrate,lpn_pressure );
+  }else{
+
+    for(int ff=0;ff<gbc->get_num_Dirichlet_faces();++ff){
+
+     lpn_Dirichlet_pressure[ff]=inlet_face_avepre;
+    }
+
+    gbc-> reset_initial_sol(face_flrate,lpn_pressure,lpn_Dirichlet_flrate,lpn_Dirichlet_pressure,initial_time);
+
+    gbc->get_P_Q(dot_face_flrate, face_flrate,lpn_Dirichlet_pressure,lpn_pressure,lpn_Dirichlet_flrate);
+
+  }
+
+
 
 
   for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
@@ -471,15 +496,11 @@ int main(int argc, char *argv[])
   delete [] face_flrate; face_flrate=nullptr;
   delete [] face_avepre; face_avepre=nullptr;
   delete [] lpn_pressure; lpn_pressure=nullptr;
+  delete [] lpn_Dirichlet_pressure; lpn_Dirichlet_pressure=nullptr;
 
   MPI_Barrier(PETSC_COMM_WORLD);
 
-  // ===== Inlet data recording files =====
-  const double inlet_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-      sol, locAssem_ptr, elements, quads, locinfnbc );
 
-  const double inlet_face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
-      sol, locAssem_ptr, elements, quads, locinfnbc );
 
   if( rank == 0 )
   {
@@ -491,13 +512,19 @@ int main(int argc, char *argv[])
 
     if( !is_restart )
     {
-      ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\n';
-      ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<inlet_face_avepre<<'\n';
+      if(gbc-> UserLPM_Dirichlet_flag==false){
+       ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\n';
+       ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<inlet_face_avepre<<'\n';
+      }else{
+       ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"Flow rate"<<'\t'<<"Reduced model flow rate"<<'\t'<<"Face averaged pressure"<<'\n';
+       ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<lpn_Dirichlet_flrate[0]<<'\t'<<inlet_face_avepre<<'\n';
+      }
     }
 
     ofile.close();
   }
 
+  delete [] lpn_Dirichlet_flrate; lpn_Dirichlet_flrate=nullptr;
   MPI_Barrier(PETSC_COMM_WORLD);
 
   // ===== FEM analysis =====

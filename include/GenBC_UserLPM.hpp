@@ -49,10 +49,47 @@ class GenBC_UserLPM : public IGenBC
 
 
     virtual void get_P0(double * const &Pn) const;
-
+    virtual double get_P0( const int &ii ) const
+    {
+      return P0_Neumann[ii];
+    }
 
     virtual void reset_initial_sol( double * const &in_Q_0,
        double * const &in_P_0, const double & curr_time );
+
+//  for GenBC with Dirichlet faces
+    virtual void reset_initial_sol( double * const &in_Q_0_Neumann,
+       double * const &in_P_0_Neumann, double * const &in_Q_0_Dirichlet,
+       double * const &in_P_0_Dirichlet, const double &curr_time ) ;
+
+    virtual void get_m( double * const &in_dot_Q,
+       double * const &in_Q, double * const &in_P, double * const &m ) const ;
+
+    virtual double get_curr_P(const int &ii )const;
+
+    virtual double get_curr_Q(const int &ii)const;
+
+    virtual double get_curr_m(const int &ii)const;
+
+    virtual double get_curr_n(const int &ii)const;
+
+
+    virtual void set_curr_P(const int & ii, const double & Pi);
+
+    virtual void set_curr_Q(const int & ii, const double & Qi);
+
+    virtual void set_curr_m(const int & ii,const double & mi);
+
+    virtual void set_curr_n(const int &ii, const double &ni);
+
+    virtual void get_P_Q( double * const &in_dot_Q,
+       double * const &in_Q, double * const &in_P, double * const &P_Neumann, double * const &Q_Dirichlet)const;
+
+    virtual void get_Q0(double * const &Qn) const;
+    double get_Q0( const int &ii ) const;
+    virtual int get_num_Dirichlet_faces()const {return num_Dirichlet_faces;}
+
+
 
   private:
     const int N;
@@ -64,6 +101,7 @@ class GenBC_UserLPM : public IGenBC
 
     int num_ebc;
 
+
     double tstart;
     double tend;
     int num_LPM_unknowns;
@@ -71,17 +109,21 @@ class GenBC_UserLPM : public IGenBC
     const char * myfifo1 = "/tmp/myfifo1";
     const char * myfifo2 = "/tmp/myfifo2";
 
-    std::vector<int> Surface_To_LPM;
+    std::vector<int> Neumann_Surface_To_LPM;
+    std::vector<int> Dirichlet_Surface_To_LPM;
+
+    int num_Dirichlet_faces;
 
     mutable std::vector<double> prev_0D_sol,Xi0;
     std::vector<std::string> face_type;
 
 
-    // Vectors storing the Q0 and Pi0 on each outlet faces
-    std::vector<double> Q0,P0;
+    // Vectors storing the Q0 and Pi0 on each Neumann and Dirichlet faces respectively.
+    std::vector<double> Q0_Neumann,P0_Neumann,Q0_Dirichlet,P0_Dirichlet;
 
+    // Vectors storing the current P and Q on each Neumann and Dirichlet faces respectively after complete of ODE integration.
+    std::vector<double> curr_P,curr_Q,curr_m,curr_n;
 
-    double F(double * const &pi, double * const &q, double * const &K)const;
 };
 
 #endif

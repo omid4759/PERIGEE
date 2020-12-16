@@ -19,6 +19,7 @@
 class IGenBC
 {
   public:
+    bool UserLPM_Dirichlet_flag=false;
     IGenBC(){};
 
     virtual ~IGenBC(){};
@@ -80,7 +81,7 @@ class IGenBC
     // For RCR, it is get_P(ii, Q_previous), which is also stored
     // as Pi_0 + Q_0 x Rp
     // --------------------------------------------------------------
-    virtual double get_P0( const int &ii )
+    virtual double get_P0( const int &ii ) const
     {
       SYS_T::print_fatal("Error: IGenBC::get_P0 is not implemented.\n");
       return 0;
@@ -153,7 +154,77 @@ class IGenBC
       SYS_T::print_fatal("Error: IGenBC::reset_initial_sol is not implemented.\n");
     }
 
+    virtual void reset_initial_sol( double * const &in_Q_0_Neumann,
+       double * const &in_P_0_Neumann, double * const &in_Q_0_Dirichlet,
+       double * const &in_P_0_Dirichlet, const double &curr_time )
+    {
+      SYS_T::print_fatal("Error: IGenBC::reset_initial_sol is not implemented.\n");
+    }
 
+
+    virtual void get_Q0(double * const &Qn) const
+    {
+      SYS_T::print_fatal("Error: IGenBC::get_Q0 is not implemented.\n");
+    }
+    virtual double get_Q0( const int &ii ) const
+    {
+      SYS_T::print_fatal("Error: IGenBC::get_Q0 is not implemented.\n");
+      return 0;
+    }
+
+    virtual void get_m( double * const &in_dot_Q, double * const &in_Q, double * const &in_P,
+      double * const &m ) const
+    {
+      SYS_T::print_fatal("Error: IGenBC::get_m is not implemented.\n");
+    }
+
+    virtual void get_P_Q( double * const &in_dot_Q,
+       double * const &in_Q, double * const &in_P, double * const &P_Neumann, double * const &Q_Dirichlet)const
+    {
+      SYS_T::print_fatal("Error: IGenBC::get_GenBC_P_Q is not implemented.\n");
+    }
+
+    virtual double get_curr_P(const int &ii )const
+    {
+     SYS_T::print_fatal("Error: IGenBC::get_curr_P is not implemented.\n");
+     return 0;
+    }
+
+
+    virtual double get_curr_Q(const int &ii)const
+    {
+     SYS_T::print_fatal("Error: IGenBC::get_curr_Q is not implemented.\n");
+     return 0;
+    }
+
+    virtual double get_curr_m(const int &ii)const
+    {
+     SYS_T::print_fatal("Error: IGenBC::get_curr_m is not implemented.\n");
+     return 0;
+    }
+
+    virtual double get_curr_n(const int &ii)const
+    {
+     SYS_T::print_fatal("Error: IGenBC::get_curr_n is not implemented.\n");
+     return 0;
+    }
+
+    virtual void set_curr_P(const int & ii, const double & Pi){
+     SYS_T::print_fatal("Error: IGenBC::set_curr_P is not implemented.\n");
+    }
+    virtual void set_curr_Q(const int & ii, const double & Qi){
+      SYS_T::print_fatal("Error: IGenBC::set_curr_Q is not implemented.\n");
+    }
+    virtual void set_curr_m(const int & ii,const double & mi){
+      SYS_T::print_fatal("Error: IGenBC::set_curr_m is not implemented.\n");
+    }
+    virtual void set_curr_n(const int &ii, const double &ni){
+      SYS_T::print_fatal("Error: IGenBC::set_curr_n is not implemented.\n");
+    }
+    virtual int get_num_Dirichlet_faces()const
+    {
+      return 0;
+    }
 
 };
 

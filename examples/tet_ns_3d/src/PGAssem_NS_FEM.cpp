@@ -823,8 +823,19 @@ void PGAssem_NS_FEM::NatBC_Resis_G(
   double * P_n=new double[num_ebc];
   double * P_np1=new double[num_ebc];
 
-  for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
-  {
+  if(gbc-> UserLPM_Dirichlet_flag){
+     for (int ebc_id = 0; ebc_id < num_ebc; ++ebc_id){
+
+       P_n[ebc_id]=gbc->get_P0(ebc_id);
+       P_np1[ebc_id]=gbc->get_curr_P(ebc_id);
+     }
+
+
+
+  }else{
+
+   for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
+   {
     // Calculate dot flow rate for face with ebc_id from solution vector dot_sol
      dot_flrate[ebc_id] = Assem_surface_flowrate( dot_sol, lassem_ptr,
         element_s, quad_s, ebc_part, ebc_id );
@@ -832,13 +843,15 @@ void PGAssem_NS_FEM::NatBC_Resis_G(
     // Calculate flow rate for face with ebc_id from solution vector sol
      flrate[ebc_id] = Assem_surface_flowrate( sol, lassem_ptr,
         element_s, quad_s, ebc_part, ebc_id );
-}
+
+    }
 
 
     // Get the (pressure) value on the outlet surface for traction evaluation
     gbc->get_P0(P_n);
     gbc->get_P(dot_flrate,flrate,P_np1);
 
+  }
 
   for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
   {
@@ -923,28 +936,40 @@ void PGAssem_NS_FEM::NatBC_Resis_KG(
   double * m_val=new double[num_ebc];
   double * n_val=new double[num_ebc];
 
-  for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
-  {
-    // Calculate dot flow rate for face with ebc_id and MPI_Allreduce them
-    // Here, dot_sol is the solution at time step n+1 (not n+alpha_f!)
-    dot_flrate [ebc_id] = Assem_surface_flowrate( dot_sol, lassem_ptr,
+  if(gbc-> UserLPM_Dirichlet_flag){
+     for (int ebc_id = 0; ebc_id < num_ebc; ++ebc_id){
+
+       P_n[ebc_id]=gbc->get_P0(ebc_id);
+       P_np1[ebc_id]=gbc->get_curr_P(ebc_id);
+       m_val[ebc_id]=gbc->get_curr_m(ebc_id);
+       n_val[ebc_id]=gbc->get_curr_n(ebc_id);
+
+     }
+  }else{
+    for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
+    {
+      // Calculate dot flow rate for face with ebc_id and MPI_Allreduce them
+      // Here, dot_sol is the solution at time step n+1 (not n+alpha_f!)
+      dot_flrate [ebc_id] = Assem_surface_flowrate( dot_sol, lassem_ptr,
         element_s, quad_s, ebc_part, ebc_id );
 
-    // Calculate flow rate for face with ebc_id and MPI_Allreduce them
-    // Here, sol is the solution at time step n+1 (not n+alpha_f!)
-    flrate [ebc_id] = Assem_surface_flowrate( sol, lassem_ptr,
+      // Calculate flow rate for face with ebc_id and MPI_Allreduce them
+      // Here, sol is the solution at time step n+1 (not n+alpha_f!)
+      flrate [ebc_id] = Assem_surface_flowrate( sol, lassem_ptr,
         element_s, quad_s, ebc_part, ebc_id );
 
-  }
+
+    }
     // Get the (pressure) value on the outlet surface for traction evaluation
-     gbc -> get_P0(P_n);
-     gbc -> get_P(dot_flrate, flrate,P_np1 );
+    gbc -> get_P0(P_n);
+    gbc -> get_P(dot_flrate, flrate,P_np1 );
     // Get the (potentially approximated) m := dP/dQ
-     gbc -> get_m(dot_flrate, flrate,m_val );
+    gbc -> get_m(dot_flrate, flrate,m_val );
 
     // Get the (potentially approximated) n := dP/d(dot_Q)
-     gbc -> get_n( dot_flrate, flrate,n_val );
+    gbc -> get_n( dot_flrate, flrate,n_val );
 
+  }
   for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
   {
     // P_n+alpha_f

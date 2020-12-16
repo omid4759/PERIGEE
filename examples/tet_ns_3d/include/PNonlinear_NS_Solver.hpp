@@ -2,8 +2,8 @@
 #define PNONLINEAR_NS_SOLVER_HPP
 // ==================================================================
 // PNonlinear_NS_Solver.hpp
-// 
-// Parallel nonlinear solver for Navier-Stokes equations. 
+//
+// Parallel nonlinear solver for Navier-Stokes equations.
 //
 // Author: Ju Liu
 // Date: Feb 11 2020
@@ -20,9 +20,9 @@ class PNonlinear_NS_Solver
   public:
     PNonlinear_NS_Solver( const APart_Node * const &anode_ptr,
         const FEANode * const &feanode_ptr,
-        const double &input_nrtol, const double &input_natol, 
-        const double &input_ndtol, const int &input_max_iteration, 
-        const int &input_renew_freq, 
+        const double &input_nrtol, const double &input_natol,
+        const double &input_ndtol, const int &input_max_iteration,
+        const int &input_renew_freq,
         const int &input_renew_threshold = 4 );
 
     ~PNonlinear_NS_Solver();
@@ -54,7 +54,7 @@ class PNonlinear_NS_Solver
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_Inflow_NodalBC * const &infnbc_part,
         const ALocal_EBC * const &ebc_part,
-        const IGenBC * const &gbc,
+        IGenBC * const &gbc,
         const Matrix_PETSc * const &bc_mat,
         FEAElement * const &elementv,
         FEAElement * const &elements,
@@ -85,6 +85,28 @@ class PNonlinear_NS_Solver
         const ICVFlowRate * const &flrate,
         const PDNSolution * const &sol_base,
         PDNSolution * const &sol ) const;
+    void impose_inflow_value( const double &flow_rate,
+        const ALocal_Inflow_NodalBC * const &infbc,
+        const PDNSolution * const &sol_base,
+        PDNSolution * const &sol ) const;
+    void get_gbc_pressure_flow(const double &stime,
+         const double &dt,
+         const double &alpha_f,
+         const PDNSolution * const &sol_base,
+         PDNSolution * const &sol,
+         PDNSolution * const &dot_sol,
+         PDNSolution * const &sol_alpha,
+         const ALocal_Inflow_NodalBC * const &infnbc,
+         const ALocal_EBC * const &ebc_part,
+         IGenBC * const &gbc,
+         IPLocAssem * const &lassem_ptr,
+         IPGAssem * const &gassem_ptr,
+         FEAElement * const &element_s,
+         const IQuadPts * const &quad_s,
+         const bool &compute_m_n_flag  ) const;
+
+
+
 };
 
 #endif

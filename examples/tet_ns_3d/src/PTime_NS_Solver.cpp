@@ -113,7 +113,8 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
   double * face_flrate=new double[ebc_part -> get_num_ebc()];
   double * face_avepre=new double[ebc_part -> get_num_ebc()];
   double * lpn_pressure=new double[ebc_part -> get_num_ebc()];
-
+  double * lpn_Dirichlet_pressure= new double[gbc->get_num_Dirichlet_faces()];
+  double * lpn_Dirichlet_flrate= new double[gbc->get_num_Dirichlet_faces()];
 
   SYS_T::commPrint("Time = %e, dt = %e, index = %d, %s \n",
       time_info->get_time(), time_info->get_step(), time_info->get_index(),
@@ -158,6 +159,7 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
       cur_dot_sol->WriteBinary(sol_dot_name.c_str());
     }
 
+
     // Calculate the flow rate & averaged pressure on all outlets
     for(int face=0; face<ebc_part -> get_num_ebc(); ++face)
     {
@@ -173,14 +175,34 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
          face_avepre[face] = gassem_ptr -> Assem_surface_ave_pressure(
           cur_sol, lassem_fluid_ptr, elements, quad_s, ebc_part, face);
     }
+
+        // Calcualte the inlet data
+    const double inlet_face_flrate = gassem_ptr -> Assem_surface_flowrate(
+        cur_sol, lassem_fluid_ptr, elements, quad_s, infnbc_part );
+
+    const double inlet_face_avepre = gassem_ptr -> Assem_surface_ave_pressure(
+        cur_sol, lassem_fluid_ptr, elements, quad_s, infnbc_part );
+
+
+
+    if(gbc-> UserLPM_Dirichlet_flag==false){
       // Calculate the 0D pressure from LPN model
 
       gbc -> get_P( dot_face_flrate, face_flrate,lpn_pressure );
 
       // Update the initial values in genbc
       gbc -> reset_initial_sol(face_flrate, lpn_pressure,time_info->get_time());
+    }else{
+
+      for(int face=0;face<gbc->get_num_Dirichlet_faces();++face){
+        lpn_Dirichlet_pressure[face]=inlet_face_avepre;
+      }
 
 
+      gbc->get_P_Q(dot_face_flrate, face_flrate,lpn_Dirichlet_pressure,lpn_pressure,lpn_Dirichlet_flrate);
+      gbc-> reset_initial_sol(face_flrate,lpn_pressure,lpn_Dirichlet_flrate,lpn_Dirichlet_pressure,time_info->get_time());
+
+    }
 
     for(int face=0; face<ebc_part -> get_num_ebc(); ++face)
     {
@@ -199,12 +221,7 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
       MPI_Barrier(PETSC_COMM_WORLD);
     }
 
-    // Calcualte the inlet data
-    const double inlet_face_flrate = gassem_ptr -> Assem_surface_flowrate(
-        cur_sol, lassem_fluid_ptr, elements, quad_s, infnbc_part );
 
-    const double inlet_face_avepre = gassem_ptr -> Assem_surface_ave_pressure(
-        cur_sol, lassem_fluid_ptr, elements, quad_s, infnbc_part );
 
     PetscMPIInt rank;
     MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
@@ -212,11 +229,14 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
     {
       std::ofstream ofile;
       ofile.open( infnbc_part->gen_flowfile_name().c_str(), std::ofstream::out | std::ofstream::app );
-      ofile<<time_info->get_index()<<'\t'<<time_info->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<inlet_face_avepre<<'\n';
+      if(gbc-> UserLPM_Dirichlet_flag==false){
+       ofile<<time_info->get_index()<<'\t'<<time_info->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<inlet_face_avepre<<'\n';
+      }else{
+       ofile<<time_info->get_index()<<'\t'<<time_info->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<lpn_Dirichlet_flrate[0]<<'\t'<<inlet_face_avepre<<'\n';
+      }
       ofile.close();
     }
     MPI_Barrier(PETSC_COMM_WORLD);
-
     // Prepare for next time step
     pre_sol->Copy(*cur_sol);
     pre_dot_sol->Copy(*cur_dot_sol);
@@ -228,6 +248,8 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
   delete [] face_flrate; face_flrate=nullptr;
   delete [] face_avepre; face_avepre=nullptr;
   delete [] lpn_pressure; lpn_pressure=nullptr;
+  delete [] lpn_Dirichlet_pressure; lpn_Dirichlet_pressure=nullptr;
+  delete [] lpn_Dirichlet_flrate; lpn_Dirichlet_flrate=nullptr;
 
 }
 
