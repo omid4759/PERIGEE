@@ -29,6 +29,8 @@ GenBC_UserLPM::GenBC_UserLPM( const char * const &lpn_filename, const int &in_N,
       sstrm >> num_ebc;
       sstrm >> num_Dirichlet_faces;
       sstrm >> num_LPM_unknowns;
+      sstrm >> initialization_steps;
+      initialization_time=dt3d*static_cast<double>(initialization_steps);
       sstrm.clear();
       break;
     }
@@ -350,6 +352,7 @@ void GenBC_UserLPM::get_P( double *const &in_dot_Q,
     read(fd2, P, sizeof(double)*(num_ebc));
     close(fd2);
 
+    printf("received P=%lf %lf \n",P[0],P[1]);
 
     for (int ii=0; ii<num_LPM_unknowns;++ii){
      prev_0D_sol[ii]=Xi_m[ii];
@@ -422,11 +425,12 @@ void GenBC_UserLPM::reset_initial_sol( double * const &in_Q_0_Neumann,
     Xi0[ii]= prev_0D_sol[ii];
   }
 
-  tstart=curr_time;
-  tend=curr_time+N*h;
+  tstart=curr_time-initialization_time;
+  tend=tstart+N*h;
 
 
 }
+
 
 
 void GenBC_UserLPM::get_m( double * const &in_dot_Q, double * const &in_Q, double * const &in_P,
@@ -501,10 +505,14 @@ void GenBC_UserLPM::get_P_Q( double * const &in_dot_Q,
     }
 
     std::string str;
-    if(output_alldata_flag==true && myrank==0){
-      str = "./GenBC_User 1 &";
+    if(tend<=0.0){
+     str = "./GenBC_User I &";
     }else{
-      str = "./GenBC_User &";
+     if(output_alldata_flag==true && myrank==0){
+      str = "./GenBC_User F &";
+     }else{
+      str = "./GenBC_User M &";
+     }
     }
     // Convert string to const char * as system requires
     // parameter of type const char *
@@ -539,15 +547,12 @@ void GenBC_UserLPM::get_P_Q( double * const &in_dot_Q,
     write(fd1,in_P0,sizeof(double)*num_Dirichlet_faces);
     write(fd1,in_P,sizeof(double)*num_Dirichlet_faces);
 
-
-
     close(fd1);
 
 
     fd2 = open(myfifo2, O_RDONLY);
 
      // Read from FIFO
-
 
     read(fd2, Xi_m, sizeof(double)*num_LPM_unknowns);
     read(fd2,surface_vals,sizeof(double)*(num_ebc+num_Dirichlet_faces));
@@ -556,12 +561,17 @@ void GenBC_UserLPM::get_P_Q( double * const &in_dot_Q,
      P_Neumann[ii]=surface_vals[ii];
     }
 
+
     for(int ii=0;ii<num_Dirichlet_faces;++ii){
      Q_Dirichlet[ii]=surface_vals[ii+num_ebc];
     }
-
     close(fd2);
 
+   /*
+    if(myrank==0){
+    printf(" received Q_Dirichlet=%lf RVVol=%lf PAflow=%lf Pout=%lf \n",Q_Dirichlet[0],Xi_m[1],Xi_m[2],P_Neumann[0]);
+     }
+   */
     for (int ii=0; ii<num_LPM_unknowns;++ii){
      prev_0D_sol[ii]=Xi_m[ii];
     }

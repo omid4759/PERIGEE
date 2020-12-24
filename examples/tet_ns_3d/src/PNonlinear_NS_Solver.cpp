@@ -111,11 +111,16 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
     rescale_inflow_value(curr_time+dt, infnbc_part, flr_ptr, sol_base, sol);
     rescale_inflow_value(curr_time+alpha_f*dt, infnbc_part, flr_ptr, sol_base, &sol_alpha);
 
+
   }else{
   // call GenBC to update Dirichlet and Neumann boundary conditions
-    get_gbc_pressure_flow(curr_time,dt,alpha_f,sol_base,sol,dot_sol,&sol_alpha,infnbc_part,ebc_part,gbc,lassem_ptr, gassem_ptr,elements,quad_s,new_tangent_flag);
+
+    get_gbc_pressure_flow(curr_time,dt,gamma,alpha_f,alpha_m,sol_base,pre_sol,pre_dot_sol,
+              sol,dot_sol,&sol_alpha,&dot_sol_alpha,infnbc_part,ebc_part,gbc,
+              lassem_ptr, gassem_ptr,elements,quad_s,new_tangent_flag);
 
   }
+
   // -------------------------------------------------
 
   // If new_tangent_flag == TRUE, update the tangent matrix;
@@ -195,8 +200,10 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
 
       if(gbc-> UserLPM_Dirichlet_flag){
       // call GenBC to update Dirichlet and Neumann boundary conditions
-        get_gbc_pressure_flow(curr_time,dt,alpha_f,sol_base,sol,dot_sol,&sol_alpha,infnbc_part,ebc_part,gbc,lassem_ptr, gassem_ptr,elements,quad_s,true);
 
+        get_gbc_pressure_flow(curr_time,dt,gamma,alpha_f,alpha_m,sol_base,pre_sol,pre_dot_sol,
+              sol,dot_sol,&sol_alpha,&dot_sol_alpha,infnbc_part,ebc_part,gbc,
+              lassem_ptr, gassem_ptr,elements,quad_s,true);
       }
 
       gassem_ptr->Clear_KG();
@@ -222,7 +229,10 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
 
       if(gbc-> UserLPM_Dirichlet_flag){
       // call GenBC to update Dirichlet and Neumann boundary conditions
-        get_gbc_pressure_flow(curr_time,dt,alpha_f,sol_base,sol,dot_sol,&sol_alpha,infnbc_part,ebc_part,gbc,lassem_ptr, gassem_ptr,elements,quad_s,false);
+
+        get_gbc_pressure_flow(curr_time,dt,gamma,alpha_f,alpha_m,sol_base,pre_sol,pre_dot_sol,
+              sol,dot_sol,&sol_alpha,&dot_sol_alpha,infnbc_part,ebc_part,gbc,
+              lassem_ptr, gassem_ptr,elements,quad_s,false);
 
       }
 
@@ -292,17 +302,32 @@ void PNonlinear_NS_Solver::rescale_inflow_value( const double &stime,
 }
 
 
-void PNonlinear_NS_Solver::impose_inflow_value( const double &flow_rate,
+void PNonlinear_NS_Solver::impose_inflow_value_correct_ac( const double &flow_rate,
+    const double &flow_rate_alpha,
+    const double &dt,
+    const double &gamma,
+    const double &alpha_m,
     const ALocal_Inflow_NodalBC * const &infbc,
     const PDNSolution * const &sol_base,
-    PDNSolution * const &sol ) const
+    const PDNSolution * const &pre_sol,
+    const PDNSolution * const &pre_dot_sol,
+    PDNSolution * const &sol,
+    PDNSolution * const &dot_sol,
+    PDNSolution * const &sol_alpha,
+    PDNSolution * const &dot_sol_alpha) const
 {
   const int numnode = infbc -> get_Num_LD();
 
-  const double val = flow_rate;
+
 
   double base_vals[3];
   int base_idx[3];
+
+
+  double pre_vals[3];
+  double curr_vals[3];
+  double pre_dot_vals[3];
+  double dot_vals[3];
 
   for(int ii=0; ii<numnode; ++ii)
   {
@@ -314,25 +339,79 @@ void PNonlinear_NS_Solver::impose_inflow_value( const double &flow_rate,
 
     VecGetValues(sol_base->solution, 3, base_idx, base_vals);
 
-    VecSetValue(sol->solution, node_index*4+1, base_vals[0] * val, INSERT_VALUES);
-    VecSetValue(sol->solution, node_index*4+2, base_vals[1] * val, INSERT_VALUES);
-    VecSetValue(sol->solution, node_index*4+3, base_vals[2] * val, INSERT_VALUES);
+    curr_vals[0]=base_vals[0]*flow_rate;
+    curr_vals[1]=base_vals[1]*flow_rate;
+    curr_vals[2]=base_vals[2]*flow_rate;
+
+    VecSetValue(sol->solution, node_index*4+1, curr_vals[0], INSERT_VALUES);
+    VecSetValue(sol->solution, node_index*4+2, curr_vals[1], INSERT_VALUES);
+    VecSetValue(sol->solution, node_index*4+3, curr_vals[2], INSERT_VALUES);
+
+
+    //make correction for acceleration values on Dirichal nodes
+    // Ydot_n+1=(gamma-1)/gamma*Ydot_n+(Y_n+1 - Y_n)/(gamma*dt)
+
+    VecGetValues(pre_sol->solution,3,base_idx,pre_vals);
+    VecGetValues(pre_dot_sol->solution,3,base_idx,pre_dot_vals);
+    dot_vals[0]=(gamma-1.0)/gamma*pre_dot_vals[0]+(curr_vals[0]-pre_vals[0])/(gamma*dt);
+    dot_vals[1]=(gamma-1.0)/gamma*pre_dot_vals[1]+(curr_vals[1]-pre_vals[1])/(gamma*dt);
+    dot_vals[2]=(gamma-1.0)/gamma*pre_dot_vals[2]+(curr_vals[2]-pre_vals[2])/(gamma*dt);
+
+    VecSetValue(dot_sol->solution, node_index*4+1, dot_vals[0], INSERT_VALUES);
+    VecSetValue(dot_sol->solution, node_index*4+2, dot_vals[1], INSERT_VALUES);
+    VecSetValue(dot_sol->solution, node_index*4+3, dot_vals[2], INSERT_VALUES);
+
+
+    curr_vals[0]=base_vals[0]*flow_rate_alpha;
+    curr_vals[1]=base_vals[1]*flow_rate_alpha;
+    curr_vals[2]=base_vals[2]*flow_rate_alpha;
+
+
+    VecSetValue(sol_alpha->solution, node_index*4+1, curr_vals[0], INSERT_VALUES);
+    VecSetValue(sol_alpha->solution, node_index*4+2, curr_vals[1], INSERT_VALUES);
+    VecSetValue(sol_alpha->solution, node_index*4+3, curr_vals[2], INSERT_VALUES);
+
+
+    //Ydot_n+alpha=Ydot_n +alpha_m*(Ydot_n+1 -Ydot_n)
+
+    curr_vals[0]=pre_dot_vals[0]+alpha_m*(dot_vals[0]-pre_dot_vals[0]);
+    curr_vals[1]=pre_dot_vals[1]+alpha_m*(dot_vals[1]-pre_dot_vals[1]);
+    curr_vals[2]=pre_dot_vals[2]+alpha_m*(dot_vals[2]-pre_dot_vals[2]);
+
+    VecSetValue(dot_sol_alpha->solution, node_index*4+1, curr_vals[0], INSERT_VALUES);
+    VecSetValue(dot_sol_alpha->solution, node_index*4+2, curr_vals[1], INSERT_VALUES);
+    VecSetValue(dot_sol_alpha->solution, node_index*4+3, curr_vals[2], INSERT_VALUES);
+
+
   }
 
   VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
   sol->GhostUpdate();
+
+  VecAssemblyBegin(dot_sol->solution); VecAssemblyEnd(dot_sol->solution);
+  dot_sol->GhostUpdate();
+
+  VecAssemblyBegin(sol_alpha->solution); VecAssemblyEnd(sol_alpha->solution);
+  sol_alpha->GhostUpdate();
+
+  VecAssemblyBegin(dot_sol_alpha->solution); VecAssemblyEnd(dot_sol_alpha->solution);
+  dot_sol_alpha->GhostUpdate();
+
 }
-
-
 
 
 void PNonlinear_NS_Solver::get_gbc_pressure_flow( const double &stime,
     const double &dt,
+    const double &gamma,
     const double &alpha_f,
+    const double &alpha_m,
     const PDNSolution * const &sol_base,
+    const PDNSolution * const &pre_sol,
+    const PDNSolution * const &pre_dot_sol,
     PDNSolution * const &sol,
     PDNSolution * const &dot_sol,
     PDNSolution * const &sol_alpha,
+    PDNSolution * const &dot_sol_alpha,
     const ALocal_Inflow_NodalBC * const &infnbc,
     const ALocal_EBC * const &ebc_part,
     IGenBC * const &gbc,
@@ -379,11 +458,14 @@ void PNonlinear_NS_Solver::get_gbc_pressure_flow( const double &stime,
   for(int ii=0;ii<num_Dirichlet_faces;++ii){
     inlet_avepre[ii]=gassem_ptr -> Assem_surface_ave_pressure(
       sol, lassem_ptr, element_s, quad_s, infnbc );
+
+   //  printf("in interation inlet P=%lf \n",inlet_avepre[ii]);
   }
+
 
   gbc->get_Q0(inlet_flrate_curr);
   const bool output_alldata_flag=false;
-  gbc->get_P_Q(dot_flrate, flrate,inlet_avepre,P_np1,inlet_flrate_new,output_alldata_flag);
+  gbc->get_P_Q(dot_flrate, flrate,inlet_avepre,P_np1,inlet_flrate_new, output_alldata_flag);
 
 
   for(int ii=0;ii<num_Neumann_faces;++ii){
@@ -397,13 +479,12 @@ void PNonlinear_NS_Solver::get_gbc_pressure_flow( const double &stime,
 
 
   for(int ii=0;ii<num_Dirichlet_faces;++ii){
-   inlet_flrate_alpha[ii]=inlet_flrate_curr[ii]+(inlet_flrate_new[ii]-inlet_flrate_curr[ii])/dt*alpha_f;
+   inlet_flrate_alpha[ii]=inlet_flrate_curr[ii]+(inlet_flrate_new[ii]-inlet_flrate_curr[ii])*alpha_f;
 
-   impose_inflow_value(inlet_flrate_new[ii],infnbc,sol_base,sol);
-   impose_inflow_value(inlet_flrate_alpha[ii],infnbc,sol_base,sol_alpha);
+   impose_inflow_value_correct_ac(inlet_flrate_new[ii],inlet_flrate_alpha[ii],dt,gamma,alpha_m,infnbc,
+      sol_base, pre_sol,pre_dot_sol,sol,dot_sol,sol_alpha,dot_sol_alpha);
 
   }
-
 
   if(compute_m_n_flag){
 

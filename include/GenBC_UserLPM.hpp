@@ -62,6 +62,7 @@ class GenBC_UserLPM : public IGenBC
        double * const &in_P_0_Neumann, double * const &in_Q_0_Dirichlet,
        double * const &in_P_0_Dirichlet, const double &curr_time ) ;
 
+
     virtual void get_m( double * const &in_dot_Q,
        double * const &in_Q, double * const &in_P, double * const &m ) const ;
 
@@ -104,6 +105,8 @@ class GenBC_UserLPM : public IGenBC
 
     double tstart;
     double tend;
+    double initialization_time;
+    int initialization_steps;
     int num_LPM_unknowns;
 
     const char * myfifo1 = "/tmp/myfifo1";
