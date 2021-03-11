@@ -71,8 +71,8 @@ class ALocal_EBC
     // --------------------------------------------------------------
     // get_ctrlPts_xyz: given the ebc_id ii, the element index eindex,
     // return the control points' geometry.
-    // The users are responsible for allocating the deleting the ctrl_xyz
-    // array.
+    // Users are responsible for allocating & deleting the ctrl_xyz
+    // arrays.
     // ebc_id : 0 <= ii < num_ebc;
     // surface element id: 0 <= eindex < num_local_cell[ii];
     // ctrl_x/y/z : output geometry array, length is 
@@ -166,8 +166,7 @@ class ALocal_EBC
     //              this partition owns any cell on this surface.
     //              ii : face_id ranging from 0 <= ii < num_ebc,
     // --------------------------------------------------------------
-    virtual void get_outvec( const int &ii, double &nx, double &ny,
-        double &nz ) const
+    virtual void get_outvec( const int &ii, double &nx, double &ny, double &nz ) const
     {
       SYS_T::print_fatal("Error: ALocal_EBC::get_outvec is not implemented. \n");
     }
@@ -175,8 +174,12 @@ class ALocal_EBC
     // --------------------------------------------------------------
     // get_thickness : return the wall thickness, if this partition
     //                 owns any cell on the wall.
+    // Users are responsible for allocating & deleting the e_thickness array.
+    // Only one surface per the assumption in wall ebc.
+    // surface element id: 0 <= eindex < num_local_cell[0]
+    // e_thickness : output thickness array, length is cell_nLocBas[0].
     // --------------------------------------------------------------
-    virtual void get_thickness(std::vector<double> &out) const
+    virtual void get_thickness( const int &eindex, double * const &e_thickness ) const
     {
       SYS_T::print_fatal("Error: ALocal_EBC::get_thickness is not implemented. \n");
     }
@@ -184,8 +187,12 @@ class ALocal_EBC
     // --------------------------------------------------------------
     // get_youngsmod : return the wall young's modulus, if this partition
     //                 owns any cell on the wall.
+    // Users are responsible for allocating & deleting the e_youngsmod array.
+    // Only one surface per the assumption in wall ebc.
+    // surface element id: 0 <= eindex < num_local_cell[0]
+    // e_youngsmod : output youngsmod array, length is cell_nLocBas[0].
     // --------------------------------------------------------------
-    virtual void get_younsmod(std::vector<double> &out) const
+    virtual void get_youngsmod( const int &eindex, double * const &e_youngsmod ) const
     {
       SYS_T::print_fatal("Error: ALocal_EBC::get_youngsmod is not implemented. \n");
     }
@@ -200,14 +207,16 @@ class ALocal_EBC
     }
 
   protected:
-    // the number of different ebc domain
+    // the number of different ebc domain on which one may prescribe different
+    // elemental boundary conditions.
     int num_ebc;
 
     // num_local_node[ii] gives the ii-th ebc's local node number
     // num_local_cell[ii] gives the ii-th ebc's local cell number
     // cell_nLocBas[ii] gives the cell's number of node. e.g., 
     //                  triangle surface is 3,
-    //                  quadralaterial surface is 4.
+    //                  quadralaterial surface is 4,
+    //                  quadratic triangle surface is 6.
     std::vector<int> num_local_node, num_local_cell, cell_nLocBas;
 
     // local_pt_xyz[ii] gives a list of local node's coordinates
@@ -222,8 +231,7 @@ class ALocal_EBC
     // size: num_ebc x num_local_node[ii]
     std::vector< std::vector<int> > local_global_node;
 
-    // local node's position in the volumetric local portion's
-    // local_to_global array.
+    // local node's position in the volumetric local portion's local_to_global array.
     // size: num_ebc x num_local_node[ii]
     std::vector< std::vector<int> > local_node_pos;
 

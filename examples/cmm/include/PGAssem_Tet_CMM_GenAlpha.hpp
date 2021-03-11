@@ -1,17 +1,17 @@
-#ifndef PGASSEM_NS_FEM_HPP
-#define PGASSEM_NS_FEM_HPP
+#ifndef PGASSEM_TET_CMM_GENALPHA_HPP
+#define PGASSEM_TET_CMM_GENALPHA_HPP
 // ==================================================================
-// PGAssem_NS_FEM.hpp
+// PGAssem_Tet_CMM_GenAlpha.hpp
 //
-// Parallel golbal assembly based on PETSc, using AIJ matrix format.
+// Parallel global assembly based on PETSc, using AIJ matrix format.
 // The assembly routine is designed for classical C0 FEM method, which
 // means we do not need extraction operators and local mesh sizes.
 //
-// The assembly is for the NS equations written in VMS formualtion
-// of NS equations. The input solution vectors contains
+// The assembly is for the CMM-type FSI problem written in VMS formualtion
+// for the NS equations. The input solution vectors contains
 //  [ pressure; velocity ],
 // the dot solution contains
-//  [ dot pressure; dot velcoty ].
+//  [ dot pressure; dot velocity ].
 //
 // Author: Ju Liu 
 // Date Created: Feb. 10 2020
@@ -19,12 +19,13 @@
 #include "IPGAssem.hpp"
 #include "PETSc_Tools.hpp"
 #include "PDNSolution_NS.hpp"
+#include "PDNSolution_Wall_Disp.hpp"
 
-class PGAssem_NS_FEM : public IPGAssem
+class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
 {
   public:
-    // Constructor for NS equations
-    PGAssem_NS_FEM( 
+    // Constructor for CMM equations
+    PGAssem_Tet_CMM_GenAlpha( 
         IPLocAssem * const &locassem_ptr,
         FEAElement * const &elements,
         const IQuadPts * const &quads,
@@ -38,9 +39,9 @@ class PGAssem_NS_FEM : public IPGAssem
         const int &in_nz_estimate=60 );
 
     // Destructor
-    virtual ~PGAssem_NS_FEM();
+    virtual ~PGAssem_Tet_CMM_GenAlpha();
 
-    // Nonzero pattern estimate for the NS equations
+    // Nonzero pattern estimate for the CMM equations
     virtual void Assem_nonzero_estimate(
         const ALocal_Elem * const &alelem_ptr,
         IPLocAssem * const &lassem_ptr,
@@ -52,7 +53,7 @@ class PGAssem_NS_FEM : public IPGAssem
         const ALocal_EBC * const &ebc_part,
         const IGenBC * const &gbc );
 
-    // Assem mass matrix and residual vector
+    // Assemble mass matrix and residual vector
     virtual void Assem_mass_residual(
         const PDNSolution * const &sol_a,
         const ALocal_Elem * const &alelem_ptr,
@@ -67,10 +68,11 @@ class PGAssem_NS_FEM : public IPGAssem
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_EBC * const &ebc_part );
 
-    // Assembly the residual vector for the NS equations
+    // Assemble the residual vector for the CMM equations
     virtual void Assem_residual(
         const PDNSolution * const &dot_sol,
         const PDNSolution * const &sol,
+        const PDNSolution * const &sol_wall_disp,
         const PDNSolution * const &dot_sol_np1,
         const PDNSolution * const &sol_np1,
         const double &curr_time,
@@ -79,6 +81,7 @@ class PGAssem_NS_FEM : public IPGAssem
         IPLocAssem * const &lassem_ptr,
         FEAElement * const &elementv,
         FEAElement * const &elements,
+        FEAElement * const &elementw,
         const IQuadPts * const &quad_v,
         const IQuadPts * const &quad_s,
         const ALocal_IEN * const &lien_ptr,
@@ -86,13 +89,15 @@ class PGAssem_NS_FEM : public IPGAssem
         const FEANode * const &fnode_ptr,
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_EBC * const &ebc_part,
+        const ALocal_EBC * const &ebc_wall_part,
         const IGenBC * const &gbc );
 
-    // Assembly the residual vector and tangent matrix 
-    // for the NS equations
+    // Assemble the residual vector and tangent matrix 
+    // for the CMM equations
     virtual void Assem_tangent_residual(
         const PDNSolution * const &dot_sol,
         const PDNSolution * const &sol,
+        const PDNSolution * const &sol_wall_disp,
         const PDNSolution * const &dot_sol_np1,
         const PDNSolution * const &sol_np1,
         const double &curr_time,
@@ -101,6 +106,7 @@ class PGAssem_NS_FEM : public IPGAssem
         IPLocAssem * const &lassem_ptr,
         FEAElement * const &elementv,
         FEAElement * const &elements,
+        FEAElement * const &elementw,
         const IQuadPts * const &quad_v,
         const IQuadPts * const &quad_s,
         const ALocal_IEN * const &lien_ptr,
@@ -108,6 +114,7 @@ class PGAssem_NS_FEM : public IPGAssem
         const FEANode * const &fnode_ptr,
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_EBC * const &ebc_part,
+        const ALocal_EBC * const &ebc_wall_part,
         const IGenBC * const &gbc );
 
     // Assembly routine for the surface integrals of flow rate and
@@ -141,6 +148,18 @@ class PGAssem_NS_FEM : public IPGAssem
         FEAElement * const &element_s,
         const IQuadPts * const &quad_s,
         const ALocal_Inflow_NodalBC * const &infbc_part );
+
+    // **** PRESTRESS TODO:
+    // **** Loop over num_selem:
+    //        - call PLocAssem_Tet_CMM_GenAlpha::get_Wall_CauchyStress()
+    //        - call ALocal_Wall_Prestress::update_prestress()
+    // virtual void Update_Wall_Prestress(
+    //     const PDNSolution * const &sol_wall_disp,
+    //     IPLocAssem * const &lassem_ptr,
+    //     FEAElement * const &element_w,
+    //     const IQuadPts * const &quad_s,
+    //     const ALocal_EBC * const &ebc_wall_part,
+    //     ALocal_Wall_Prestress * const &wall_prestress );
 
   private:
     // Private data
@@ -200,6 +219,29 @@ class PGAssem_NS_FEM : public IPGAssem
         const ALocal_EBC * const &ebc_part,
         const IGenBC * const &gbc );
 
+    // Wall integral for thin-walled linear membrane
+    // **** PRESTRESS TODO: additional arg ALocal_Wall_Prestress
+    void WallMembrane_G( const double &curr_time,
+        const double &dt, 
+        const PDNSolution * const &dot_sol,
+        const PDNSolution * const &sol_wall_disp,
+        IPLocAssem * const &lassem_ptr,
+        FEAElement * const &element_w,
+        const IQuadPts * const &quad_s,
+        const ALocal_NodalBC * const &nbc_part,
+        const ALocal_EBC * const &ebc_wall_part );
+
+    // **** PRESTRESS TODO: additional arg ALocal_Wall_Prestress
+    void WallMembrane_KG( const double &curr_time,
+        const double &dt, 
+        const PDNSolution * const &dot_sol,
+        const PDNSolution * const &sol_wall_disp,
+        IPLocAssem * const &lassem_ptr,
+        FEAElement * const &element_w,
+        const IQuadPts * const &quad_s,
+        const ALocal_NodalBC * const &nbc_part,
+        const ALocal_EBC * const &ebc_wall_part );
+
     void GetLocal(const double * const &array, const int * const &IEN,
         double * const &local_array) const
     {
@@ -220,6 +262,19 @@ class PGAssem_NS_FEM : public IPGAssem
         const int offset1 = ii * dof_sol;
         const int offset2 = IEN[ii] * dof_sol;
         for(int jj=0; jj<dof_sol; ++jj)
+          local_array[offset1 + jj] = array[offset2 + jj];
+      }
+    }
+
+    void GetLocal( const double * const &array, const int * const &IEN,
+        const int &in_locbas, const int &in_dof,
+        double * const &local_array) const
+    {
+      for(int ii=0; ii<in_locbas; ++ii)
+      {
+        const int offset1 = ii * in_dof;
+        const int offset2 = IEN[ii] * in_dof;
+        for(int jj=0; jj<in_dof; ++jj)
           local_array[offset1 + jj] = array[offset2 + jj];
       }
     }

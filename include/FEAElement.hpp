@@ -22,6 +22,7 @@
 #include "IAExtractor.hpp"
 #include "BernsteinBasis_Array.hpp"
 #include "IBernsteinBasis.hpp"
+#include "Matrix_3x3.hpp"
 
 class FEAElement
 {
@@ -309,6 +310,15 @@ class FEAElement
     // ------------------------------------------------------------------------    
     virtual void get_invJacobian(const int &quaindex, double * const &dxi_dx)
       const {SYS_T::commPrint("Warning: get_invJacobian is not implemented. \n");} 
+
+    // ------------------------------------------------------------------------    
+    // Return the global-to-lamina rotation matrix for transforming between the
+    // global and local lamina coordinates. This routine is used in membrane
+    // and shell elements.
+    // Reference: TJRH Linear finite element book page 386.
+    virtual void get_rotationMatrix( const int &quaindex, Matrix_3x3 &rot_mat ) 
+      const {SYS_T::commPrint("Warning: get_rotationMatrix is not implemented. \n");}
+    // ------------------------------------------------------------------------    
 
     // ------------------------------------------------------------------------    
     // Unit outward normal vector:

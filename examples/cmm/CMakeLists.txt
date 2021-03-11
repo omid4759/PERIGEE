@@ -31,7 +31,6 @@ SET( perigee_source ${perigee_SOURCE_DIR}/../../src )
 # 1. Preprocessor source cpp
 SET( perigee_preprocess_lib_src 
   ${perigee_source}/System/Sys_Tools.cpp
-  ${perigee_source}/System/Vec_Tools.cpp
   ${perigee_source}/System/Vector_3.cpp
   ${perigee_source}/System/Matrix_double_3by3_Array.cpp
   ${perigee_source}/System/Math_Tools.cpp
@@ -68,6 +67,7 @@ SET( perigee_preprocess_lib_src
 
 SET( perigee_analysis_lib_src
   ${perigee_source}/System/PETSc_Tools.cpp
+  ${perigee_source}/System/Matrix_3x3.cpp
   ${perigee_source}/System/Matrix_double_6by6_Array.cpp
   ${perigee_source}/System/Matrix_PETSc.cpp
   ${perigee_source}/Mesh/QuadPts_Gauss_Tet.cpp
@@ -84,6 +84,9 @@ SET( perigee_analysis_lib_src
   ${perigee_source}/Element/FEANode.cpp
   ${perigee_source}/Element/FEAElement_Tet4.cpp
   ${perigee_source}/Element/FEAElement_Tet10_v2.cpp
+  ${perigee_source}/Element/FEAElement_Triangle3_membrane.cpp
+  ${perigee_source}/Element/FEAElement_Triangle6_membrane.cpp
+  ${perigee_source}/Element/FEAElement_Triangle6.cpp  # only for testing
   ${perigee_source}/Model/GenBC_RCR.cpp
   ${perigee_source}/Model/GenBC_Resistance.cpp
   ${perigee_source}/Model/GenBC_Inductance.cpp
@@ -93,8 +96,13 @@ SET( perigee_analysis_lib_src
   ${perigee_source}/Solver/PDNTimeStep.cpp
   ${perigee_source}/Solver/TimeMethod_GenAlpha.cpp
   ${perigee_source}/Solver/PLinear_Solver_PETSc.cpp
-  ${perigee_SOURCE_DIR}/src/PLocAssem_Tet_VMS_NS_GenAlpha.cpp
-  )
+  ${perigee_SOURCE_DIR}/src/PLocAssem_Tet_CMM_GenAlpha.cpp
+  ${perigee_SOURCE_DIR}/src/PGAssem_Tet_CMM_GenAlpha.cpp
+  ${perigee_SOURCE_DIR}/src/PDNSolution_NS.cpp
+  ${perigee_SOURCE_DIR}/src/PDNSolution_Wall_Disp.cpp
+  ${perigee_SOURCE_DIR}/src/PNonlinear_CMM_Solver.cpp
+  ${perigee_SOURCE_DIR}/src/PTime_CMM_Solver.cpp
+)
 
 SET( perigee_postprocess_lib_src
   ${perigee_source}/Mesh/QuadPts_vis_tri6.cpp
@@ -103,8 +111,14 @@ SET( perigee_postprocess_lib_src
   ${perigee_source}/Postproc_Tool/PostVectSolution.cpp
   ${perigee_source}/Postproc_Tool/Vis_Tools.cpp
   ${perigee_source}/Postproc_Tool/Interpolater.cpp
+  ${perigee_SOURCE_DIR}/src/VisDataPrep_CMM.cpp
+  ${perigee_SOURCE_DIR}/src/VTK_Writer_CMM.cpp
   )
 
+SET( perigee_test_lib_src
+  ${perigee_source}/Mesh/QuadPts_debug.cpp
+  )
+  
 INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ../../include )
 
@@ -122,6 +136,10 @@ TARGET_LINK_LIBRARIES( perigee_analysis ${EXTRA_LINK_LIBS} perigee_preprocess )
 ADD_LIBRARY( perigee_postprocess ${perigee_postprocess_lib_src} )
 TARGET_LINK_LIBRARIES( perigee_postprocess ${EXTRA_LINK_LIBS} perigee_analysis
   perigee_preprocess )
+
+# 4. Test lib
+ADD_LIBRARY( perigee_test ${perigee_test_lib_src} )
+TARGET_LINK_LIBRARIES( perigee_test ${EXTRA_LINK_LIBS} perigee_analysis )
 # -------------------------------------------------------------------
 
 # Print compiler setup
@@ -133,19 +151,25 @@ INCLUDE(../../conf/message_compiler_setup.cmake)
 ADD_EXECUTABLE( gmsh_p1_IO gmsh_p1_process.cpp )
 ADD_EXECUTABLE( preprocess3d preprocess_sv_tets.cpp)
 ADD_EXECUTABLE( cmm_tet_3d cmm_driver.cpp)
-#ADD_EXECUTABLE( prepost prepost_ns_tets.cpp)
-#ADD_EXECUTABLE( vis_ns vis_ns.cpp)
-#ADD_EXECUTABLE( vis_p1_wss vis_p1_wss.cpp)
+ADD_EXECUTABLE( prepost prepost_cmm_tets.cpp)
+ADD_EXECUTABLE( vis_cmm vis_cmm.cpp)
+ADD_EXECUTABLE( vis_p1_wss vis_p1_wss.cpp)
+ADD_EXECUTABLE( vis_p2_wss vis_p2_wss.cpp)
 
-ADD_EXECUTABLE( test test.cpp )
+#ADD_EXECUTABLE( test test.cpp )
+ADD_EXECUTABLE( test_sol test_sol.cpp )
+ADD_EXECUTABLE( test_element test_membrane_element_routine.cpp )
 
 TARGET_LINK_LIBRARIES( gmsh_p1_IO perigee_preprocess )
 TARGET_LINK_LIBRARIES( preprocess3d perigee_preprocess )
 TARGET_LINK_LIBRARIES( cmm_tet_3d perigee_analysis )
-#TARGET_LINK_LIBRARIES( prepost perigee_preprocess )
-#TARGET_LINK_LIBRARIES( vis_ns perigee_postprocess )
-#TARGET_LINK_LIBRARIES( vis_p1_wss perigee_postprocess )
+TARGET_LINK_LIBRARIES( prepost perigee_preprocess )
+TARGET_LINK_LIBRARIES( vis_cmm perigee_postprocess )
+TARGET_LINK_LIBRARIES( vis_p1_wss perigee_postprocess )
+TARGET_LINK_LIBRARIES( vis_p2_wss perigee_postprocess )
 
-TARGET_LINK_LIBRARIES( test perigee_preprocess )
+#TARGET_LINK_LIBRARIES( test perigee_preprocess )
+TARGET_LINK_LIBRARIES( test_element perigee_test )
+TARGET_LINK_LIBRARIES( test_sol perigee_analysis )
 
 # EOF

@@ -1,6 +1,6 @@
-#include "VTK_Writer_NS.hpp"
+#include "VTK_Writer_CMM.hpp"
 
-VTK_Writer_NS::VTK_Writer_NS( const int &in_nelem,
+VTK_Writer_CMM::VTK_Writer_CMM( const int &in_nelem,
     const int &in_nlocbas, const std::string &epart_file )
 : nLocBas( in_nlocbas ), nElem( in_nelem ), 
   intep( nLocBas, true )
@@ -14,7 +14,7 @@ VTK_Writer_NS::VTK_Writer_NS( const int &in_nelem,
 }
 
 
-VTK_Writer_NS::~VTK_Writer_NS()
+VTK_Writer_CMM::~VTK_Writer_CMM()
 {
   VEC_T::clean( epart_map );
   VEC_T::clean( ectrl_x );
@@ -23,7 +23,7 @@ VTK_Writer_NS::~VTK_Writer_NS()
 }
 
 
-void VTK_Writer_NS::writeOutput(
+void VTK_Writer_CMM::writeOutput(
     const FEANode * const &fnode_ptr,
     const ALocal_IEN * const &lien_ptr,
     const ALocal_Elem * const &lelem_ptr,
@@ -73,32 +73,23 @@ void VTK_Writer_NS::writeOutput(
     intep.interpolateVTKPts(&IEN_e[0], &ectrl_x[0], &ectrl_y[0], &ectrl_z[0],
         elemptr, points );
   
-    std::vector<double> inputInfo; inputInfo.clear();
+    std::vector<double> inputInfo;
     
-    // Interpolating pressure
-    int asize = vdata_ptr -> get_arraySizes(0);
-
-    for(int jj=0; jj<nLocBas; ++jj)
+    for(int ii=0; ii<numDArrays; ++ii)
     {
-      int pt_index = IEN_e[jj];
-      for(int kk=0; kk<asize; ++kk)
-        inputInfo.push_back( pointArrays[0][pt_index * asize + kk] );
-    }
+      inputInfo.clear();
+      int asize = vdata_ptr -> get_arraySizes(ii);
+
+      for(int jj=0; jj<nLocBas; ++jj)
+      {
+        int pt_index = IEN_e[jj];
+        for(int kk=0; kk<asize; ++kk)
+          inputInfo.push_back( pointArrays[ii][pt_index * asize + kk] );
+      }
  
     intep.interpolateVTKData( asize, &IEN_e[0], &inputInfo[0],
-        elemptr, dataVecs[0] ); 
-
-    // Interpolate velocity vector
-    inputInfo.clear();
-    asize = vdata_ptr->get_arraySizes(1);
-    for(int jj=0; jj<nLocBas; ++jj)
-    {
-      int pt_index = IEN_e[jj];
-      for(int kk=0; kk<asize; ++kk)
-        inputInfo.push_back( pointArrays[1][pt_index * asize + kk ] );
+        elemptr, dataVecs[ii] ); 
     }
-    intep.interpolateVTKData( asize, &IEN_e[0], &inputInfo[0],
-        elemptr, dataVecs[1] );
 
     // Set mesh connectivity
     if( elemptr->get_Type() == 501 )

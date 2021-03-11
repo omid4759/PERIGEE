@@ -1,11 +1,12 @@
 #include "PDNSolution.hpp"
 
 PDNSolution::PDNSolution( const APart_Node * const &pNode )
+: dof_num( pNode->get_dof() ),
+  nlocalnode( pNode->get_nlocalnode() ),
+  nghostnode( pNode->get_nghostnode() ),
+  nlocal( pNode->get_nlocalnode() * dof_num ),
+  nghost( pNode->get_nghostnode() * dof_num )
 {
-  dof_num = pNode->get_dof();
-  nlocal = pNode->get_nlocalnode() * dof_num;
-  nghost = pNode->get_nghostnode() * dof_num;
-
   PetscInt * ifrom = new PetscInt [nghost];
 
   for(int ii=0; ii<pNode->get_nghostnode(); ++ii)
@@ -17,16 +18,17 @@ PDNSolution::PDNSolution( const APart_Node * const &pNode )
   VecCreateGhost(PETSC_COMM_WORLD, nlocal, PETSC_DECIDE, nghost, ifrom,
       &solution);
    
-  delete [] ifrom;
+  delete [] ifrom; ifrom = nullptr;
 }
 
 PDNSolution::PDNSolution( const APart_Node * const &pNode,
    const int &input_dof_num )
+: dof_num( input_dof_num ),
+  nlocalnode( pNode->get_nlocalnode() ),
+  nghostnode( pNode->get_nghostnode() ),
+  nlocal( pNode->get_nlocalnode() * dof_num ),
+  nghost( pNode->get_nghostnode() * dof_num )
 {
-  dof_num = input_dof_num;
-  nlocal = pNode->get_nlocalnode() * dof_num;
-  nghost = pNode->get_nghostnode() * dof_num;
-
   PetscInt * ifrom = new PetscInt [nghost];
 
   for(int ii=0; ii<pNode->get_nghostnode(); ++ii)
@@ -38,43 +40,41 @@ PDNSolution::PDNSolution( const APart_Node * const &pNode,
   VecCreateGhost(PETSC_COMM_WORLD, nlocal, PETSC_DECIDE, nghost, ifrom,
       &solution);
    
-  delete [] ifrom;
+  delete [] ifrom; ifrom = nullptr;
 }
 
-
 PDNSolution::PDNSolution( const PDNSolution &INPUT )
+: dof_num( INPUT.get_dof_num() ),
+  nlocalnode( INPUT.get_nlocalnode() ),
+  nghostnode( INPUT.get_nghostnode() ),
+  nlocal( INPUT.get_nlocal() ),
+  nghost( INPUT.get_nghost() )
 {
   VecDuplicate(INPUT.solution, &solution);
   VecCopy(INPUT.solution, solution);
 
-  dof_num = INPUT.get_dof_num();
-  nlocal = INPUT.get_nlocal();
-  nghost = INPUT.get_nghost();
-
   VecGhostUpdateBegin(solution, INSERT_VALUES, SCATTER_FORWARD);
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
 }
 
-
 PDNSolution::PDNSolution( const PDNSolution * const &INPUT_ptr )
+: dof_num( INPUT_ptr->get_dof_num() ),
+  nlocalnode( INPUT_ptr->get_nlocalnode() ),
+  nghostnode( INPUT_ptr->get_nghostnode() ),
+  nlocal( INPUT_ptr->get_nlocal() ),
+  nghost( INPUT_ptr->get_nghost() )
 {
   VecDuplicate(INPUT_ptr->solution, &solution);
   VecCopy(INPUT_ptr->solution, solution);
 
-  dof_num = INPUT_ptr->get_dof_num();
-  nlocal  = INPUT_ptr->get_nlocal();
-  nghost  = INPUT_ptr->get_nghost();
-
   VecGhostUpdateBegin(solution, INSERT_VALUES, SCATTER_FORWARD);
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
 }
-
 
 PDNSolution::~PDNSolution()
 {
   VecDestroy(&solution);
 }
-
 
 void PDNSolution::Gen_random()
 {
@@ -99,14 +99,13 @@ void PDNSolution::Gen_random()
   delete [] val; val = nullptr; delete [] idx; idx = nullptr;
 }
 
-
 void PDNSolution::Copy(const PDNSolution &INPUT)
 {
+  SYS_T::print_fatal_if( dof_num != INPUT.get_dof_num(), "Error: PDNSolution::Copy, dof_num does not match.\n");
+  SYS_T::print_fatal_if( nlocal != INPUT.get_nlocal(), "Error: PDNSolution::Copy, nlocal does not match.\n");
+  SYS_T::print_fatal_if( nghost != INPUT.get_nghost(), "Error: PDNSolution::Copy, nghost does not match.\n");
+  
   VecCopy(INPUT.solution, solution);
-
-  dof_num = INPUT.get_dof_num();
-  nlocal = INPUT.get_nlocal();
-  nghost = INPUT.get_nghost();
 
   VecGhostUpdateBegin(solution, INSERT_VALUES, SCATTER_FORWARD);
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
@@ -114,16 +113,15 @@ void PDNSolution::Copy(const PDNSolution &INPUT)
 
 void PDNSolution::Copy(const PDNSolution * const &INPUT_ptr)
 {
+  SYS_T::print_fatal_if( dof_num != INPUT_ptr->get_dof_num(), "Error: PDNSolution::Copy, dof_num does not match.\n");
+  SYS_T::print_fatal_if( nlocal != INPUT_ptr->get_nlocal(), "Error: PDNSolution::Copy, nlocal does not match.\n");
+  SYS_T::print_fatal_if( nghost != INPUT_ptr->get_nghost(), "Error: PDNSolution::Copy, nghost does not match.\n");
+  
   VecCopy(INPUT_ptr->solution, solution);
-
-  dof_num = INPUT_ptr->get_dof_num();
-  nlocal = INPUT_ptr->get_nlocal();
-  nghost = INPUT_ptr->get_nghost();
 
   VecGhostUpdateBegin(solution, INSERT_VALUES, SCATTER_FORWARD);
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
 }
-
 
 void PDNSolution::GhostUpdate()
 {
@@ -159,7 +157,6 @@ void PDNSolution::PlusAX(const PDNSolution &x, const double &a)
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
 }
 
-
 void PDNSolution::PlusAX(const PDNSolution * const &x_ptr, const double &a)
 {
   VecAXPY(solution, a, x_ptr->solution);
@@ -167,14 +164,12 @@ void PDNSolution::PlusAX(const PDNSolution * const &x_ptr, const double &a)
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
 }
 
-
 void PDNSolution::ScaleValue(const double &val)
 {
   VecScale(solution, val);
   VecGhostUpdateBegin(solution, INSERT_VALUES, SCATTER_FORWARD);
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
 }
-
 
 void PDNSolution::GetLocalArray( double * const &local_array ) const
 {
@@ -187,7 +182,6 @@ void PDNSolution::GetLocalArray( double * const &local_array ) const
   VecRestoreArray(lsol, &array);
   VecGhostRestoreLocalForm(solution, &lsol);
 }
-
 
 void PDNSolution::GetLocalArray( std::vector<double> &local_array ) const
 {
@@ -202,7 +196,6 @@ void PDNSolution::GetLocalArray( std::vector<double> &local_array ) const
   VecGhostRestoreLocalForm(solution, &lsol);
 }
 
-
 void PDNSolution::Assembly_GhostUpdate()
 {
   VecAssemblyBegin(solution);
@@ -210,7 +203,6 @@ void PDNSolution::Assembly_GhostUpdate()
   VecGhostUpdateBegin(solution, INSERT_VALUES, SCATTER_FORWARD);
   VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
 }
-
 
 void PDNSolution::PrintWithGhost() const
 {
@@ -254,77 +246,9 @@ void PDNSolution::ReadBinary(const char * const &file_name) const
   PetscViewerDestroy(&viewer);
 }
 
-void PDNSolution::PlusAiX(PDNSolution &x, const double &a,
-    const double &b, const int &na, const int &nb )
+bool is_layout_equal( const PDNSolution &left, const PDNSolution &right )
 {
-  Vec lx, ls; // local copy of x and solution vector
-  double * array_x, * array_s; // double array pointer for accessing data
-
-  VecGhostGetLocalForm(x.solution, &lx);
-  VecGhostGetLocalForm(solution, &ls);
-
-  VecGetArray(lx, &array_x);
-  VecGetArray(ls, &array_s); 
-
-  int res = nlocal % (na+nb);
-
-  if(res != 0)
-  {
-    SYS_T::commPrint("Error: The PlusAiX function call does not match the solution layout. \n");
-    MPI_Abort(PETSC_COMM_WORLD, 1);
-  }
-
-  int num = nlocal / (na+nb);
-
-  for(int kk=0; kk<num; ++kk)
-  {
-    int start = kk * (na + nb);
-    for(int ii=0; ii<na; ++ii)
-    {
-      array_s[start + ii] += a * array_x[start + ii];
-    }
-    for(int ii=0; ii<nb; ++ii)
-    {
-      array_s[start + na + ii] += b * array_x[start + na + ii];
-    }
-  }
-
-  VecRestoreArray(lx, &array_x);
-  VecRestoreArray(ls, &array_s);
-
-  VecGhostRestoreLocalForm(x.solution, &lx);
-  VecGhostRestoreLocalForm(solution, &ls);
-
-  VecGhostUpdateBegin(solution, INSERT_VALUES, SCATTER_FORWARD);
-  VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
-}
-
-
-void PDNSolution::PlusAiX( const PDNSolution &xx, const std::vector<double> &aa )
-{
-  SYS_T::print_fatal_if( static_cast<int>(aa.size()) != dof_num, "Error: PDNSolution::PlusAiX, input aa vector should have size dof_num of the solution vector. \n");
-
-  std::vector<double> array_xx;
-  xx.GetLocalArray(array_xx);
-
-  Vec ls;
-  VecGhostGetLocalForm(solution, &ls);
-  double * array_s;
-  VecGetArray(ls, &array_s);
-
-  int nloc = nlocal / dof_num;
-
-  for(int ii=0; ii<nloc; ++ii)
-  {
-    for(int jj=0; jj<dof_num; ++jj)
-      array_s[ii*dof_num + jj] += aa[jj] * array_xx[ii*dof_num+jj];
-  }
-
-  VecRestoreArray(ls, &array_s);
-  VecGhostRestoreLocalForm(solution, &ls);
-
-  VecGhostUpdateBegin(solution, INSERT_VALUES, SCATTER_FORWARD);
-  VecGhostUpdateEnd(solution, INSERT_VALUES, SCATTER_FORWARD);
+  return ( left.nlocalnode == right.nlocalnode && left.nghostnode == right.nghostnode );
 }
 
 // EOF

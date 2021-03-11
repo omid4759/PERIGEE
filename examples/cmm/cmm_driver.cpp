@@ -17,14 +17,16 @@
 #include "FEAElement_Tet10_v2.hpp"
 #include "FEAElement_Triangle3_3D_der0.hpp"
 #include "FEAElement_Triangle6_3D_der0.hpp"
+#include "FEAElement_Triangle3_membrane.hpp"
+#include "FEAElement_Triangle6_membrane.hpp"
 #include "CVFlowRate_Unsteady.hpp"
 #include "CVFlowRate_Linear2Steady.hpp"
-// #include "GenBC_Resistance.hpp"
-// #include "GenBC_RCR.hpp"
-// #include "GenBC_Inductance.hpp"
-#include "PLocAssem_Tet_VMS_NS_GenAlpha.hpp"
-// #include "PGAssem_NS_FEM.hpp"
-#include "PTime_NS_Solver.hpp"
+#include "GenBC_Resistance.hpp"
+#include "GenBC_RCR.hpp"
+#include "GenBC_Inductance.hpp"
+#include "PLocAssem_Tet_CMM_GenAlpha.hpp"
+#include "PGAssem_Tet_CMM_GenAlpha.hpp"
+#include "PTime_CMM_Solver.hpp"
 
 int main( int argc, char *argv[] )
 {
@@ -237,6 +239,19 @@ int main( int argc, char *argv[] )
   // Local sub-domain's wall elemental (Neumann) BC for CMM
   ALocal_EBC * locebc_wall = new ALocal_EBC_wall(part_file, rank, "ebc_wall");
 
+  // Cross check fluid densities specified for the solver vs. wall youngsmod calculation
+  if( locebc_wall -> get_fluid_density() != fluid_density )
+    SYS_T::commPrint("Warning: Assigned fluid density does not match that used to compute "
+                     "wall youngsmod in the preprocessor.\n");
+
+  // **** PRESTRESS TODO: Create new class ALocal_Wall_Prestress & initialize here
+  //   - constructor takes in ebc_wall_part & quad_s, then
+  //                 resizes prestress to nqp x num_sele; initializes to 0 
+  //   - void write_hdf5(FileName) const: writes to /ebc_wall
+  //                 not necessary, unless we want to read in stored prestresses for a restart
+  //   - void get_prestress(eindex, e_prestress) const: returns vals for an element
+  //   - void update_prestress(eindex, e_prestress)   : updates vals for an element
+
   // Local sub-domain's nodal indices
   APart_Node * pNode = new APart_Node(part_file, rank);
 
@@ -270,14 +285,16 @@ int main( int argc, char *argv[] )
   SYS_T::commPrint("===> Set up volumetric and surface element containers. \n");
   FEAElement * elementv = nullptr;
   FEAElement * elements = nullptr;
+  FEAElement * elementw = nullptr;
 
   if( GMIptr->get_elemType() == 501 )          // linear tet
   {
     if( nqp_tet > 5 ) SYS_T::commPrint("Warning: Requested > 5 volumetric quadrature points for a linear tet element.\n");
-    if( nqp_tri > 4 ) SYS_T::commPrint("Warning: Reqiested > 4 surface quadrature points for a linear tri element.\n");
+    if( nqp_tri > 4 ) SYS_T::commPrint("Warning: Requested > 4 surface quadrature points for a linear tri element.\n");
 
     elementv = new FEAElement_Tet4( nqp_tet );
     elements = new FEAElement_Triangle3_3D_der0( nqp_tri );
+    elementw = new FEAElement_Triangle3_membrane( nqp_tri );
   }
   else if( GMIptr->get_elemType() == 502 )     // quadratic tet
   {
@@ -286,6 +303,7 @@ int main( int argc, char *argv[] )
 
     elementv = new FEAElement_Tet10_v2( nqp_tet );
     elements = new FEAElement_Triangle6_3D_der0( nqp_tri );
+    elementw = new FEAElement_Triangle6_membrane( nqp_tri );
   }
   else SYS_T::print_fatal("Error: Element type not supported.\n");
 
@@ -297,25 +315,248 @@ int main( int argc, char *argv[] )
   // ===== Generalized-alpha =====
   SYS_T::commPrint("===> Set up the generalized-alpha time integration scheme.\n");
 
-  TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha(
-      genA_rho_inf, false );
+  TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha( genA_rho_inf, false );
 
   tm_galpha_ptr->print_info();
 
   // ===== Local assembly routine =====
-  IPLocAssem * locAssem_ptr = new PLocAssem_Tet_VMS_NS_GenAlpha(
+  IPLocAssem * locAssem_ptr = new PLocAssem_Tet_CMM_GenAlpha(
       tm_galpha_ptr, GMIptr->get_nLocBas(),
       quadv->get_num_quadPts(), elements->get_nLocBas(),
-      fluid_density, fluid_mu, bs_beta, c_tauc, GMIptr->get_elemType() );
+      fluid_density, fluid_mu, bs_beta,
+      wall_density, wall_poisson, wall_kappa,
+      c_tauc, GMIptr->get_elemType() );
 
+  // ===== Initial condition =====
+  // base generates a parabolic velocity profile at the inlet with unit flow rate
+  PDNSolution * base = new PDNSolution_NS( pNode, fNode, locinfnbc, 1 );
+  
+  PDNSolution * sol = new PDNSolution_NS( pNode, 0 );
+
+  PDNSolution * dot_sol = new PDNSolution_NS( pNode, 0 );
+
+  PDNSolution * sol_wall_disp = new PDNSolution_Wall_Disp( pNode, fNode, 0 );
+  
+  PDNSolution * dot_sol_wall_disp = new PDNSolution_Wall_Disp( pNode, fNode, 0 );
+
+  if( is_restart )
+  {
+    initial_index = restart_index;
+    initial_time  = restart_time;
+    initial_step  = restart_step;
+
+    // Read in pres, velo
+    SYS_T::file_check(restart_name.c_str());
+    sol->ReadBinary(restart_name.c_str());
+
+    // Read in dot pres, dot velo
+    std::string restart_dot_name = "dot_" + restart_name;
+    SYS_T::file_check(restart_dot_name.c_str());
+    dot_sol->ReadBinary(restart_dot_name.c_str());
+
+    // Read in wall disp: may not exist if restart from rigid soln
+    std::string restart_disp_name = restart_name + "_disp";
+    std::string restart_dot_disp_name = "dot_" + restart_name + "_disp";
+    if( SYS_T::file_exist( restart_disp_name ) )
+    {
+      sol_wall_disp->ReadBinary(restart_disp_name.c_str());
+
+      // Read in dot wall disp if wall disp exists
+      SYS_T::file_check(restart_dot_disp_name.c_str());
+      dot_sol_wall_disp->ReadBinary(restart_dot_disp_name.c_str());
+    }
+
+    SYS_T::commPrint("===> Read sol from disk as a restart run... \n");
+    SYS_T::commPrint("     restart_name: %s \n", restart_name.c_str());
+    SYS_T::commPrint("     restart_dot_name: %s \n", restart_dot_name.c_str());
+    if( SYS_T::file_exist( restart_disp_name ) )
+    {
+      SYS_T::commPrint("     restart_disp_name: %s \n", restart_disp_name.c_str());
+      SYS_T::commPrint("     restart_dot_disp_name: %s \n", restart_dot_disp_name.c_str());
+    }
+    SYS_T::commPrint("     restart_time: %e \n", restart_time);
+    SYS_T::commPrint("     restart_index: %d \n", restart_index);
+    SYS_T::commPrint("     restart_step: %e \n", restart_step);
+  }
+
+  // ===== Time step info =====
+  PDNTimeStep * timeinfo = new PDNTimeStep(initial_index, initial_time, initial_step);
+
+  // ===== LPN models =====
+  IGenBC * gbc = nullptr;
+
+  if( SYS_T::get_genbc_file_type( lpn_file.c_str() ) == 1  )
+    gbc = new GenBC_Resistance( lpn_file.c_str() );
+  else if( SYS_T::get_genbc_file_type( lpn_file.c_str() ) == 2  )
+    gbc = new GenBC_RCR( lpn_file.c_str(), 1000, initial_step );
+  else if( SYS_T::get_genbc_file_type( lpn_file.c_str() ) == 3  )
+    gbc = new GenBC_Inductance( lpn_file.c_str() );
+  else
+    SYS_T::print_fatal( "Error: GenBC input file %s format cannot be recongnized.\n", lpn_file.c_str() );
+
+  gbc -> print_info();
+
+  // Make sure the gbc number of faces matches that of ALocal_EBC
+  SYS_T::print_fatal_if(gbc->get_num_ebc() != locebc->get_num_ebc(),
+      "Error: GenBC number of faces does not match with that in ALocal_EBC.\n");
+
+  // ===== Global assembly =====
+  SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
+
+  IPGAssem * gloAssem_ptr = new PGAssem_Tet_CMM_GenAlpha( locAssem_ptr, elements, quads,
+      GMIptr, locElem, locIEN, pNode, locnbc, locebc, gbc, nz_estimate );
+
+  SYS_T::commPrint("===> Assembly nonzero estimate matrix ... \n");
+  gloAssem_ptr->Assem_nonzero_estimate( locElem, locAssem_ptr,
+      elements, quads, locIEN, pNode, locnbc, locebc, gbc );
+
+  SYS_T::commPrint("===> Matrix nonzero structure fixed. \n");
+  gloAssem_ptr->Fix_nonzero_err_str();
+  gloAssem_ptr->Clear_KG();
+
+  // ===== Initialize the dot_sol vector by solving the mass matrix =====
+  if( is_restart == false )
+  {
+    SYS_T::commPrint("===> Assembly mass matrix and residual vector.\n");
+    PLinear_Solver_PETSc * lsolver_acce = new PLinear_Solver_PETSc(
+        1.0e-14, 1.0e-85, 1.0e30, 1000, "mass_", "mass_" );
+
+    KSPSetType(lsolver_acce->ksp, KSPGMRES);
+    KSPGMRESSetOrthogonalization(lsolver_acce->ksp,
+        KSPGMRESModifiedGramSchmidtOrthogonalization);
+    KSPGMRESSetRestart(lsolver_acce->ksp, 500);
+
+    PC preproc; lsolver_acce->GetPC(&preproc);
+    PCSetType( preproc, PCHYPRE );
+    PCHYPRESetType( preproc, "boomeramg" );
+
+    gloAssem_ptr->Assem_mass_residual( sol, locElem, locAssem_ptr, elementv,
+        elements, quadv, quads, locIEN, pNode, fNode, locnbc, locebc );
+
+    lsolver_acce->Solve( gloAssem_ptr->K, gloAssem_ptr->G, dot_sol );
+
+    dot_sol -> ScaleValue(-1.0);
+
+    SYS_T::commPrint("\n===> Consistent initial acceleration is obtained. \n");
+    lsolver_acce -> print_info();
+    delete lsolver_acce;
+    SYS_T::commPrint(" The mass matrix lsolver is destroyed. \n\n");
+  }
+
+  // ===== Linear solver context =====
+  PLinear_Solver_PETSc * lsolver = new PLinear_Solver_PETSc();
+
+  PC upc; lsolver->GetPC(&upc);
+  const PetscInt pfield[1] = {0}, vfields[] = {1,2,3};
+  PCFieldSplitSetBlockSize(upc,4);
+  PCFieldSplitSetFields(upc,"u",3,vfields,vfields);
+  PCFieldSplitSetFields(upc,"p",1,pfield,pfield);
+
+  // ===== Nonlinear solver context =====
+  // **** PRESTRESS TODO: pass in prestress_flag, ALocal_Wall_Prestress
+  // **** Should prestress flag only be allowed true if !is_restart ?
+  PNonlinear_CMM_Solver * nsolver = new PNonlinear_CMM_Solver( pNode, fNode,
+      nl_rtol, nl_atol, nl_dtol, nl_maxits, nl_refreq, nl_threshold );
+
+  nsolver->print_info();
+
+  // ===== Temporal solver context =====
+  // **** PRESTRESS TODO: pass in ALocal_Wall_Prestress
+  // **** need a separate tsolver initialized for prestressing?
+  PTime_CMM_Solver * tsolver = new PTime_CMM_Solver( sol_bName,
+      sol_record_freq, ttan_renew_freq, final_time );
+
+  tsolver->print_info();
+
+  // ===== Outlet data recording files =====
+  for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
+  {
+    const double dot_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
+        dot_sol, locAssem_ptr, elements, quads, locebc, ff );
+
+    const double face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
+        sol, locAssem_ptr, elements, quads, locebc, ff );
+
+    const double face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
+        sol, locAssem_ptr, elements, quads, locebc, ff );
+
+    // set the gbc initial conditions using the 3D data
+    gbc -> reset_initial_sol( ff, face_flrate, face_avepre );
+
+    const double dot_lpn_flowrate = dot_face_flrate;
+    const double lpn_flowrate = face_flrate;
+    const double lpn_pressure = gbc -> get_P( ff, dot_lpn_flowrate, lpn_flowrate );
+
+    // Create the txt files and write the initial flow rates
+    if(rank == 0)
+    {
+      std::ofstream ofile;
+
+      // If this is NOT a restart run, generate a new file, otherwise append to
+      // existing file
+      if( !is_restart )
+        ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::trunc );
+      else
+        ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::app );
+
+      // If this is NOT a restart, then record the initial values
+      if( !is_restart )
+      {
+        ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"dot Flow rate"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\t'<<"Reduced model pressure"<<'\n';
+        ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<dot_face_flrate<<'\t'<<face_flrate<<'\t'<<face_avepre<<'\t'<<lpn_pressure<<'\n';
+      }
+
+      ofile.close();
+    }
+  }
+
+  MPI_Barrier(PETSC_COMM_WORLD);
+
+  // ===== Inlet data recording files =====
+  const double inlet_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
+      sol, locAssem_ptr, elements, quads, locinfnbc );
+
+  const double inlet_face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
+      sol, locAssem_ptr, elements, quads, locinfnbc );
+
+  if( rank == 0 )
+  {
+    std::ofstream ofile;
+    if( !is_restart )
+      ofile.open( locinfnbc->gen_flowfile_name().c_str(), std::ofstream::out | std::ofstream::trunc );
+    else
+      ofile.open( locinfnbc->gen_flowfile_name().c_str(), std::ofstream::out | std::ofstream::app );
+
+    if( !is_restart )
+    {
+      ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\n';
+      ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<inlet_face_avepre<<'\n';
+    }
+
+    ofile.close();
+  }
+
+  MPI_Barrier(PETSC_COMM_WORLD);
+
+  // ===== FEM analysis =====
+  SYS_T::commPrint("===> Start Finite Element Analysis:\n");
+
+  tsolver->TM_CMM_GenAlpha(is_restart, base, dot_sol, sol, dot_sol_wall_disp, sol_wall_disp,
+      tm_galpha_ptr, timeinfo, inflow_rate_ptr, locElem, locIEN, pNode, fNode,
+      locnbc, locinfnbc, locebc, locebc_wall, gbc, pmat, elementv, elements, elementw,
+      quadv, quads, locAssem_ptr, gloAssem_ptr, lsolver, nsolver);
+
+  // ===== Print complete solver info =====
+  lsolver -> print_info();
 
   // ===== Deallocate memory =====
-  delete fNode; delete locIEN; delete GMIptr; delete PartBasic;
-  delete locElem; delete locnbc; delete locinfnbc;
-  delete locebc; delete locebc_wall; delete pNode;
-  delete inflow_rate_ptr; delete quadv; delete quads;
-  delete elementv; delete elements; delete pmat;
-  delete tm_galpha_ptr; delete locAssem_ptr; 
+  delete fNode; delete locIEN; delete GMIptr; delete PartBasic; delete locElem;
+  delete locnbc; delete locinfnbc; delete locebc; delete locebc_wall; delete pNode;
+  delete inflow_rate_ptr; delete quadv; delete quads; delete elementv;
+  delete elements; delete elementw; delete pmat; delete tm_galpha_ptr;
+  delete locAssem_ptr; delete base; delete sol; delete dot_sol;
+  delete sol_wall_disp; delete dot_sol_wall_disp; delete timeinfo; delete gbc;
+  delete gloAssem_ptr; delete lsolver; delete nsolver; delete tsolver;
 
   PetscFinalize();
   return EXIT_SUCCESS;

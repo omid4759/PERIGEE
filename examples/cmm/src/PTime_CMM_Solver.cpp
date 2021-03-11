@@ -1,39 +1,38 @@
-#include "PTime_NS_Solver.hpp"
+#include "PTime_CMM_Solver.hpp"
 
-PTime_NS_Solver::PTime_NS_Solver(
+PTime_CMM_Solver::PTime_CMM_Solver(
     const std::string &input_name, const int &input_record_freq,
     const int &input_renew_tang_freq, const double &input_final_time )
 : final_time(input_final_time), sol_record_freq(input_record_freq),
   renew_tang_freq(input_renew_tang_freq), pb_name(input_name)
 {}
 
-PTime_NS_Solver::~PTime_NS_Solver()
+PTime_CMM_Solver::~PTime_CMM_Solver()
 {}
 
-std::string PTime_NS_Solver::Name_Generator(const int &counter) const
+std::string PTime_CMM_Solver::Name_Generator(const int &counter,
+    const std::string &prefix ) const
 {
   int aux = 900000000 + counter;
   std::ostringstream temp;
   temp<<aux;
 
-  std::string out_name(pb_name);
-  out_name.append(temp.str());
+  std::string out_name = pb_name + prefix + temp.str();
   return out_name;
 }
 
-std::string PTime_NS_Solver::Name_dot_Generator(const int &counter) const
+std::string PTime_CMM_Solver::Name_dot_Generator(const int &counter,
+    const std::string &prefix ) const
 {
   int aux = 900000000 + counter;
   std::ostringstream temp;
   temp<<aux;
 
-  std::string out_name("dot_");
-  out_name.append(pb_name);
-  out_name.append(temp.str());
+  std::string out_name = "dot_" + pb_name + prefix + temp.str();
   return out_name;
 }
 
-void PTime_NS_Solver::print_info() const
+void PTime_CMM_Solver::print_info() const
 {
   SYS_T::commPrint("----------------------------------------------------------- \n");
   SYS_T::commPrint("Time stepping solver setted up:\n");
@@ -44,7 +43,7 @@ void PTime_NS_Solver::print_info() const
   SYS_T::commPrint("----------------------------------------------------------- \n");
 }
 
-void PTime_NS_Solver::Write_restart_file(const PDNTimeStep * const &timeinfo,
+void PTime_CMM_Solver::Write_restart_file(const PDNTimeStep * const &timeinfo,
     const std::string &solname ) const
 {
   std::ofstream restart_file("restart_file.txt", std::ofstream::out | std::ofstream::trunc);
@@ -60,11 +59,13 @@ void PTime_NS_Solver::Write_restart_file(const PDNTimeStep * const &timeinfo,
     SYS_T::print_fatal("Error: PTimeSolver cannot open restart_file.txt");
 }
 
-void PTime_NS_Solver::TM_NS_GenAlpha( 
+void PTime_CMM_Solver::TM_CMM_GenAlpha( 
     const bool &restart_init_assembly_flag,
     const PDNSolution * const &sol_base,
     const PDNSolution * const &init_dot_sol,
     const PDNSolution * const &init_sol,
+    const PDNSolution * const &init_dot_sol_wall_disp,
+    const PDNSolution * const &init_sol_wall_disp,
     const TimeMethod_GenAlpha * const &tmga_ptr,
     PDNTimeStep * const &time_info,
     const ICVFlowRate * const flr_ptr,
@@ -75,33 +76,52 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
     const ALocal_NodalBC * const &nbc_part,
     const ALocal_Inflow_NodalBC * const &infnbc_part,
     const ALocal_EBC * const &ebc_part,
+    const ALocal_EBC * const &ebc_wall_part,
     IGenBC * const &gbc,
     const Matrix_PETSc * const &bc_mat,
     FEAElement * const &elementv,
     FEAElement * const &elements,
+    FEAElement * const &elementw,
     const IQuadPts * const &quad_v,
     const IQuadPts * const &quad_s,
     IPLocAssem * const &lassem_fluid_ptr,
     IPGAssem * const &gassem_ptr,
     PLinear_Solver_PETSc * const &lsolver_ptr,
-    PNonlinear_NS_Solver * const &nsolver_ptr ) const
+    PNonlinear_CMM_Solver * const &nsolver_ptr ) const
 {
+  // Pres & velo
   PDNSolution * pre_sol = new PDNSolution(*init_sol);
   PDNSolution * cur_sol = new PDNSolution(*init_sol);
   PDNSolution * pre_dot_sol = new PDNSolution(*init_dot_sol);
   PDNSolution * cur_dot_sol = new PDNSolution(*init_dot_sol);
 
+  // Wall disp
+  PDNSolution * pre_sol_wall_disp = new PDNSolution(*init_sol_wall_disp);
+  PDNSolution * cur_sol_wall_disp = new PDNSolution(*init_sol_wall_disp);
+  PDNSolution * pre_dot_sol_wall_disp = new PDNSolution(*init_dot_sol_wall_disp);
+  PDNSolution * cur_dot_sol_wall_disp = new PDNSolution(*init_dot_sol_wall_disp);
+
   std::string sol_name ("");
   std::string sol_dot_name ("");
+  std::string sol_wall_disp_name ("");
+  std::string sol_dot_wall_disp_name ("");
 
   // If this is a restart run, do not re-write the solution binaries
   if(restart_init_assembly_flag == false)
   {
+    // Write (dot) pres, (dot) velo
     sol_name = Name_Generator(time_info->get_index());
     cur_sol->WriteBinary(sol_name.c_str());
     
     sol_dot_name = Name_dot_Generator(time_info->get_index());
     cur_dot_sol->WriteBinary(sol_dot_name.c_str());
+
+    // Write (dot) wall disp
+    sol_wall_disp_name = Name_Generator(time_info->get_index(), "disp_");
+    cur_sol_wall_disp->WriteBinary(sol_wall_disp_name.c_str());
+
+    sol_dot_wall_disp_name = Name_dot_Generator(time_info->get_index(), "disp_");
+    cur_dot_sol_wall_disp->WriteBinary(sol_dot_wall_disp_name.c_str());
   }
 
   bool conv_flag, renew_flag;
@@ -128,13 +148,13 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
     if( nl_counter == 1 ) renew_flag = false;
 
     // Call the nonlinear equation solver
-    // ==== TODO: Pass in wall_locnbc & wall_locebc  ====
-    nsolver_ptr->GenAlpha_Solve_NS( renew_flag, 
+    nsolver_ptr->GenAlpha_Solve_CMM( renew_flag, 
         time_info->get_time(), time_info->get_step(), 
-        sol_base, pre_dot_sol, pre_sol, tmga_ptr, flr_ptr,
-        alelem_ptr, lien_ptr, anode_ptr, feanode_ptr, nbc_part, infnbc_part,
-        ebc_part, gbc, bc_mat, elementv, elements, quad_v, quad_s, lassem_fluid_ptr,
-        gassem_ptr, lsolver_ptr, cur_dot_sol, cur_sol, conv_flag, nl_counter );
+        sol_base, pre_dot_sol, pre_sol, pre_dot_sol_wall_disp, pre_sol_wall_disp,
+        tmga_ptr, flr_ptr, alelem_ptr, lien_ptr, anode_ptr, feanode_ptr, nbc_part, infnbc_part,
+        ebc_part, ebc_wall_part, gbc, bc_mat, elementv, elements, elementw, quad_v, quad_s,
+        lassem_fluid_ptr, gassem_ptr, lsolver_ptr, cur_dot_sol, cur_sol, 
+        cur_dot_sol_wall_disp, cur_sol_wall_disp, conv_flag, nl_counter );
 
     // Update the time step information
     time_info->TimeIncrement();
@@ -146,11 +166,19 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
     // Record solution if meets criteria
     if( time_info->get_index()%sol_record_freq == 0 )
     {
+      // Write (dot) pres, (dot) velo
       sol_name = Name_Generator( time_info->get_index() );
       cur_sol->WriteBinary(sol_name.c_str());
 
       sol_dot_name = Name_dot_Generator(time_info->get_index());
       cur_dot_sol->WriteBinary(sol_dot_name.c_str());
+
+      // Write (dot) wall disp
+      sol_wall_disp_name = Name_Generator(time_info->get_index(), "disp_");
+      cur_sol_wall_disp->WriteBinary(sol_wall_disp_name.c_str());
+
+      sol_dot_wall_disp_name = Name_dot_Generator(time_info->get_index(), "disp_");
+      cur_dot_sol_wall_disp->WriteBinary(sol_dot_wall_disp_name.c_str());
     }
 
     // Calculate the flow rate & averaged pressure on all outlets
@@ -212,9 +240,14 @@ void PTime_NS_Solver::TM_NS_GenAlpha(
     // Prepare for next time step
     pre_sol->Copy(*cur_sol);
     pre_dot_sol->Copy(*cur_dot_sol);
+
+    pre_sol_wall_disp->Copy(*cur_sol_wall_disp);
+    pre_dot_sol_wall_disp->Copy(*cur_dot_sol_wall_disp);
   }
 
   delete pre_sol; delete cur_sol; delete pre_dot_sol; delete cur_dot_sol;
+  delete pre_sol_wall_disp; delete cur_sol_wall_disp;
+  delete pre_dot_sol_wall_disp; delete cur_dot_sol_wall_disp;
 }
 
 // EOF

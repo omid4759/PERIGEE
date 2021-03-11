@@ -4,6 +4,8 @@
 // Sys_Tools.hpp
 // ------------------------------------------------------------------
 // The SYS_T namespace contains a suite of tools at the system level.
+//
+// These functions will be frequently used in the PERIGEE code.
 // ==================================================================
 #include <cstdlib>
 #include <iostream>
@@ -16,9 +18,10 @@
 
 namespace SYS_T
 {
-  // Print ASCII art fonts
+  // Print ASCII art
   void print_perigee_art();
 
+  // Return the rank of the CPU
   inline PetscMPIInt get_MPI_rank()
   {
     PetscMPIInt rank;
@@ -26,6 +29,7 @@ namespace SYS_T
     return rank;
   }
 
+  // Return the number of total number of CPUs
   inline PetscMPIInt get_MPI_size()
   {
     PetscMPIInt size;
@@ -42,11 +46,9 @@ namespace SYS_T
   // ----------------------------------------------------------------
   int get_genbc_file_type( const char * const &lpn_filename );
 
-
   // ----------------------------------------------------------------
-  // gen_partfile_name( baseName, rank )
-  // Generate a partition file's name (hdf5 file) in the default
-  // manner. It will return baseName_pxxxxx.h5.
+  // Generate a partition file's name (hdf5 file) in the default manner.
+  // It will return a std string : baseName_pxxxxx.h5.
   // ----------------------------------------------------------------
   inline std::string gen_partfile_name( const std::string &baseName, 
       const int &rank )
@@ -67,49 +69,20 @@ namespace SYS_T
     return ss.str();
   }
 
-
   // ----------------------------------------------------------------
-  // Check if a file exists. If a file cannot be found, throw an error
-  // message and exit code
-  // ----------------------------------------------------------------
-  inline void file_check( const std::string &fName )
-  {
-    if( FILE *ff = fopen(fName.c_str(), "r") ) fclose(ff);
-    else
-    {
-      PetscPrintf(PETSC_COMM_WORLD, "Error: The file %s does not exist. Job is killed. \n", fName.c_str());
-      MPI_Barrier(PETSC_COMM_WORLD);
-      MPI_Abort(PETSC_COMM_WORLD, 1);
-    }
-  }
-
-  inline bool file_exist( const std::string &fName )
-  {
-    if( FILE *ff = fopen(fName.c_str(), "r") )
-    {
-      fclose(ff);
-      return true;
-    }
-    else return false;
-  }
-
-  // ----------------------------------------------------------------
-  // get_xyz_index() 
   // Assume ii = iz * dim_x * dim_y + iy * dim_x + ix
   // this function will return ix iy and iz based on the input ii, 
   // dim_x, dim_y.
   // ----------------------------------------------------------------
-  inline void get_xyz_index( const int &ii, const int &dim_x,
-      const int &dim_y, int &ix, int &iy, int &iz)
+  inline void get_xyz_index( const int &ii, const int &dim_x, const int &dim_y, 
+      int &ix, int &iy, int &iz)
   {
     const int ixy = ii % (dim_x * dim_y);
     iz = (ii - ixy) / (dim_x * dim_y);
     ix = ixy % dim_x; iy = (ixy - ix) / dim_x;
   }
 
-
   // ----------------------------------------------------------------
-  // get_xy_index()
   // Assume ii = iy * dim_x + ix;
   // this function will return ix and iy based on the input ii and dim_x.
   // ----------------------------------------------------------------
@@ -118,7 +91,6 @@ namespace SYS_T
     ix = ii % dim_x;
     iy = (ii-ix)/dim_x;
   }
-
 
   // ----------------------------------------------------------------
   // gen_random()
@@ -136,7 +108,6 @@ namespace SYS_T
   double gen_randomD_open( const double &min, const double &max );
 
   int gen_randomI_closed( const int &min, const int &max );
-
 
   // ----------------------------------------------------------------
   // print size based on bytes
@@ -167,10 +138,9 @@ namespace SYS_T
     return ss.str();
   }
 
-
   // ----------------------------------------------------------------
   // to_string functions : convert numeric values to string 
-  // NOte: std::to_string is implemented in string in C++ 11.
+  // Note: std::to_string is implemented in string in C++ 11.
   // ----------------------------------------------------------------
   inline std::string to_string( const int &a )
   {
@@ -260,7 +230,6 @@ namespace SYS_T
   inline void cmdPrint(const char * const &dataname, const std::string &datavalue)
   {std::ostringstream ss; ss<<dataname<<" "<<datavalue<<"\n"; PetscPrintf(PETSC_COMM_WORLD, ss.str().c_str());}
 
-
   // 4. Print specific system message
   inline void synPrintElementInfo(int nlocalele, double memspace, 
       double totaltime, PetscMPIInt rank)
@@ -271,13 +240,10 @@ namespace SYS_T
     synPrint(ss.str(), rank);
   }
 
-
   // 5. Print fatal error message and terminate the MPI process
   inline void print_fatal( const char output[], ... )
   {
-    PetscMPIInt rank;
-
-    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
+    const PetscMPIInt rank = get_MPI_rank();
 
     if(!rank)
     {
@@ -291,9 +257,23 @@ namespace SYS_T
     MPI_Abort(PETSC_COMM_WORLD, 1);
   }
 
-  inline void print_fatal_if( bool a, const char output[] )
+  inline void print_fatal_if( bool a, const char output[], ... )
   {
-    if( a ) print_fatal(output);
+    if( a )
+    {
+      const PetscMPIInt rank = get_MPI_rank();
+
+      if(!rank)
+      {
+        va_list Argp;
+        va_start(Argp, output);
+        (*PetscVFPrintf)(PETSC_STDOUT,output,Argp);
+        va_end(Argp);
+      }
+
+      MPI_Barrier(PETSC_COMM_WORLD);
+      MPI_Abort(PETSC_COMM_WORLD, 1);
+    }
   }
 
   // exit message printers are used in terminating serial program when 
@@ -320,7 +300,6 @@ namespace SYS_T
     if( a ) print_exit(mesg);
   }
 
-
   // =================================================================
   // The followings are system function to monitor system memory usages 
   // dynamically.
@@ -333,20 +312,17 @@ namespace SYS_T
   // -----------------------------------------------------------------
   void print_MaxMemUsage();
 
-
   // ----------------------------------------------------------------
   // 2. Print the Current memory used for the program. The usage is 
   //    reduced to CPU 0 by MPI_SUM.  
   // ----------------------------------------------------------------
   void print_CurMemUsage();
 
-
   // ----------------------------------------------------------------
   // 3. Print the Maximum space PETSc has allocated. This function 
   //    should be used with the command line argument -malloc
   // ----------------------------------------------------------------
   void print_MaxMallocUsage();
-
 
   // ----------------------------------------------------------------
   // 4. Print the Current space PETSc has allocated. This function 
@@ -361,12 +337,10 @@ namespace SYS_T
   // ----------------------------------------------------------------
   std::string get_time();
 
-
   // ----------------------------------------------------------------
   // 2. get_date: return the present date as YYYY/MM/DD
   // ----------------------------------------------------------------
   std::string get_date();
-
 
   // ----------------------------------------------------------------
   // 3. Structure that holds information about memory usage in kB.
@@ -381,13 +355,11 @@ namespace SYS_T
     unsigned long int VmRSS; // current resident memory size in kB
   };
 
-
   // ----------------------------------------------------------------
   // 4. get_memory_stats(): fills the MemoryStats structure with info
   //    about the memory consumption of this process. Only for Linux.
   // ----------------------------------------------------------------
   void get_memory_stats( MemoryStats &stats );
-
 
   // ================================================================
   // The folowing are options-get functions that read command-line
@@ -442,6 +414,26 @@ namespace SYS_T
     if(flg) outdata = char_outdata;
   }
 
+  // ----------------------------------------------------------------
+  // Check if a file exists. If a file cannot be found, throw an error
+  // message and exit code
+  // ----------------------------------------------------------------
+  inline bool file_exist( const std::string &fName )
+  {
+    if( FILE *ff = fopen(fName.c_str(), "r") )
+    {
+      fclose(ff);
+      return true;
+    }
+    else return false;
+  }
+
+  inline void file_check( const std::string &fName )
+  {
+    print_fatal_if( !file_exist(fName), 
+        "Error: The file %s does not exist. Job is killed. \n", fName.c_str());
+  }
+
   // ================================================================
   // SYS_T::Timer class defines a timer tool that one can use to
   // measure the time spent on events
@@ -450,10 +442,13 @@ namespace SYS_T
   {
     public:
       Timer();
+      
       ~Timer();
 
       void Start();
+      
       void Stop();
+      
       void Reset();
 
       double get_sec() const;

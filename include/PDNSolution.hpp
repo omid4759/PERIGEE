@@ -14,7 +14,7 @@
 //       private: int nlocal, nghost, the number of local and ghost
 //                nodes in the subdomain.
 //                int dof_num, the number of degrees of freedom per
-//                node.
+//                node, which could be different from dof in APart_Node.
 //
 // Author: Ju Liu
 // Date: Nov. 23th 2013
@@ -24,11 +24,12 @@
 class PDNSolution
 {
   public:
-    Vec solution;  
+    Vec solution; 
     
     // --------------------------------------------------------------
     // Construct a solution vec compatible with the analysis node 
-    // partition
+    // partition, with the solution vector's dof value being equal
+    // to the APart_Node class's dof value.
     // --------------------------------------------------------------
     PDNSolution( const APart_Node * const &pNode );
     
@@ -37,11 +38,10 @@ class PDNSolution
     // partition, but with a different dof_num from pNode->dof. 
     // The users specify a dof number for the solution class.
     // --------------------------------------------------------------
-    PDNSolution( const APart_Node * const &pNode,
-       const int &input_dof_num );
+    PDNSolution( const APart_Node * const &pNode, const int &input_dof_num );
     
     // --------------------------------------------------------------
-    // Copy constructor
+    // Copy constructors
     // --------------------------------------------------------------
     PDNSolution( const PDNSolution &INPUT );
 
@@ -70,11 +70,13 @@ class PDNSolution
     virtual void GhostUpdate();
 
     // --------------------------------------------------------------
-    // ! Compute Norms of solution vector 
+    // ! Compute 1-, 2-, and infinity- Norms of the solution vector 
     // --------------------------------------------------------------
 		virtual double Norm_1() const;
-		virtual double Norm_2() const;
-		virtual double Norm_inf() const;
+		
+    virtual double Norm_2() const;
+		
+    virtual double Norm_inf() const;
 
     // --------------------------------------------------------------
     // ! Perform solution = solution + a * x 
@@ -84,52 +86,25 @@ class PDNSolution
     virtual void PlusAX(const PDNSolution * const &x_ptr, const double &a);
 
     // --------------------------------------------------------------
-    // ! Perform += a_i * x_i.
-    //   x has the same length with the solution, and length of x is
-    //   a multiple of (na + nb);
-    //   a_i = a for (na+nb)*k    <= i < (na + nb)*k + na
-    //   a_i = b for (na+nb)*k+na <= i < (na+nb) * (k+1)
-    //   This function call is useful for the special Generalized-alpha
-    //   time integration used for VMS-NS solver. 
-    //   Refer to CMAME 197(2007), pp 182 for details
-    // --------------------------------------------------------------
-    virtual void PlusAiX(PDNSolution &x, const double &a,
-        const double &b, const int &na, const int &nb );
-
-    // -------------------------------------------------------------
-    // ! Perform solution[ii*dofNum + jj] += a[jj] * x[ii*dofNum + jj].
-    //   This is a generalized version for the PlusAiX( PDNSolution,
-    //   const double, const double, const int, const int ).
-    //   The users should make sure that aa.size() == dofNum of the
-    //   solution vector. The PlusAiX(x,a,b, na,nb) is equivalent to
-    //   setting aa = [a,..., a, b, ..., b].
-    //                 na times   nb times
-    // -------------------------------------------------------------
-    virtual void PlusAiX( const PDNSolution &xx, 
-        const std::vector<double> &aa );
-
-    // --------------------------------------------------------------
     // ! Perform uniform scaling operation : solution = a * solution
     // --------------------------------------------------------------
-    virtual void ScaleValue(const double &a);
+    virtual void ScaleValue( const double &a );
 
     // --------------------------------------------------------------
     // ! Get the part of the solution vector that belongs to the local 
-    //   nodes and ghost nodes. Here the local_array should have been 
-    //   allocated with length equal to nlocal + nghost.
-    //   The user is responsible for freeing the memory allocation 
-    //   after the task is done.
-    //   If one uses a dynamic array, one should allocate length
-    //   nlocal + nghost for it.
+    //   nodes and ghost nodes.
+    //   If one uses a dynamic array, one should allocate it with the
+    //   size nlocal + nghost, and one is also responsible for freeing
+    //   the memory allocation of the local_array pointer.
     // --------------------------------------------------------------
     virtual void GetLocalArray( double * const &local_array ) const;
     
     virtual void GetLocalArray( std::vector<double> &local_array ) const;
 
     // --------------------------------------------------------------
-    // ! Assembly the vector and update the ghost node values. It is
+    // ! Assembly the vector and update its ghost values. It is
     //   just a routine calling the following things. This is called
-    //   after VecSetValues calling to finish the assembly of vector.
+    //   after VecSetValues to finish the assembly of vector.
     //          VecAssemblyBegin(solution);
     //          VecAssenblyEnd(solution);
     //          GhostUpdate();
@@ -137,22 +112,33 @@ class PDNSolution
     virtual void Assembly_GhostUpdate();
 
     // --------------------------------------------------------------
-    // ! Print the vec solution on screen with or without ghost part
+    // ! Print the vec solution on screen with or without the ghost part
     // --------------------------------------------------------------
     virtual void PrintWithGhost() const;
+    
     virtual void PrintNoGhost() const;
 
     // --------------------------------------------------------------
     // ! Write and Read the solution vector in PETSc binary format
     // --------------------------------------------------------------
     virtual void WriteBinary(const char * const &file_name) const;
+    
     virtual void ReadBinary(const char * const &file_name) const;
+
+    // --------------------------------------------------------------
+    // ! Get the number of local and ghost nodes for the parallel 
+    //   vector's local portion.
+    // --------------------------------------------------------------
+    virtual int get_nlocalnode() const {return nlocalnode;}
+
+    virtual int get_nghostnode() const {return nghostnode;}
 
     // --------------------------------------------------------------
     // ! Get the number of local and ghost entries in the parallel 
     //   vector's local portion.
     // --------------------------------------------------------------
     virtual int get_nlocal() const {return nlocal;}
+    
     virtual int get_nghost() const {return nghost;}
 
     // --------------------------------------------------------------
@@ -163,16 +149,28 @@ class PDNSolution
     virtual int get_nlgn() const {return nlocal + nghost;}
 
     // --------------------------------------------------------------
-    // ! Get the number of degrees of freedom 
+    // ! Get the number of degrees of freedom of this solution vector
     // --------------------------------------------------------------
     virtual int get_dof_num() const {return dof_num;}
 
+    // --------------------------------------------------------------
+    // ! Compare the layout of the solution vector, that is
+    //   nlocalnode and nghostnode. 
+    //   Return true if the nlocalnode and nghostnode for the two inputs
+    //   are the same; false otherwise. 
+    // --------------------------------------------------------------
+    friend bool is_layout_equal( const PDNSolution &left, const PDNSolution &right );
+
   private:
     // --------------------------------------------------------------
+    // dof_num default value is apart_node -> get_dof, but user may
+    // reset its value.
+    // nlocalnode := apart_node -> get_nlocalnode
+    // nghostnode := apart_node -> get_nghostnode
     // nlocal := apart_node -> get_nlocalnode * dof_num
     // nghost := apart_node -> get_nghostnode * dof_num
     // --------------------------------------------------------------
-    int nlocal, nghost, dof_num; 
+    const int dof_num, nlocalnode, nghostnode, nlocal, nghost; 
 };
 
 #endif

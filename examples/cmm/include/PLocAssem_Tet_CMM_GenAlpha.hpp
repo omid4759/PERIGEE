@@ -1,28 +1,27 @@
-#ifndef PLOCASSEM_TET_VMS_NS_GENALPHA_HPP
-#define PLOCASSEM_TET_VMS_NS_GENALPHA_HPP
+#ifndef PLOCASSEM_TET_CMM_GENALPHA_HPP
+#define PLOCASSEM_TET_CMM_GENALPHA_HPP
 // ==================================================================
-// PLocAssem_Tet_VMS_NS_GenAlpha.hpp
+// PLocAssem_Tet_CMM_GenAlpha.hpp
 // 
-// Parallel Local Assembly routine for VMS and Gen-alpha based NS
-// solver.
-//
-// Author: Ju Liu
-// Date: Feb. 10 2020
+// Parallel Local Assembly routine for VMS and Gen-alpha based
+// solver for the CMM type FSI problem.
 // ==================================================================
 #include "IPLocAssem.hpp"
 #include "TimeMethod_GenAlpha.hpp"
 
-class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
+class PLocAssem_Tet_CMM_GenAlpha : public IPLocAssem
 {
   public:
-    PLocAssem_Tet_VMS_NS_GenAlpha(
+    PLocAssem_Tet_CMM_GenAlpha(
         const TimeMethod_GenAlpha * const &tm_gAlpha,
         const int &in_nlocbas, const int &in_nqp,
         const int &in_snlocbas, const double &in_rho, 
         const double &in_vis_mu, const double &in_beta,
-        const double &in_ctauc = 1.0, const int &elemtype = 501 );
+        const double &in_wall_rho, const double &in_nu,
+        const double &in_kappa, const double &in_ctauc = 1.0,
+        const int &elemtype = 501 );
 
-    virtual ~PLocAssem_Tet_VMS_NS_GenAlpha();
+    virtual ~PLocAssem_Tet_CMM_GenAlpha();
 
     virtual int get_dof() const {return 4;}
 
@@ -138,9 +137,51 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
         const double * const &eleCtrlPts_z,
         const IQuadPts * const &quad );
 
+    // **** PRESTRESS TODO: additional arg ele_prestress
+    virtual void Assem_Residual_EBC_Wall(
+        const double &time, const double &dt,
+        const double * const &dot_sol,
+        const double * const &sol_wall_disp,
+        FEAElement * const &element,
+        const double * const &eleCtrlPts_x,
+        const double * const &eleCtrlPts_y,
+        const double * const &eleCtrlPts_z,
+        const double * const &ele_thickness,
+        const double * const &ele_youngsmod,
+        const IQuadPts * const &quad );
+
+    // **** PRESTRESS TODO: additional arg ele_prestress
+    virtual void Assem_Tangent_Residual_EBC_Wall(
+        const double &time, const double &dt,
+        const double * const &dot_sol,
+        const double * const &sol_wall_disp,
+        FEAElement * const &element,
+        const double * const &eleCtrlPts_x,
+        const double * const &eleCtrlPts_y,
+        const double * const &eleCtrlPts_z,
+        const double * const &ele_thickness,
+        const double * const &ele_youngsmod,
+        const IQuadPts * const &quad );
+
+    // **** PRESTRESS TODO
+    // **** Could replace relevant code in Assem_(Tangent_)Residual_EBC_Wall
+    // virtual void get_Wall_CauchyStress(
+    //     const double * const &sol_wall_disp,
+    //     FEAElement * const &element,
+    //     const double * const &eleCtrlPts_x,
+    //     const double * const &eleCtrlPts_y,
+    //     const double * const &eleCtrlPts_z,
+    //     const double * const &ele_thickness,
+    //     const double * const &ele_youngsmod,
+    //     const IQuadPts * const &quad,
+    //     double * const &stress );
+
   private:
     // Private data
     const double rho0, vis_mu, alpha_f, alpha_m, gamma, beta;
+
+    // wall properties: density, Poisson ratio, shear correction factor (kappa)
+    const double rho_w, nu_w, kappa_w; 
 
     const int nqp; // number of quadrature points
 
@@ -173,13 +214,21 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
     void get_DC( double &dc_tau, const double * const &dxi_dx,
         const double &u, const double &v, const double &w ) const;
 
-    void get_f(const double &x, const double &y, const double &z,
+    // Return body force acting on the fluid domain
+    void get_f( const double &x, const double &y, const double &z,
         const double &t, double &fx, double &fy, double &fz ) const
     {
       fx = 0.0; fy = 0.0; fz = 0.0;
     }
 
-    void get_H1(const double &x, const double &y, const double &z,
+    // Return body force acting on the wall domain
+    void get_fw( const double &x, const double &y, const double &z,
+        const double &t, double &fw_x, double &fw_y, double &fw_z ) const
+    {
+      fw_x = 0.0; fw_y = 0.0; fw_z = 0.0;
+    }
+
+    void get_H1( const double &x, const double &y, const double &z,
         const double &t, const double &nx, const double &ny,
         const double &nz, double &gx, double &gy, double &gz ) const
     {
@@ -187,11 +236,11 @@ class PLocAssem_Tet_VMS_NS_GenAlpha : public IPLocAssem
       gx = p0*nx; gy = p0*ny; gz = p0*nz;
     }
 
-    typedef void ( PLocAssem_Tet_VMS_NS_GenAlpha::*locassem_tet_vms_ns_funs )( const double &x, const double &y, const double &z,
+    typedef void ( PLocAssem_Tet_CMM_GenAlpha::*locassem_tet_cmm_funs )( const double &x, const double &y, const double &z,
         const double &t, const double &nx, const double &ny,
         const double &nz, double &gx, double &gy, double &gz ) const;
 
-    locassem_tet_vms_ns_funs * flist;
+    locassem_tet_cmm_funs * flist;
 
     void get_ebc_fun( const int &ebc_id,
         const double &x, const double &y, const double &z,

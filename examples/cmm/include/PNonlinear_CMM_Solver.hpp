@@ -1,7 +1,7 @@
-#ifndef PNONLINEAR_NS_SOLVER_HPP
-#define PNONLINEAR_NS_SOLVER_HPP
+#ifndef PNONLINEAR_CMM_SOLVER_HPP
+#define PNONLINEAR_CMM_SOLVER_HPP
 // ==================================================================
-// PNonlinear_NS_Solver.hpp
+// PNonlinear_CMM_Solver.hpp
 // 
 // Parallel nonlinear solver for Navier-Stokes equations. 
 //
@@ -14,37 +14,39 @@
 #include "PLinear_Solver_PETSc.hpp"
 #include "Matrix_PETSc.hpp"
 #include "PDNSolution_NS.hpp"
+#include "PDNSolution_Wall_Disp.hpp"
 
-class PNonlinear_NS_Solver
+class PNonlinear_CMM_Solver
 {
   public:
-    PNonlinear_NS_Solver( const APart_Node * const &anode_ptr,
+    PNonlinear_CMM_Solver( const APart_Node * const &anode_ptr,
         const FEANode * const &feanode_ptr,
         const double &input_nrtol, const double &input_natol, 
         const double &input_ndtol, const int &input_max_iteration, 
         const int &input_renew_freq, 
         const int &input_renew_threshold = 4 );
 
-    ~PNonlinear_NS_Solver();
+    ~PNonlinear_CMM_Solver();
 
     int get_non_max_its() const {return nmaxits;}
 
     void print_info() const;
 
     // --------------------------------------------------------------
-    // GenAlpha_Solve_NS:
-    // This is a solver for fluid dynamics.
-    //
-    // This solver solves the Navier-Stokes using 2nd-order Generalized
+    // GenAlpha_Solve_CMM:
+    // This is a solver for CMM-FSI using the 2nd-order Generalized.
     // alpha method.
     // --------------------------------------------------------------
-    void GenAlpha_Solve_NS(
+    // **** PRESTRESS TODO: additional args prestress_flag, ALocal_Wall_Prestress
+    void GenAlpha_Solve_CMM(
         const bool &new_tangent_flag,
         const double &curr_time,
         const double &dt,
         const PDNSolution * const &sol_base,
         const PDNSolution * const &pre_dot_sol,
         const PDNSolution * const &pre_sol,
+        const PDNSolution * const &pre_dot_sol_wall_disp,
+        const PDNSolution * const &pre_sol_wall_disp,
         const TimeMethod_GenAlpha * const &tmga_ptr,
         const ICVFlowRate * const flr_ptr,
         const ALocal_Elem * const &alelem_ptr,
@@ -54,10 +56,12 @@ class PNonlinear_NS_Solver
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_Inflow_NodalBC * const &infnbc_part,
         const ALocal_EBC * const &ebc_part,
+        const ALocal_EBC * const &ebc_wall_part,
         const IGenBC * const &gbc,
         const Matrix_PETSc * const &bc_mat,
         FEAElement * const &elementv,
         FEAElement * const &elements,
+        FEAElement * const &elementw,
         const IQuadPts * const &quad_v,
         const IQuadPts * const &quad_s,
         IPLocAssem * const &lassem_ptr,
@@ -65,6 +69,8 @@ class PNonlinear_NS_Solver
         PLinear_Solver_PETSc * const &lsolver_ptr,
         PDNSolution * const &dot_sol,
         PDNSolution * const &sol,
+        PDNSolution * const &dot_sol_wall_disp,
+        PDNSolution * const &sol_wall_disp,
         bool &conv_flag, int &nl_counter ) const;
 
   private:
@@ -85,6 +91,22 @@ class PNonlinear_NS_Solver
         const ICVFlowRate * const &flrate,
         const PDNSolution * const &sol_base,
         PDNSolution * const &sol ) const;
+
+    // CMM segregated algorithm: nodal update of sol_wall_disp and 
+    // dot_sol_wall_disp based on the dot_velo increment 
+    // The dot_step vector is assumed to take the following form:
+    //     [dot_pres_step, dot_velo_x_step, dot_velo_y_step, dot_velo_z_step] 
+    // The wall_data is a vector of three degrees of freedom:
+    //     [wall_data_x, wall_data_y, wall_data_z]
+    // and it can be either sol_wall_disp or dot_sol_wall_disp
+    // The update will occur in the following manner:
+    //     wall_data_x += val * dot_velo_x_step
+    //     wall_data_y += val * dot_velo_y_step
+    //     wall_data_z += val * dot_velo_z_step
+    void update_wall( const double &val,
+        const PDNSolution * const &dot_step,
+        PDNSolution * const &wall_data,
+        const ALocal_EBC * const &ebc_wall_part ) const;
 };
 
 #endif

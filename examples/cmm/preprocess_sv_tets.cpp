@@ -3,6 +3,13 @@
 //
 // This is a preprocessor code for handling Navier-Stokes equations 
 // discretized by tetradedral elements.
+// 
+// This preprocessor is similiar to that of the NS solver, please
+// refer to the initialization of Elem_3D_tet_wall class for the
+// specification of the wall properties, which will be utilized
+// for FSI type simulations. Notice that the USERS may need to set
+// proper file names for constructing Elem_3D_tet_wall and recompile
+// the code.
 //
 // Date Created: Jan 01 2020
 // ==================================================================
@@ -219,27 +226,43 @@ int main( int argc, char * argv[] )
 
   ebc -> resetTriIEN_outwardnormal( IEN ); // reset IEN for outward normal calculations
 
-  // Wall mesh is set as an elemental bc.
+  // ----------------------------------------------------------------
+  // Wall mesh for CMM-type model is set as an elemental bc.
   // Set the wall region, its corresponding centerline, and the thickness-to-radius ratio
   const std::string walls_combined = sur_file_wall;
   const std::string centerlines_combined = "centerlines.vtp";
   const double thickness2radius_combined = 0.2;
 
-  // Overwrite wall properties in the following selected regions
-  std::vector<std::string> wallsList; wallsList.clear();
-  std::vector<std::string> centerlinesList; centerlinesList.clear();
-  std::vector<double> thickness2radiusList; thickness2radiusList.clear();
+  // For variable wall properties:
+  // If constructing wall properties with multiple spatial distributions,
+  // provide three additional vectors of equal length: 
+  //     1. wallsList:            surface vtp's, each a subset of the entire wall
+  //     2. centerlinesList:      corresponding centerline vtp's
+  //     3. thickness2radiusList: corresponding ratios
+  // The background wall properties will first be prescribed to the entire wall
+  // using centerlines_combined and thickness2radius_combined. Wall properties
+  // in wallsList will then be overwritten using the corresponding lists.
+  // ----------------------------------------------------------------
+  // std::vector<std::string> wallsList; wallsList.clear();
+  // std::vector<std::string> centerlinesList; centerlinesList.clear();
+  // std::vector<double> thickness2radiusList; thickness2radiusList.clear();
 
-  if(elemType == 501) wallsList.push_back( "wall_aorta.vtp" );
-  else wallsList.push_back( "wall_aorta.vtu" );
+  // if(elemType == 501) wallsList.push_back( "wall_aorta.vtp" );
+  // else wallsList.push_back( "wall_aorta.vtu" );
 
-  centerlinesList.push_back( "centerlines_aorta.vtp" );
-  thickness2radiusList.push_back( 0.2 );
+  // centerlinesList.push_back( "centerlines_aorta.vtp" );
+  // thickness2radiusList.push_back( 0.2 );
+
+  // // Initialized with default fluid density 1.065
+  // ElemBC * wall_bc = new ElemBC_3D_tet_wall( walls_combined, centerlines_combined,
+  //                                            thickness2radius_combined, wallsList,
+  //                                            centerlinesList, thickness2radiusList, elemType );
 
   ElemBC * wall_bc = new ElemBC_3D_tet_wall( walls_combined, centerlines_combined,
-                                             thickness2radius_combined, wallsList,
-                                             centerlinesList, thickness2radiusList, elemType);
+                                             thickness2radius_combined, elemType );
+
   wall_bc -> resetTriIEN_outwardnormal( IEN );
+  // ----------------------------------------------------------------
 
   // Start partition the mesh for each cpu_rank 
   const bool isPrintPartInfo = true;
