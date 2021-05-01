@@ -285,8 +285,10 @@ int main(int argc, char *argv[])
   // ===== Generalized-alpha =====
   SYS_T::commPrint("===> Setup the Generalized-alpha time scheme.\n");
 
-  TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha(
-      genA_rho_inf, false );
+  // TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha(
+  //     genA_rho_inf, false );
+
+  TimeMethod_GenAlpha * tm_galpha_ptr = new TimeMethod_GenAlpha( 1.0, 1.0, 1.0 );
 
   tm_galpha_ptr->print_info();
 

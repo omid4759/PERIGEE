@@ -15,6 +15,8 @@ PNonlinear_NS_Solver::PNonlinear_NS_Solver(
   // Generate the incremental solution vector used for update 
   // the solution of the nonlinear algebraic system 
   dot_step = new PDNSolution_NS( anode_ptr, 0, false );
+  
+  Qi0 = 0.0;
 }
 
 
@@ -106,9 +108,15 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
 
   // ------------------------------------------------- 
   // Update the inflow boundary values
-  rescale_inflow_value(curr_time+dt, infnbc_part, flr_ptr, sol_base, sol);
-  rescale_inflow_value(curr_time+alpha_f*dt, infnbc_part, flr_ptr, sol_base, &sol_alpha);
+  //rescale_inflow_value(curr_time+dt, infnbc_part, flr_ptr, sol_base, sol);
+  //rescale_inflow_value(curr_time+alpha_f*dt, infnbc_part, flr_ptr, sol_base, &sol_alpha);
   // ------------------------------------------------- 
+  
+  
+  set_Dirichlet_inflow( curr_time,dt,gamma,alpha_f,alpha_m,sol_base,pre_sol,pre_dot_sol,
+      sol,dot_sol,&sol_alpha,&dot_sol_alpha,infnbc_part,lassem_ptr, gassem_ptr,elements,quad_s );
+  
+  
 
   // If new_tangent_flag == TRUE, update the tangent matrix;
   // otherwise, use the matrix from the previous time step
@@ -179,6 +187,9 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
 
     dot_sol_alpha.PlusAX( dot_step, (-1.0) * alpha_m );
     sol_alpha.PlusAX( dot_step, (-1.0) * alpha_f * gamma * dt );
+    
+    set_Dirichlet_inflow( curr_time,dt,gamma,alpha_f,alpha_m,sol_base,pre_sol,pre_dot_sol,
+        sol,dot_sol,&sol_alpha,&dot_sol_alpha,infnbc_part, lassem_ptr, gassem_ptr,elements,quad_s );    
 
     // Assembly residual (& tangent if condition satisfied) 
     if( nl_counter % nrenew_freq == 0 || nl_counter >= nrenew_threshold )
@@ -224,7 +235,8 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
     SYS_T::print_fatal_if( residual_norm != residual_norm, "Error: nonlinear solver residual norm is NaN. Job killed.\n" );
     
     SYS_T::commPrint("  --- nl_res: %e \n", residual_norm);
-
+    
+    if( initial_norm < 1e-7 ) initial_norm = 1e-7;
     relative_error = residual_norm / initial_norm;
 
     SYS_T::print_fatal_if( relative_error >= nd_tol, "Error: nonlinear solver is diverging with error %e. Job killed.\n", relative_error);
@@ -232,7 +244,9 @@ void PNonlinear_NS_Solver::GenAlpha_Solve_NS(
   }while(nl_counter<nmaxits && relative_error > nr_tol && residual_norm > na_tol);
 
   Print_convergence_info(nl_counter, relative_error, residual_norm);
-
+  
+  update_Qi0();
+  
   if(relative_error <= nr_tol || residual_norm <= na_tol) conv_flag = true;
   else conv_flag = false;
 }
@@ -268,6 +282,193 @@ void PNonlinear_NS_Solver::rescale_inflow_value( const double &stime,
 
   VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
   sol->GhostUpdate();
+}
+
+
+void PNonlinear_NS_Solver::set_Dirichlet_inflow( const double &stime,
+    const double &dt,
+    const double &gamma,
+    const double &alpha_f,
+    const double &alpha_m,
+    const PDNSolution * const &sol_base,
+    const PDNSolution * const &pre_sol,
+    const PDNSolution * const &pre_dot_sol,
+    PDNSolution * const &sol,
+    PDNSolution * const &dot_sol,
+    PDNSolution * const &sol_alpha,
+    PDNSolution * const &dot_sol_alpha,
+    const ALocal_Inflow_NodalBC * const &infnbc,
+    IPLocAssem * const &lassem_ptr,
+    IPGAssem * const &gassem_ptr,
+    FEAElement * const &element_s,
+    const IQuadPts * const &quad_s ) const
+{
+  //currentlt 1 Dirichlet inlet only
+  const double inlet_avepre = gassem_ptr -> Assem_surface_ave_pressure(
+      sol, lassem_ptr, element_s, quad_s, infnbc );
+  
+  const double inlet_avepre_prev = gassem_ptr -> Assem_surface_ave_pressure(
+      pre_sol, lassem_ptr, element_s, quad_s, infnbc );
+  // use last 0D solution as initial Q for the next 0D integration
+  const double inlet_flrate_prev = Qi0;
+  
+  const double inlet_flrate = get_inductor_flow( inlet_avepre, inlet_avepre_prev, inlet_flrate_prev, stime, dt ); 
+
+  // if(SYS_T::get_MPI_rank() == 0)
+  //   std::cout << "t = " << stime << " P = " << inlet_avepre << " Q = " << inlet_flrate << "\n";
+
+  const double inlet_flrate_alpha = inlet_flrate_prev + ( inlet_flrate - inlet_flrate_prev ) * alpha_f;
+
+  impose_inflow_value_correct_ac( inlet_flrate,inlet_flrate_alpha,dt,gamma,alpha_f,alpha_m,infnbc,
+      sol_base, pre_sol,pre_dot_sol,sol,dot_sol,sol_alpha,dot_sol_alpha );
+}
+
+double PNonlinear_NS_Solver::get_inductor_flow( const double &inlet_press, 
+    const double &inlet_press_prev,
+    const double &inlet_flow_prev,
+    const double &curr,
+    const double &dt ) const
+{
+  const double fac13 = 1.0 / 3.0;
+  const double fac23 = 2.0 / 3.0;
+  const double fac18 = 1.0 / 8.0;
+  const double fac38 = 3.0 / 8.0;
+  const int N = 1000;
+  const double h = dt / static_cast<double>(N);
+
+  double Qi_m = inlet_flow_prev; 
+  
+  for(int mm=0; mm<N; ++mm)
+  {
+    const double P_m = inlet_press_prev + static_cast<double>(mm) * ( inlet_press - inlet_press_prev ) / static_cast<double>(N);
+    
+    const double P_mp1 = inlet_press_prev + static_cast<double>(mm+1) * ( inlet_press - inlet_press_prev ) / static_cast<double>(N);
+
+    const double K1 = F( P_m, curr );
+
+    const double K2 = F( fac23 * P_m + fac13 * P_mp1, curr );
+
+    const double K3 = F( fac13 * P_m + fac23 * P_mp1, curr );
+  
+    const double K4 = F( P_mp1, curr );
+
+    Qi_m = Qi_m + fac18 * K1 * h + fac38 * K2 * h + fac38 * K3 * h + fac18 * K4 * h; 
+  }
+
+  // if(SYS_T::get_MPI_rank() == 0)
+  //   std::cout << "\ninlet_flow_prev =" << inlet_flow_prev << " Qi_m = " << Qi_m << " F =" << F(inlet_press, curr) << "\n";
+ 
+  record_0D_Q(Qi_m);
+  
+  return Qi_m;
+  //return -Qi_m + F( inlet_press , curr) * dt;
+}    
+
+double PNonlinear_NS_Solver::F( const double &Pi, const double &curr ) const
+{
+  const double P_head = 5000.0;
+  const double LL = 2.0;
+  return ( P_head - Pi ) / LL;
+}
+
+void PNonlinear_NS_Solver::impose_inflow_value_correct_ac( const double &flow_rate,
+    const double &flow_rate_alpha,
+    const double &dt,
+    const double &gamma,
+    const double &alpha_f,
+    const double &alpha_m,
+    const ALocal_Inflow_NodalBC * const &infbc,
+    const PDNSolution * const &sol_base,
+    const PDNSolution * const &pre_sol,
+    const PDNSolution * const &pre_dot_sol,
+    PDNSolution * const &sol,
+    PDNSolution * const &dot_sol,
+    PDNSolution * const &sol_alpha,
+    PDNSolution * const &dot_sol_alpha ) const
+{
+  const int numnode = infbc -> get_Num_LD();
+
+  double base_vals[3];
+  int base_idx[3];
+
+  double pre_vals[3];
+  double curr_vals[3];
+  double pre_dot_vals[3];
+  double dot_vals[3];
+
+  for(int ii=0; ii<numnode; ++ii)
+  {
+    const int node_index = infbc -> get_LDN( ii );
+
+    base_idx[0] = node_index * 4 + 1;
+    base_idx[1] = node_index * 4 + 2;
+    base_idx[2] = node_index * 4 + 3;
+
+    VecGetValues(sol->solution, 3, base_idx, curr_vals);
+    VecGetValues(sol_base->solution, 3, base_idx, base_vals);
+
+    curr_vals[0]=base_vals[0]*flow_rate;
+    curr_vals[1]=base_vals[1]*flow_rate;
+    curr_vals[2]=base_vals[2]*flow_rate;
+
+    VecSetValue(sol->solution, node_index*4+1, curr_vals[0], INSERT_VALUES);
+    VecSetValue(sol->solution, node_index*4+2, curr_vals[1], INSERT_VALUES);
+    VecSetValue(sol->solution, node_index*4+3, curr_vals[2], INSERT_VALUES);
+
+
+    //make correction for acceleration values on Dirichal nodes
+    // Ydot_n+1=(gamma-1)/gamma*Ydot_n+(Y_n+1 - Y_n)/(gamma*dt)
+
+    VecGetValues(pre_sol->solution,3,base_idx,pre_vals);
+    VecGetValues(pre_dot_sol->solution,3,base_idx,pre_dot_vals);
+    VecGetValues(dot_sol->solution,3,base_idx,dot_vals);
+
+    dot_vals[0]=(gamma-1.0)/gamma*pre_dot_vals[0]+(curr_vals[0]-pre_vals[0])/(gamma*dt);
+    dot_vals[1]=(gamma-1.0)/gamma*pre_dot_vals[1]+(curr_vals[1]-pre_vals[1])/(gamma*dt);
+    dot_vals[2]=(gamma-1.0)/gamma*pre_dot_vals[2]+(curr_vals[2]-pre_vals[2])/(gamma*dt);
+
+    VecSetValue(dot_sol->solution, node_index*4+1, dot_vals[0], INSERT_VALUES);
+    VecSetValue(dot_sol->solution, node_index*4+2, dot_vals[1], INSERT_VALUES);
+    VecSetValue(dot_sol->solution, node_index*4+3, dot_vals[2], INSERT_VALUES);
+
+    curr_vals[0]=(1.0-alpha_f)*pre_vals[0]+alpha_f*curr_vals[0];
+    curr_vals[1]=(1.0-alpha_f)*pre_vals[1]+alpha_f*curr_vals[1];
+    curr_vals[2]=(1.0-alpha_f)*pre_vals[2]+alpha_f*curr_vals[2];
+    
+    VecSetValue(sol_alpha->solution, node_index*4+1, curr_vals[0], INSERT_VALUES);
+    VecSetValue(sol_alpha->solution, node_index*4+2, curr_vals[1], INSERT_VALUES);
+    VecSetValue(sol_alpha->solution, node_index*4+3, curr_vals[2], INSERT_VALUES);
+
+    dot_vals[0]=(1.0-alpha_m)*pre_dot_vals[0]+alpha_m*dot_vals[0];
+    dot_vals[1]=(1.0-alpha_m)*pre_dot_vals[1]+alpha_m*dot_vals[1];
+    dot_vals[2]=(1.0-alpha_m)*pre_dot_vals[2]+alpha_m*dot_vals[2];
+    
+    VecSetValue(dot_sol_alpha->solution, node_index*4+1, dot_vals[0], INSERT_VALUES);
+    VecSetValue(dot_sol_alpha->solution, node_index*4+2, dot_vals[1], INSERT_VALUES);
+    VecSetValue(dot_sol_alpha->solution, node_index*4+3, dot_vals[2], INSERT_VALUES);
+  }
+
+  VecAssemblyBegin(sol->solution); VecAssemblyEnd(sol->solution);
+  sol->GhostUpdate();
+
+  VecAssemblyBegin(dot_sol->solution); VecAssemblyEnd(dot_sol->solution);
+  dot_sol->GhostUpdate();
+  
+  VecAssemblyBegin(sol_alpha->solution); VecAssemblyEnd(sol_alpha->solution);
+  sol_alpha->GhostUpdate();
+  
+  VecAssemblyBegin(dot_sol_alpha->solution); VecAssemblyEnd(dot_sol_alpha->solution);
+  dot_sol_alpha->GhostUpdate();
+}
+
+void PNonlinear_NS_Solver::record_0D_Q( const double & Qim) const
+{
+  Qim_final = Qim;
+}
+
+void PNonlinear_NS_Solver::update_Qi0() const
+{
+  Qi0 = Qim_final;
 }
 
 // EOF

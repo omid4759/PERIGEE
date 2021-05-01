@@ -70,7 +70,7 @@ class PNonlinear_NS_Solver
   private:
     const double nr_tol, na_tol, nd_tol;
     const int nmaxits, nrenew_freq, nrenew_threshold;
-
+    mutable double Qi0, Qim_final;
     // vector container for the step update in the smaller matrix problem
     PDNSolution * dot_step;
 
@@ -85,6 +85,50 @@ class PNonlinear_NS_Solver
         const ICVFlowRate * const &flrate,
         const PDNSolution * const &sol_base,
         PDNSolution * const &sol ) const;
+        
+    void impose_inflow_value_correct_ac( const double &flow_rate,
+        const double &flow_rate_alpha,
+        const double &dt,
+        const double &gamma,
+        const double &alpha_f,
+        const double &alpha_m,
+        const ALocal_Inflow_NodalBC * const &infbc,
+        const PDNSolution * const &sol_base,
+        const PDNSolution * const &pre_sol,
+        const PDNSolution * const &pre_dot_sol,
+        PDNSolution * const &sol,
+        PDNSolution * const &dot_sol,
+        PDNSolution * const &sol_alpha,
+        PDNSolution * const &dot_sol_alpha ) const;
+
+    void set_Dirichlet_inflow( const double &stime,
+         const double &dt,
+         const double &gamma,
+         const double &alpha_f,
+         const double &alpha_m,
+         const PDNSolution * const &sol_base,
+         const PDNSolution * const &pre_sol,
+         const PDNSolution * const &pre_dot_sol,
+         PDNSolution * const &sol,
+         PDNSolution * const &dot_sol,
+         PDNSolution * const &sol_alpha,
+         PDNSolution * const &dot_sol_alpha,
+         const ALocal_Inflow_NodalBC * const &infnbc,
+         IPLocAssem * const &lassem_ptr,
+         IPGAssem * const &gassem_ptr,
+         FEAElement * const &element_s,
+         const IQuadPts * const &quad_s ) const;    
+         
+    double get_inductor_flow( const double &inlet_press, 
+         const double &inlet_press_prev,
+         const double &inlet_flow_prev,
+         const double &stime,
+         const double &dt ) const;
+         
+    double F( const double &Pi, const double &curr ) const;    
+    
+    void record_0D_Q( const double & Qim ) const;
+    void update_Qi0() const;
 };
 
 #endif
