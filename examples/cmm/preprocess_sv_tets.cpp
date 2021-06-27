@@ -46,8 +46,8 @@ int main( int argc, char * argv[] )
   
   // Element options: 501 linear tets, 502 quadratic tets
   int elemType = 501;
-  int num_outlet = 1;
-  int ringBC_type = 0;
+  int num_outlet = 2;
+  int ringBC_type = 1;
 
   // cmmBC_type : 0 deformable wall, 
   //              1 rigid wall, 
