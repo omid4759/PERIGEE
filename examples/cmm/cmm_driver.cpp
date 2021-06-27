@@ -41,13 +41,13 @@ int main( int argc, char *argv[] )
   int nz_estimate = 300;
 
   // Fluid properties
-  double fluid_density = 1.065;
-  double fluid_mu = 3.5e-2;
+  double fluid_density = 1.00;
+  double fluid_mu = 4.0e-2;
   double c_tauc = 1.0;               // scaling factor for tau_c: 0.0, 0.125, or 1.0
 
   // Wall properties: density, Poisson ratio, shear correction factor (kappa)
   double wall_density = 1.0;
-  double wall_poisson = 0.5;
+  double wall_poisson = 0.3;
   double wall_kappa   = 5.0 / 6.0;
 
   // Inflow file
