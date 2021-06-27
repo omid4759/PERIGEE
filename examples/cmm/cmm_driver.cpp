@@ -60,7 +60,7 @@ int main( int argc, char *argv[] )
   std::string lpn_file("lpn_rcr_input.txt");
 
   // Backflow stabilization
-  double bs_beta = 0.2;
+  double bs_beta = 0.0;
 
   // Generalized-alpha rho_inf
   double genA_rho_inf = 0.5;
