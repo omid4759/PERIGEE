@@ -58,12 +58,16 @@ NodalBC_3D_CMM::NodalBC_3D_CMM(
 
       if( ringbc_type == 0 )
       {
-        // regardless of comp, all ring nodes are added as essential bc
-        for(unsigned int ii = 0; ii < nbc_ring->get_num_dir_nodes(); ++ii)
+        // Greenshields-Weller
+        if(comp == 2)
         {
-          dir_nodes.push_back( nbc_ring->get_dir_nodes(ii) );
-          cap_num_dir_nodes[ cap_id[ii] ] += 1;
+          for(unsigned int ii = 0; ii < nbc_ring->get_num_dir_nodes(); ++ii)
+          {
+            dir_nodes.push_back( nbc_ring->get_dir_nodes(ii) );
+            cap_num_dir_nodes[ cap_id[ii] ] += 1;
+          }
         }
+        // Greenshields-Weller
       }
       else if( ringbc_type == 1 )
       {
@@ -112,7 +116,7 @@ NodalBC_3D_CMM::NodalBC_3D_CMM(
       // Assign the wall nodes for this type of nodal/essential bc
       for(unsigned int ii=0; ii<nbc_wall->get_num_dir_nodes(); ++ii)
         dir_nodes.push_back( nbc_wall->get_dir_nodes(ii) );
-      
+
       // Clean up the dir_nodes and generate ID array
       VEC_T::sort_unique_resize(dir_nodes);
 
@@ -136,14 +140,14 @@ NodalBC_3D_CMM::NodalBC_3D_CMM(
 
       for(unsigned int ii=0; ii<nbc_ring->get_num_dir_nodes(); ++ii)
         ring_gnode.push_back( nbc_ring->get_dir_nodes(ii) );
-   
+
       // prepare wall node indices
       std::vector<unsigned int> wall_gnode;
       wall_gnode.clear();
 
       for(unsigned int ii=0; ii<nbc_wall->get_num_dir_nodes(); ++ii)
         wall_gnode.push_back( nbc_wall->get_dir_nodes(ii) );
-   
+
       for(unsigned int ii=0; ii<static_cast<unsigned int>(nFunc); ++ii)
       {
         if( VEC_T::is_invec(ring_gnode, ii) )
@@ -156,7 +160,7 @@ NodalBC_3D_CMM::NodalBC_3D_CMM(
             if( comp == 0 ) dir_nodes.push_back( ii ); 
           }
           else SYS_T::print_fatal( "NodalBC_3D_CMM Error: No such type of essential bc for ring nodes.\n" );
-   
+
         }
         else if( !VEC_T::is_invec( wall_gnode, ii) )
           dir_nodes.push_back( ii );
@@ -175,12 +179,11 @@ NodalBC_3D_CMM::NodalBC_3D_CMM(
 
       break;
     }
-
     default:
-
+    {
       SYS_T::print_fatal( "NodalBC_3D_CMM Error: No such type of CMM BC.\n" );
       break;
-
+    }
   } // end switch
 }
 

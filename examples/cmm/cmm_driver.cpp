@@ -282,7 +282,7 @@ int main( int argc, char *argv[] )
   ALocal_Ring_NodalBC * locringnbc = new ALocal_Ring_NodalBC(part_file, rank);
 
   // Local sub-domain's outflow elemental (Neumann) BC
-  ALocal_EBC * locebc = new ALocal_EBC_outflow(part_file, rank);
+  ALocal_EBC * locebc = new ALocal_EBC(part_file, rank);
 
   // Local sub-domain's wall elemental (Neumann) BC for CMM
   ALocal_EBC * locebc_wall = new ALocal_EBC_wall(part_file, rank, quads->get_num_quadPts(), "ebc_wall");

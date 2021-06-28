@@ -46,8 +46,8 @@ int main( int argc, char * argv[] )
   
   // Element options: 501 linear tets, 502 quadratic tets
   int elemType = 501;
-  int num_outlet = 2;
-  int ringBC_type = 1;
+  int num_outlet = 1;
+  int ringBC_type = 0;
 
   // cmmBC_type : 0 deformable wall, 
   //              1 rigid wall, 
@@ -78,20 +78,10 @@ int main( int argc, char * argv[] )
 
   // Get the command line arguments
   SYS_T::GetOptionInt(   "-cpu_size",          cpu_size);
-  SYS_T::GetOptionInt(   "-in_ncommon",        in_ncommon);
-  SYS_T::GetOptionInt(   "-num_outlet",        num_outlet);
   SYS_T::GetOptionInt(   "-elem_type",         elemType);
-  SYS_T::GetOptionInt(   "-ringbc_type",       ringBC_type);
-  SYS_T::GetOptionInt(   "-cmmbc_type",        cmmBC_type);
   SYS_T::GetOptionBool(  "-is_uniform_wall",   is_uniform_wall);
   SYS_T::GetOptionReal(  "-wall_thickness",    wall_thickness);
   SYS_T::GetOptionReal(  "-wall_youngsmod",    wall_youngsmod);
-  SYS_T::GetOptionReal(  "-wall_springconst",  wall_springconst);
-  SYS_T::GetOptionReal(  "-wall_dampingconst", wall_dampingconst);
-  SYS_T::GetOptionString("-geo_file",          geo_file);
-  SYS_T::GetOptionString("-sur_file_in",       sur_file_in);
-  SYS_T::GetOptionString("-sur_file_wall",     sur_file_wall);
-  SYS_T::GetOptionString("-sur_file_out_base", sur_file_out_base);
 
   if( elemType != 501 && elemType !=502 ) SYS_T::print_fatal("ERROR: unknown element type %d.\n", elemType);
 
@@ -150,11 +140,14 @@ int main( int argc, char * argv[] )
     if(elemType == 501 )
       sur_file_out[ii] = SYS_T::gen_capfile_name( sur_file_out_base, ii, ".vtp" ); 
     else
-      sur_file_out[ii] = SYS_T::gen_capfile_name( sur_file_out_base, ii, ".vtu" ); 
+      sur_file_out[ii] = SYS_T::gen_capfile_name( sur_file_out_base, ii, ".vtu" );
  
     SYS_T::file_check(sur_file_out[ii]);
     cout<<sur_file_out[ii]<<" found. \n";
   }
+
+  std::vector< std::string > ebc_file = sur_file_out;
+  ebc_file.push_back( sur_file_in );
 
   // If we can still detect additional files on disk, throw an warning
   if( SYS_T::file_exist(SYS_T::gen_capfile_name(sur_file_out_base, num_outlet, ".vtp")) ||
@@ -234,7 +227,7 @@ int main( int argc, char * argv[] )
   for(unsigned int ii=0; ii<sur_file_out.size(); ++ii)
     outlet_outvec[ii] = TET_T::get_out_normal( sur_file_out[ii], ctrlPts, IEN );
 
-  ElemBC * ebc = new ElemBC_3D_tet_outflow( sur_file_out, outlet_outvec, elemType );
+  ElemBC * ebc = new ElemBC_3D_tet( ebc_file, elemType );
 
   ebc -> resetTriIEN_outwardnormal( IEN ); // reset IEN for outward normal calculations
 
@@ -346,7 +339,7 @@ int main( int argc, char * argv[] )
     ringpart->write_hdf5( part_file.c_str() );
 
     // Partition Elemental BC and write to h5 file
-    IEBC_Partition * ebcpart = new EBC_Partition_vtp_outflow(part, mnindex, ebc, NBC_list);
+    IEBC_Partition * ebcpart = new EBC_Partition_vtp(part, mnindex, ebc);
     ebcpart -> write_hdf5( part_file.c_str() );
 
     // Partition Elemental Wall BC and write it to h5 file
