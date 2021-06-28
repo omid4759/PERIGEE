@@ -46,10 +46,6 @@ NodalBC_3D_CMM::NodalBC_3D_CMM(
     // ======================== Deformable wall ========================
     case 0:
     {
-      // regardless of comp, assign all interior inlet nodes as nodal/essential bc
-      for(unsigned int ii=0; ii<nbc_inflow->get_num_dir_nodes(); ++ii)
-        dir_nodes.push_back( nbc_inflow->get_dir_nodes(ii) );
-
       // obtain the type of ring nodes' specification
       const std::vector<int> cap_id = nbc_ring -> get_cap_id();
 
