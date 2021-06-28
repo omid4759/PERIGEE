@@ -333,12 +333,12 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_nonzero_estimate(
   delete [] row_index; row_index = nullptr;
 
   // Create a temporary zero solution vector to feed Natbc_Resis_KG
-  PDNSolution * temp = new PDNSolution_NS( node_ptr, 0, false );
+  //PDNSolution * temp = new PDNSolution_NS( node_ptr, 0, false );
 
   // 0.1 is an (arbitrarily chosen) nonzero time step size feeding the NatBC_Resis_KG 
-  NatBC_Resis_KG(0.1, temp, temp, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc );
+  //NatBC_Resis_KG(0.1, temp, temp, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc );
 
-  delete temp;
+  //delete temp;
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
@@ -395,8 +395,8 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_mass_residual(
         row_index[dof_mat*ii+mm] = dof_mat * nbc_part -> get_LID(mm, IEN_e[ii]) + mm;
     }
 
-    RingBC_KG( ringnbc_part, dof_mat, nLocBas * dof_mat, nLocBas * dof_mat,
-        row_index, row_index, lassem_ptr->Tangent, lassem_ptr->Residual );
+    //RingBC_KG( ringnbc_part, dof_mat, nLocBas * dof_mat, nLocBas * dof_mat,
+    //    row_index, row_index, lassem_ptr->Tangent, lassem_ptr->Residual );
 
     MatSetValues(K, loc_dof, row_index, loc_dof, row_index,
         lassem_ptr->Tangent, ADD_VALUES);
@@ -481,7 +481,7 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_residual(
         row_index[dof_mat*ii+mm] = dof_mat * nbc_part -> get_LID(mm, IEN_e[ii]) + mm;
     }
 
-    RingBC_G( ringnbc_part, dof_mat, nLocBas * dof_mat, row_index, lassem_ptr->Residual );
+    //RingBC_G( ringnbc_part, dof_mat, nLocBas * dof_mat, row_index, lassem_ptr->Residual );
 
     VecSetValues(G, loc_dof, row_index, lassem_ptr->Residual, ADD_VALUES);
   }
@@ -497,13 +497,12 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_residual(
   delete [] row_index; row_index = nullptr;
 
   // Backflow stabilization residual contribution
-  BackFlow_G( sol_a, sol_b, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part );
+  //BackFlow_G( sol_a, sol_b, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part );
 
   // Residual contribution from the thin-walled linear membrane in CMM
   WallMembrane_G( curr_time, dt, sol_a, sol_b, sol_wall_disp, lassem_ptr, elementw, quad_s, nbc_part, ringnbc_part, ebc_wall_part );
 
-  // Resistance type boundary condition
-  NatBC_Resis_G( dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc );
+  NatBC_G(curr_time, dt, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part );
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
@@ -572,8 +571,8 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_tangent_residual(
         row_index[dof_mat*ii + mm] = dof_mat*nbc_part->get_LID(mm, IEN_e[ii])+mm;
     }
 
-    RingBC_KG( ringnbc_part, dof_mat, nLocBas * dof_mat, nLocBas * dof_mat,
-        row_index, row_index, lassem_ptr->Tangent, lassem_ptr->Residual );
+    //RingBC_KG( ringnbc_part, dof_mat, nLocBas * dof_mat, nLocBas * dof_mat,
+    //    row_index, row_index, lassem_ptr->Tangent, lassem_ptr->Residual );
 
     MatSetValues(K, loc_dof, row_index, loc_dof, row_index,
         lassem_ptr->Tangent, ADD_VALUES);
@@ -591,15 +590,11 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_tangent_residual(
   delete [] ectrl_z; ectrl_z = nullptr;
   delete [] row_index; row_index = nullptr;
 
-  // Backflow stabilization residual & tangent contribution
-  BackFlow_KG( dt, sol_a, sol_b, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part );
-
   // Residual & tangent contributions from the thin-walled linear membrane in CMM
   WallMembrane_KG( curr_time, dt, sol_a, sol_b, sol_wall_disp, lassem_ptr, elementw, quad_s, nbc_part, ringnbc_part, ebc_wall_part );
 
-  // Resistance type boundary condition
-  NatBC_Resis_KG( dt, dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc );
-
+  NatBC_G(curr_time, dt, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part );
+  
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
 
@@ -645,7 +640,7 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_G( const double &curr_time, const double &d
           srow_index[dof_mat * ii + mm] = dof_mat * nbc_part -> get_LID(mm, LSIEN[ii]) + mm;
       }
 
-      RingBC_G( ringnbc_part, dof_mat, snLocBas * dof_mat, srow_index, lassem_ptr->Residual );
+      //RingBC_G( ringnbc_part, dof_mat, snLocBas * dof_mat, srow_index, lassem_ptr->Residual );
 
       VecSetValues(G, dof_mat*snLocBas, srow_index, lassem_ptr->Residual, ADD_VALUES);
     }
@@ -704,7 +699,7 @@ void PGAssem_Tet_CMM_GenAlpha::BackFlow_G(
           srow_index[dof_mat * ii + mm] = dof_mat * nbc_part -> get_LID(mm, LSIEN[ii]) + mm;
       }
 
-      RingBC_G( ringnbc_part, dof_mat, dof_mat * snLocBas, srow_index, lassem_ptr->sur_Residual );
+      //RingBC_G( ringnbc_part, dof_mat, dof_mat * snLocBas, srow_index, lassem_ptr->sur_Residual );
 
       VecSetValues(G, dof_mat*snLocBas, srow_index, lassem_ptr->sur_Residual, ADD_VALUES);
     }
@@ -767,8 +762,8 @@ void PGAssem_Tet_CMM_GenAlpha::BackFlow_KG( const double &dt,
           srow_index[dof_mat * ii + mm] = dof_mat * nbc_part -> get_LID(mm, LSIEN[ii]) + mm;
       }
 
-      RingBC_KG( ringnbc_part, dof_mat, dof_mat * snLocBas, dof_mat * snLocBas,
-          srow_index, srow_index, lassem_ptr->sur_Tangent, lassem_ptr->sur_Residual );
+      //RingBC_KG( ringnbc_part, dof_mat, dof_mat * snLocBas, dof_mat * snLocBas,
+      //    srow_index, srow_index, lassem_ptr->sur_Tangent, lassem_ptr->sur_Residual );
 
       MatSetValues(K, dof_mat*snLocBas, srow_index, dof_mat*snLocBas, srow_index,
           lassem_ptr->sur_Tangent, ADD_VALUES);
@@ -855,7 +850,7 @@ void PGAssem_Tet_CMM_GenAlpha::WallMembrane_G(
         srow_index[dof_mat * ii + mm] = dof_mat * nbc_part -> get_LID(mm, LSIEN[ii]) + mm;
     }
 
-    RingBC_G( ringnbc_part, dof_mat, dof_mat * snLocBas, srow_index, lassem_ptr->sur_Residual );
+    //RingBC_G( ringnbc_part, dof_mat, dof_mat * snLocBas, srow_index, lassem_ptr->sur_Residual );
 
     VecSetValues(G, dof_mat*snLocBas, srow_index, lassem_ptr->sur_Residual, ADD_VALUES);
   }
@@ -945,8 +940,8 @@ void PGAssem_Tet_CMM_GenAlpha::WallMembrane_KG(
         srow_index[dof_mat * ii + mm] = dof_mat * nbc_part -> get_LID(mm, LSIEN[ii]) + mm;
     }
 
-    RingBC_KG( ringnbc_part, dof_mat, dof_mat * snLocBas, dof_mat * snLocBas,
-        srow_index, srow_index, lassem_ptr->sur_Tangent, lassem_ptr->sur_Residual );
+    //RingBC_KG( ringnbc_part, dof_mat, dof_mat * snLocBas, dof_mat * snLocBas,
+    //    srow_index, srow_index, lassem_ptr->sur_Tangent, lassem_ptr->sur_Residual );
 
     MatSetValues(K, dof_mat*snLocBas, srow_index, dof_mat*snLocBas, srow_index,
         lassem_ptr->sur_Tangent, ADD_VALUES);
@@ -1245,7 +1240,7 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_G(
         srow_idx[3*ii+2] = dof_mat * nbc_part->get_LID(3, LSIEN[ii]) + 3;
       }
 
-      RingBC_G( ringnbc_part, 3, snLocBas * 3, srow_idx, Res );
+      //RingBC_G( ringnbc_part, 3, snLocBas * 3, srow_idx, Res );
 
       VecSetValues(G, snLocBas*3, srow_idx, Res, ADD_VALUES);
     }
@@ -1381,7 +1376,7 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_KG(
         scol_idx[ii*3+2] = dof_mat * map_Bj[ii*3+2] + 3;
       }
 
-      RingBC_KG( ringnbc_part, 3, snLocBas * 3, num_face_nodes * 3, srow_idx, scol_idx, Tan, Res );
+      //RingBC_KG( ringnbc_part, 3, snLocBas * 3, num_face_nodes * 3, srow_idx, scol_idx, Tan, Res );
 
       MatSetValues(K, snLocBas*3, srow_idx, num_face_nodes*3, scol_idx, Tan, ADD_VALUES);
       VecSetValues(G, snLocBas*3, srow_idx, Res, ADD_VALUES);

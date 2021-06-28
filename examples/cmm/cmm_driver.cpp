@@ -388,6 +388,7 @@ int main( int argc, char *argv[] )
   // ===== LPN models =====
   IGenBC * gbc = nullptr;
 
+  /*
   if( GENBC_T::get_genbc_file_type( lpn_file.c_str() ) == 1  )
     gbc = new GenBC_Resistance( lpn_file.c_str() );
   else if( GENBC_T::get_genbc_file_type( lpn_file.c_str() ) == 2  )
@@ -404,6 +405,7 @@ int main( int argc, char *argv[] )
   // Make sure the gbc number of faces matches that of ALocal_EBC
   SYS_T::print_fatal_if(gbc->get_num_ebc() != locebc->get_num_ebc(),
       "Error: GenBC number of faces does not match with that in ALocal_EBC.\n");
+  */
 
   // ===== Global assembly =====
   SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
@@ -468,76 +470,6 @@ int main( int argc, char *argv[] )
       sol_record_freq, ttan_renew_freq, final_time );
 
   tsolver->print_info();
-
-  // ===== Outlet data recording files =====
-  for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
-  {
-    const double dot_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-        dot_sol, locAssem_ptr, elements, quads, locebc, ff );
-
-    const double face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-        sol, locAssem_ptr, elements, quads, locebc, ff );
-
-    const double face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
-        sol, locAssem_ptr, elements, quads, locebc, ff );
-
-    // set the gbc initial conditions using the 3D data
-    gbc -> reset_initial_sol( ff, face_flrate, face_avepre, timeinfo->get_time() );
-
-    const double dot_lpn_flowrate = dot_face_flrate;
-    const double lpn_flowrate = face_flrate;
-    const double lpn_pressure = gbc -> get_P( ff, dot_lpn_flowrate, lpn_flowrate );
-
-    // Create the txt files and write the initial flow rates
-    if(rank == 0)
-    {
-      std::ofstream ofile;
-
-      // If this is NOT a restart run, generate a new file, otherwise append to
-      // existing file
-      if( !is_restart )
-        ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::trunc );
-      else
-        ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::app );
-
-      // If this is NOT a restart, then record the initial values
-      if( !is_restart )
-      {
-        ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"dot Flow rate"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\t'<<"Reduced model pressure"<<'\n';
-        ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<dot_face_flrate<<'\t'<<face_flrate<<'\t'<<face_avepre<<'\t'<<lpn_pressure<<'\n';
-      }
-
-      ofile.close();
-    }
-  }
-
-  MPI_Barrier(PETSC_COMM_WORLD);
-
-  // ===== Inlet data recording files =====
-  const double inlet_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-      sol, locAssem_ptr, elements, quads, locinfnbc );
-
-  const double inlet_face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
-      sol, locAssem_ptr, elements, quads, locinfnbc );
-
-  if( rank == 0 )
-  {
-    std::ofstream ofile;
-    if( !is_restart )
-      ofile.open( locinfnbc->gen_flowfile_name().c_str(), std::ofstream::out | std::ofstream::trunc );
-    else
-      ofile.open( locinfnbc->gen_flowfile_name().c_str(), std::ofstream::out | std::ofstream::app );
-
-    if( !is_restart )
-    {
-      ofile<<"Time index"<<'\t'<<"Time"<<'\t'<<"Flow rate"<<'\t'<<"Face averaged pressure"<<'\n';
-      ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<inlet_face_flrate<<'\t'<<inlet_face_avepre<<'\n';
-    }
-
-    ofile.close();
-  }
-
-  MPI_Barrier(PETSC_COMM_WORLD);
 
   // ===== FEM analysis =====
   SYS_T::commPrint("===> Start Finite Element Analysis:\n");

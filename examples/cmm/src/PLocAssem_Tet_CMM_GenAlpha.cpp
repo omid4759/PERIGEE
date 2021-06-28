@@ -48,6 +48,11 @@ PLocAssem_Tet_CMM_GenAlpha::PLocAssem_Tet_CMM_GenAlpha(
 
   Zero_sur_Tangent_Residual();
 
+  const int num_ebc_fun = 2;
+  flist = new locassem_tet_cmm_funs [num_ebc_fun];
+  flist[0] = &PLocAssem_Tet_CMM_GenAlpha::get_H1;
+  flist[1] = &PLocAssem_Tet_CMM_GenAlpha::get_H2;
+
   print_info();
 }
 
@@ -58,6 +63,8 @@ PLocAssem_Tet_CMM_GenAlpha::~PLocAssem_Tet_CMM_GenAlpha()
   delete [] Residual; Residual = nullptr;
   delete [] sur_Tangent; sur_Tangent = nullptr;
   delete [] sur_Residual; sur_Residual = nullptr;
+  
+  delete [] flist; flist = nullptr;
 }
 
 
