@@ -71,7 +71,7 @@ PLocAssem_Tet_CMM_GenAlpha::~PLocAssem_Tet_CMM_GenAlpha()
 void PLocAssem_Tet_CMM_GenAlpha::print_info() const
 {
   SYS_T::commPrint("----------------------------------------------------------- \n");
-  SYS_T::commPrint("  Three-dimensional Incompressible Navier-Stokes equations: \n");
+  SYS_T::commPrint("  Three-dimensional FSI with membrane model for the wall: \n");
   if(nLocBas == 4)
     SYS_T::commPrint("  FEM: 4-node Tetrahedral element \n");
   else if(nLocBas == 10)
