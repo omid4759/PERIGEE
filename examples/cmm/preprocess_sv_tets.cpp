@@ -57,7 +57,7 @@ int main( int argc, char * argv[] )
   // Wall properties
   bool   is_uniform_wall = true;
   double wall_thickness = 0.05;     // only used for uniform properties
-  double wall_youngsmod = 1.0e7;    // only used for uniform properties
+  double wall_youngsmod = 1.0e8;    // only used for uniform properties
   double wall_springconst  = 0.0;
   double wall_dampingconst = 0.0;
 

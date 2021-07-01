@@ -35,7 +35,7 @@ int main( int argc, char *argv[] )
 {
   // Number of quadrature points for tets and triangles
   // Suggested values: 5 / 4 for linear, 29 / 13 for quadratic
-  int nqp_tet = 5, nqp_tri = 4;
+  int nqp_tet = 5, nqp_tri = 13;
 
   // Estimate of num nonzeros per row for the sparse tangent matrix 
   int nz_estimate = 300;
