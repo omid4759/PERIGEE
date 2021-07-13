@@ -71,7 +71,7 @@ class GenBC_Coronary : public IGenBC
 
     // Set initial values for the LPM ODE integration.
     virtual void reset_initial_sol( const int &ii, const double &in_Q_0,
-       const double &in_P_0, const double &curr_time );
+       const double &in_P_0, const double &curr_time, const bool &is_restart );
 
     // Write 0D solutions into a file for restart
     virtual void write_0D_sol(const int &curr_index, const double &curr_time) const;
@@ -116,6 +116,10 @@ class GenBC_Coronary : public IGenBC
 
     // prev_0D_sol records solutions when each ODE integration is completed.
     mutable std::vector< std::vector<double> > prev_0D_sol;
+    
+    //restart_0D_sol is used to keep 0D solutions from coronary_sol.txt 
+    // when simulation restarts from a previous step.
+    std::vector< std::vector<double> > restart_0D_sol;
 
     // Vectors for outlet initial flow and capacitor pressures (2 capacitors)
     // The vector length is num_ebc
