@@ -14,12 +14,12 @@
 //              |
 //             Pim
 //
-// Ra, Ramicro and Rv are resistors for the coronary arteries, coronary 
+// Ra, Ramicro and Rv are resistors for the coronary arteries, coronary
 // microvasculature and coronary veins, respectively.
-// Ca and Cim are capacitors for proximal and distal vascularture, 
+// Ca and Cim are capacitors for proximal and distal vascularture,
 // respectively.
 // Pd and Pim are the distal and intramyocardial pressures, respectively.
-// Intramyocardial pressure Pim is applied to capacitor Cim to model 
+// Intramyocardial pressure Pim is applied to capacitor Cim to model
 // restricted coronary flow during systole.
 //
 // The GenBC_Coronary input file uses the following format,
@@ -48,7 +48,7 @@
 class GenBC_Coronary : public IGenBC
 {
   public:
-    GenBC_Coronary( const char * const &lpn_filename, const int &in_N, const double &dt3d );
+    GenBC_Coronary( const char * const &lpn_filename, const int &in_N, const double &dt3d, const int &in_index );
 
     virtual ~GenBC_Coronary();
 
@@ -58,13 +58,13 @@ class GenBC_Coronary : public IGenBC
 
     virtual double get_m( const int &ii, const double &in_dot_Q, const double &in_Q ) const;
 
-    virtual double get_n( const int &ii, const double &in_dot_Q, const double &in_Q ) const 
+    virtual double get_n( const int &ii, const double &in_dot_Q, const double &in_Q ) const
     { return 0.0; }
 
     // Obtain P for the ii-th outlet surface (coronary or RCR).
     virtual double get_P( const int &ii, const double &in_dot_Q, const double &in_Q ) const;
 
-    // Get initial P for the ii-th outlet face at the begining of 
+    // Get initial P for the ii-th outlet face at the begining of
     // LPM ODE integration.
     // 0 <= ii < num_ebc
     virtual double get_P0( const int &ii ) const;
@@ -72,6 +72,9 @@ class GenBC_Coronary : public IGenBC
     // Set initial values for the LPM ODE integration.
     virtual void reset_initial_sol( const int &ii, const double &in_Q_0,
        const double &in_P_0, const double &curr_time );
+
+    // Write 0D solutions into a file for restart
+    virtual void write_0D_sol(const int &curr_index, const double &curr_time) const;
 
   private:
     const int num_odes; // Number of ODEs in the model
@@ -90,7 +93,7 @@ class GenBC_Coronary : public IGenBC
     bool is_RCR;
 
     // Vectors storing the Ra, Ca, Ra_micro, Cim, Rv, Pd, and alpha_Pim.
-    // alpha_Pim stores the scaling values for all coronary outlet faces. 
+    // alpha_Pim stores the scaling values for all coronary outlet faces.
     // The length of the vectors is num_ebc
     std::vector<double> Ra, Ca, Ra_micro, Cim, Rv, Pd, alpha_Pim;
 
@@ -99,14 +102,14 @@ class GenBC_Coronary : public IGenBC
     // Note: num_Pim_data=0 indicates an RCR outlet.
     std::vector<int> num_Pim_data;
 
-    // Time_data and Pim_data for user-provided intramyocardial pressure 
+    // Time_data and Pim_data for user-provided intramyocardial pressure
     // waveform (time-pressure) for each coronary outlet face
-    // der_Pim_data stands for the corresponding dPim/dt for each coronary 
+    // der_Pim_data stands for the corresponding dPim/dt for each coronary
     // outlet face.
-    // Their sizes are num_ebc x num_Pim_data[ii] with 0 <= ii < num_ebc 
+    // Their sizes are num_ebc x num_Pim_data[ii] with 0 <= ii < num_ebc
     std::vector< std::vector<double> > Time_data, Pim_data, der_Pim_data;
 
-    // precomputed dPim/dt needed by RK4, 
+    // precomputed dPim/dt needed by RK4,
     // dPimdt_k1 has size num_ebc x N+1
     // dPimdt_k2/3 has size num_ebc x N
     std::vector< std::vector<double> > dPimdt_k1, dPimdt_k2, dPimdt_k3;
@@ -121,16 +124,19 @@ class GenBC_Coronary : public IGenBC
     // The size of Pi0 is 2 x num_ebc
     std::vector< std::vector<double> > Pi0;
 
+    // This file records coronary 0D solutions at each time step
+    std::string lpn_sol_file="coronary_sol.txt";
+
     // PRIVATE FUNCTIONS:
-    // Evaluate the coronary LPM (2 first order ODEs) for the ii-th outlet 
+    // Evaluate the coronary LPM (2 first order ODEs) for the ii-th outlet
     // face (which is a coronary outlet) and output the ODE derivatives to K.
-    void F_coronary( const int &ii, const double * const &pi, const double &q, 
+    void F_coronary( const int &ii, const double * const &pi, const double &q,
         const double &dPimdt, double * const &K ) const;
 
     // Evaluate the RCR ODE for the ii-th outlet face and return the result.
     double F_RCR( const int &ii, const double &pi, const double &q ) const;
 
-    // Pre-compute dPim/dt at the begining of the ODE integration for the 
+    // Pre-compute dPim/dt at the begining of the ODE integration for the
     // ii-th outlet face, 0 <= ii < num_ebc
     void get_dPim_dt( const int &ii, const double &time_start, const double &time_end );
 };

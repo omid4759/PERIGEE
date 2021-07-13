@@ -7,11 +7,11 @@
 //
 // This is a pure virtual class for General BC for outflow boundary
 // conditions.
-// 
+//
 // Author: Ju Liu
 // Date: Aug 21 2019
-// Reference: J. Liu, et al. The nested block preconditioning technique 
-// for the incompressible Navier-Stokes equations with emphasis on 
+// Reference: J. Liu, et al. The nested block preconditioning technique
+// for the incompressible Navier-Stokes equations with emphasis on
 // hemodynamic simulations.
 // ==================================================================
 #include "Sys_Tools.hpp"
@@ -27,14 +27,14 @@ class IGenBC
 
     // --------------------------------------------------------------
     // return the number of faces with elemental boundary condtiions.
-    // This value is assumed to match the num_ebc in ALocal_EBC. 
+    // This value is assumed to match the num_ebc in ALocal_EBC.
     // --------------------------------------------------------------
     virtual int get_num_ebc() const = 0;
 
     // --------------------------------------------------------------
     // Get the dP/dQ for surface ii
     // for implicit BC's, this value is defined via a difference quotient
-    // that is, (get_P(Q+epsilon) - get_P(Q)) / epsilon 
+    // that is, (get_P(Q+epsilon) - get_P(Q)) / epsilon
     // for simple models, e.g. resistance type bc, this value is just
     // the resistance value on this bc.
     // --------------------------------------------------------------
@@ -75,7 +75,7 @@ class IGenBC
     // in_Q_0 : the initial value for the ODE integration of flow rate
     // in_P_0 : the initial value for the ODE integration of averaged Pressure
     // For problems like RCR, it is often convenient to integrate the
-    // ODE for Pi, the pressure over the capacitor. So, there can be 
+    // ODE for Pi, the pressure over the capacitor. So, there can be
     // more data to be initialized. Check the details of each class
     // implementation.
     // --------------------------------------------------------------
@@ -83,7 +83,18 @@ class IGenBC
         const double &in_P_0, const double &curr_time )
     {
       SYS_T::print_fatal("Error: IGenBC::reset_initial_sol is not implemented.\n");
-    }    
+    }
+
+    // --------------------------------------------------------------
+    // Write 0D solutions into a file for restarting the simulation from a previous step.
+    // This function is needed by Coronary BC as not all 0D solutions can be restoerd
+    // from a previous 3D solutions. For RCR, resistance, inductance, this function does nothing.
+    // --------------------------------------------------------------
+    virtual void write_0D_sol(const int &curr_index, const double &curr_time) const
+    {
+      SYS_T::print_fatal("Error: IGenBC::reset_write_0D_sol is not implemented.\n");
+    }
+
 };
 
 #endif

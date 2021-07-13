@@ -18,7 +18,7 @@ class GenBC_RCR : public IGenBC
     GenBC_RCR( const char * const &lpn_filename, const int &in_N,
        const double &dt3d );
 
-    virtual ~GenBC_RCR(); 
+    virtual ~GenBC_RCR();
 
     virtual void print_info() const;
 
@@ -33,7 +33,7 @@ class GenBC_RCR : public IGenBC
       return 0.0;
     }
 
-    // Obtain P in order to the define the outlet traction for the ii-th 
+    // Obtain P in order to the define the outlet traction for the ii-th
     // outlet surface
     virtual double get_P( const int &ii, const double &in_dot_Q,
        const double &in_Q ) const;
@@ -49,9 +49,11 @@ class GenBC_RCR : public IGenBC
       reset_initial_sol( ii, in_Q_0, in_P_0 );
     }
 
+    virtual void write_0D_sol(const int &curr_index, const double &curr_time) const{};
+
   private:
     const int N;
-    
+
     const double h; // delta t = Nh
 
     // Parameters used to define difference quotient for get_m.
@@ -68,9 +70,9 @@ class GenBC_RCR : public IGenBC
 
     double F(const int &ii, const double &pi, const double &q) const
     {
-      return -1.0 * pi / (Rd[ii] * C[ii]) + q / C[ii]; 
+      return -1.0 * pi / (Rd[ii] * C[ii]) + q / C[ii];
     }
-    
+
     virtual void reset_initial_sol( const int &ii, const double &in_Q_0,
         const double &in_P_0 );
 };
