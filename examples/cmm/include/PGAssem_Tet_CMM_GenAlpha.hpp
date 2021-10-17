@@ -133,6 +133,14 @@ class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
         const int &ebc_id );
 
     virtual double Assem_surface_flowrate(
+        const Vec &sol_vec,
+        IPLocAssem * const &lassem_ptr,
+        FEAElement * const &element_s,
+        const IQuadPts * const &quad_s,
+        const ALocal_EBC * const &ebc_part,
+        const int &ebc_id );
+
+    virtual double Assem_surface_flowrate(
         const PDNSolution * const &sol,
         IPLocAssem * const &lassem_ptr,
         FEAElement * const &element_s,

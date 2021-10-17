@@ -1018,6 +1018,58 @@ double PGAssem_Tet_CMM_GenAlpha::Assem_surface_flowrate(
 
 
 double PGAssem_Tet_CMM_GenAlpha::Assem_surface_flowrate(
+    const Vec &sol_vec,
+    IPLocAssem * const &lassem_ptr,
+    FEAElement * const &element_s,
+    const IQuadPts * const &quad_s,
+    const ALocal_EBC * const &ebc_part,
+    const int &ebc_id )
+{
+  assert( nlgn == PETSc_T::GetLocalGhostSize(sol_vec) );
+
+  double * array = new double [nlgn * dof_sol];
+  double * local = new double [snLocBas * dof_sol];
+  int * LSIEN = new int [snLocBas];
+  double * sctrl_x = new double [snLocBas];
+  double * sctrl_y = new double [snLocBas];
+  double * sctrl_z = new double [snLocBas];
+
+  PETSc_T::GetLocalArray( sol_vec, array );
+
+  const int num_sele = ebc_part -> get_num_local_cell(ebc_id);
+
+  double esum = 0.0;
+
+  for(int ee=0; ee<num_sele; ++ee)
+  {
+    // Obtain the LSIEN array
+    ebc_part -> get_SIEN( ebc_id, ee, LSIEN);
+
+    // Obtain the control points coordinates
+    ebc_part -> get_ctrlPts_xyz(ebc_id, ee, sctrl_x, sctrl_y, sctrl_z);
+
+    // Obtain the solution vector in this element
+    GetLocal(array, LSIEN, snLocBas, local);
+
+    esum += lassem_ptr -> get_flowrate( local, element_s, sctrl_x,
+        sctrl_y, sctrl_z, quad_s );
+  }
+
+  delete [] array; array = nullptr;
+  delete [] local; local = nullptr;
+  delete [] LSIEN; LSIEN = nullptr;
+  delete [] sctrl_x; sctrl_x = nullptr;
+  delete [] sctrl_y; sctrl_y = nullptr;
+  delete [] sctrl_z; sctrl_z = nullptr;
+
+  double sum = 0.0;
+  MPI_Allreduce(&esum, &sum, 1, MPI_DOUBLE, MPI_SUM, PETSC_COMM_WORLD);
+
+  return sum;
+}
+
+
+double PGAssem_Tet_CMM_GenAlpha::Assem_surface_flowrate(
     const PDNSolution * const &vec,
     IPLocAssem * const &lassem_ptr,
     FEAElement * const &element_s,
