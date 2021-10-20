@@ -1025,7 +1025,9 @@ double PGAssem_Tet_CMM_GenAlpha::Assem_surface_flowrate(
     const ALocal_EBC * const &ebc_part,
     const int &ebc_id )
 {
-  assert( nlgn == PETSc_T::GetLocalGhostSize(sol_vec) );
+  // The input vector shall have the length equaling a typical PDNSolution
+  // vector.
+  assert( nlgn * dof_sol == PETSc_T::GetLocalGhostSize(sol_vec) );
 
   double * array = new double [nlgn * dof_sol];
   double * local = new double [snLocBas * dof_sol];
@@ -1482,13 +1484,6 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_matrix_free_K( const Vec &XX,
     const double flrate = Assem_surface_flowrate( sol, lassem_ptr,
         element_s, quad_s, ebc_part, ebc_id );
 
-    // Get the (pressure) value on the outlet surface for traction evaluation
-    const double P_n   = gbc -> get_P0( ebc_id );
-    const double P_np1 = gbc -> get_P( ebc_id, dot_flrate, flrate );
-
-    // P_n+alpha_f
-    const double resis_val = P_n + a_f * (P_np1 - P_n);
-
     // Get the (potentially approximated) m := dP/dQ
     const double m_val = gbc -> get_m( ebc_id, dot_flrate, flrate );
 
@@ -1498,18 +1493,48 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_matrix_free_K( const Vec &XX,
     // Define alpha_f * n + alpha_f * gamma * dt * m
     // coef a^t a enters as the consistent tangent for the resistance-type bc
     const double coef = a_f * n_val + dd_dv * m_val;
-  
+
+    // Calculate the inner product of a given vector XX with int_NA by doing a
+    // surface flowrate calculation
+    const double XX_dot_intNA_n = Assem_surface_flowrate( XX, lassem_ptr, element_s,
+        quad_s, ebc_part, ebc_id );  
+   
+    const std::vector<double> intNA = ebc_part -> get_intNA( ebc_id ); 
+
+    // Now we need to insert  coef x XX_dot_intNA_n a into YY
+    const std::vector<int> intNA_ID = ebc_part -> get_LID( ebc_id ); 
     
-  
-  
-  
+    const int num_face_nodes = ebc_part -> get_num_face_nodes( ebc_id );
+    
+    const Vector_3 out_n = ebc_part -> get_outvec( ebc_id );
+
+    PetscInt * row_id = new PetscInt [ num_face_nodes * 3 ];
+
+    PetscScalar * Res = new PetscScalar [ num_face_nodes * 3];
+
+    for(int ii=0; ii<num_face_nodes; ++ii)
+    {
+      row_id[ii*3 + 0] = dof_mat * intNA_ID[ii*3+0] + 1;
+      row_id[ii*3 + 1] = dof_mat * intNA_ID[ii*3+0] + 2;
+      row_id[ii*3 + 2] = dof_mat * intNA_ID[ii*3+0] + 3;
+    
+      Res[ii*3 + 0] = coef * XX_dot_intNA_n * intNA[ii] * out_n.x();
+      Res[ii*3 + 1] = coef * XX_dot_intNA_n * intNA[ii] * out_n.y();
+      Res[ii*3 + 2] = coef * XX_dot_intNA_n * intNA[ii] * out_n.z();
+    }
+
+    VecSetValues( YY, num_face_nodes*3, row_id, Res, INSERT_VALUES );
+
+    delete [] row_id; row_id = nullptr;
+    delete [] Res;    Res = nullptr;
   }
 
   delete [] LSIEN; LSIEN = nullptr;
   delete [] sctrl_x; sctrl_x = nullptr;
   delete [] sctrl_y; sctrl_y = nullptr;
   delete [] sctrl_z; sctrl_z = nullptr;
-}
 
+  VecAssemblyBegin(YY); VecAssemblyEnd(YY);
+}
 
 // EOF
