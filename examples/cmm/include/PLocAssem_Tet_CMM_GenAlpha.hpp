@@ -243,7 +243,7 @@ class PLocAssem_Tet_CMM_GenAlpha : public IPLocAssem
         const double &t, const double &nx, const double &ny,
         const double &nz, double &gx, double &gy, double &gz ) const
     {
-      const double p0 = -5.0e2;
+      const double p0 = -5.0e4;
       gx = p0*nx; gy = p0*ny; gz = p0*nz;
     }
 
