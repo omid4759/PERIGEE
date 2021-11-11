@@ -43,18 +43,18 @@ int main( int argc, char * argv[] )
   // Input files
   std::string geo_file("./whole_vol.vtu");
 
-  std::string geo_f_file("./lumen_vol.vtu");
-  std::string geo_s_file("./tissue_vol.vtu");
+  std::string geo_f_file("./fluid.vtu");
+  std::string geo_s_file("./solid.vtu");
 
-  std::string sur_f_file_in("./lumen_inlet_vol.vtp");
-  std::string sur_f_file_wall("./lumen_wall_vol.vtp");
-  std::string sur_f_file_out_base("./lumen_outlet_vol_");
+  std::string sur_f_file_in("./fbot_fluid.vtp");
+  std::string sur_f_file_wall("./fwall_fluid.vtp");
+  std::string sur_f_file_out("./ftop_fluid.vtp");
 
-  std::string sur_s_file_in("./tissue_inlet_vol.vtp");
-  std::string sur_s_file_wall("./tissue_wall_vol.vtp");
-  std::string sur_s_file_out_base("./tissue_outlet_vol_");
+  std::string sur_s_file_in("./sbot_solid.vtp");
+  std::string sur_s_file_wall("./swall_solid.vtp");
+  std::string sur_s_file_out("./stop_solid.vtp");
 
-  int num_outlet = 1;
+  const int num_outlet = 1;
 
   const std::string part_file("part");
 
@@ -68,17 +68,6 @@ int main( int argc, char * argv[] )
 
   SYS_T::GetOptionInt("-cpu_size", cpu_size);
   SYS_T::GetOptionInt("-in_ncommon", in_ncommon);
-  SYS_T::GetOptionInt("-num_outlet", num_outlet);
-  SYS_T::GetOptionString("-geo_file", geo_file);
-  SYS_T::GetOptionString("-geo_f_file", geo_f_file);
-  SYS_T::GetOptionString("-geo_s_file", geo_s_file);
-  SYS_T::GetOptionString("-sur_f_file_in", sur_f_file_in);
-  SYS_T::GetOptionString("-sur_f_file_wall", sur_f_file_wall);
-  SYS_T::GetOptionString("-sur_f_file_out_base", sur_f_file_out_base);
-  SYS_T::GetOptionString("-sur_s_file_in", sur_s_file_in);
-  SYS_T::GetOptionString("-sur_s_file_wall", sur_s_file_wall);
-  SYS_T::GetOptionString("-sur_s_file_out_base", sur_s_file_out_base);
-
   std::cout<<"==== /Command Line Arguments ===="<<std::endl;
   std::cout<<" -num_outlet: "<<num_outlet<<std::endl;
   std::cout<<" -geo_file: "<<geo_file<<std::endl;
@@ -86,10 +75,10 @@ int main( int argc, char * argv[] )
   std::cout<<" -geo_s_file: "<<geo_s_file<<std::endl;
   std::cout<<" -sur_f_file_in: "<<sur_f_file_in<<std::endl;
   std::cout<<" -sur_f_file_wall: "<<sur_f_file_wall<<std::endl;
-  std::cout<<" -sur_f_file_out_base: "<<sur_f_file_out_base<<std::endl;
+  std::cout<<" -sur_f_file_out: "<<sur_f_file_out<<std::endl;
   std::cout<<" -sur_s_file_in: "<<sur_s_file_in<<std::endl;
   std::cout<<" -sur_s_file_wall: "<<sur_s_file_wall<<std::endl;
-  std::cout<<" -sur_s_file_out_base: "<<sur_s_file_out_base<<std::endl;
+  std::cout<<" -sur_s_file_out: "<<sur_s_file_out<<std::endl;
   std::cout<<" -part_file: "<<part_file<<std::endl;
   std::cout<<" -cpu_size: "<<cpu_size<<std::endl;
   std::cout<<" -in_ncommon: "<<in_ncommon<<std::endl;
@@ -102,37 +91,14 @@ int main( int argc, char * argv[] )
 
   // Check if the geometrical file exist on disk
   SYS_T::file_check(geo_file); std::cout<<geo_file<<" found. \n";
-
   SYS_T::file_check(geo_f_file); std::cout<<geo_f_file<<" found. \n";
-
   SYS_T::file_check(geo_s_file); std::cout<<geo_s_file<<" found. \n";
-
   SYS_T::file_check(sur_f_file_in); std::cout<<sur_f_file_in<<" found. \n";
-
   SYS_T::file_check(sur_s_file_in); std::cout<<sur_s_file_in<<" found. \n";
-
   SYS_T::file_check(sur_f_file_wall); std::cout<<sur_f_file_wall<<" found. \n";
-
   SYS_T::file_check(sur_s_file_wall); std::cout<<sur_s_file_wall<<" found. \n";
-
-  std::vector< std::string > sur_f_file_out( num_outlet );
-  std::vector< std::string > sur_s_file_out( num_outlet );
-
-  for(int ii=0; ii<num_outlet; ++ii)
-  {
-    sur_f_file_out[ii] = SYS_T::gen_capfile_name( sur_f_file_out_base, ii, ".vtp" );
-    sur_s_file_out[ii] = SYS_T::gen_capfile_name( sur_s_file_out_base, ii, ".vtp" );
-
-    SYS_T::file_check( sur_f_file_out[ii] );
-    std::cout<<sur_f_file_out[ii]<<" found. \n";
-    SYS_T::file_check( sur_s_file_out[ii] );
-    std::cout<<sur_s_file_out[ii]<<" found. \n";
-  } 
-
-  // If we can still detect additional files on disk, throw an warning
-  if( SYS_T::file_exist(SYS_T::gen_capfile_name(sur_f_file_out_base, num_outlet, ".vtp")) ||
-      SYS_T::file_exist(SYS_T::gen_capfile_name(sur_s_file_out_base, num_outlet, ".vtp")) )
-    cout<<endl<<"Warning: there are additional outlet surface files on disk. Check num_outlet please.\n\n";
+  SYS_T::file_check(sur_f_file_out); std::cout<<sur_f_file_out<<" found. \n";
+  SYS_T::file_check(sur_s_file_out); std::cout<<sur_s_file_out<<" found. \n";
 
   // ----- Write the input argument into a HDF5 file
   hid_t cmd_file_id = H5Fcreate("preprocessor_cmd.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -148,10 +114,10 @@ int main( int argc, char * argv[] )
   cmdh5w->write_string("geo_f_file", geo_f_file);
   cmdh5w->write_string("geo_s_file", geo_s_file);
   cmdh5w->write_string("sur_f_file_in", sur_f_file_in);
-  cmdh5w->write_string("sur_f_file_out_base", sur_f_file_out_base);
+  cmdh5w->write_string("sur_f_file_out", sur_f_file_out);
   cmdh5w->write_string("sur_f_file_wall", sur_f_file_wall);
   cmdh5w->write_string("sur_s_file_in", sur_s_file_in);
-  cmdh5w->write_string("sur_s_file_out_base", sur_s_file_out_base);
+  cmdh5w->write_string("sur_s_file_out", sur_s_file_out);
   cmdh5w->write_string("sur_s_file_wall", sur_s_file_wall);
   cmdh5w->write_string("part_file", part_file);
 
@@ -227,13 +193,12 @@ int main( int argc, char * argv[] )
   std::vector<INodalBC *> NBC_list( dofMat, nullptr );
 
   std::vector<std::string> dir_list;
-  dir_list.push_back( sur_f_file_in );
   dir_list.push_back( sur_s_file_in );
-  for(int ii=0; ii<num_outlet; ++ii) dir_list.push_back( sur_s_file_out[ii] );
+  dir_list.push_back( sur_s_file_out );
 
   NBC_list[0] = new NodalBC_3D_vtp( nFunc );
-  NBC_list[1] = new NodalBC_3D_vtp( dir_list, nFunc );
-  NBC_list[2] = new NodalBC_3D_vtp( dir_list, nFunc );
+  NBC_list[1] = new NodalBC_3D_vtp( nFunc );
+  NBC_list[2] = new NodalBC_3D_vtp( nFunc );
   NBC_list[3] = new NodalBC_3D_vtp( dir_list, nFunc );
 
   // Mesh NBC
@@ -242,10 +207,10 @@ int main( int argc, char * argv[] )
   
   std::vector<std::string> meshdir_vtp_list; meshdir_vtp_list.clear();
   meshdir_vtp_list.push_back( sur_f_file_in );
-  for(int ii=0; ii<num_outlet; ++ii) meshdir_vtp_list.push_back( sur_f_file_out[ii] );
+  meshdir_vtp_list.push_back( sur_f_file_out );
 
-  meshBC_list[0] = new NodalBC_3D_vtu( geo_s_file, meshdir_vtp_list, nFunc );
-  meshBC_list[1] = new NodalBC_3D_vtu( geo_s_file, meshdir_vtp_list, nFunc );
+  meshBC_list[0] = new NodalBC_3D_vtu( geo_s_file, nFunc );
+  meshBC_list[1] = new NodalBC_3D_vtu( geo_s_file, nFunc );
   meshBC_list[2] = new NodalBC_3D_vtu( geo_s_file, meshdir_vtp_list, nFunc );
 
   // Generate inflow bc info
@@ -254,12 +219,13 @@ int main( int argc, char * argv[] )
 
   // Elemental BC
   cout<<"Elem boundary for the implicit solver: \n";
-  std::vector< Vector_3 > outlet_outvec( num_outlet );
-  
-  for(int ii=0; ii<num_outlet; ++ii)
-    outlet_outvec[ii] = TET_T::get_out_normal( sur_f_file_out[ii], ctrlPts, IEN );
 
-  ElemBC * ebc = new ElemBC_3D_tet_outflow( sur_f_file_out, outlet_outvec );
+  std::vector<std::string> ebclist;
+  ebclist.clear();
+  ebclist.push_back( sur_f_file_in );
+  ebclist.push_back( sur_f_file_out );
+
+  ElemBC * ebc = new ElemBC_3D_tet( ebclist );
 
   ebc -> resetTriIEN_outwardnormal( IEN );
 
@@ -302,7 +268,7 @@ int main( int argc, char * argv[] )
     INBC_Partition * infpart = new NBC_Partition_3D_inflow(part, mnindex, InFBC);
     infpart->write_hdf5( part_file.c_str() );
 
-    IEBC_Partition * ebcpart = new EBC_Partition_vtp_outflow(part, mnindex, ebc, NBC_list);
+    IEBC_Partition * ebcpart = new EBC_Partition_vtp(part, mnindex, ebc);
     ebcpart -> write_hdf5(part_file.c_str());
 
     IEBC_Partition * mebcpart = new EBC_Partition_vtp(part, mnindex, mesh_ebc);

@@ -359,15 +359,6 @@ void PGAssem_FSI_FEM::Assem_nonzero_estimate(
     }
   }
 
-  // Resis BC for K and G
-  PDNSolution * temp = new PDNSolution_Mixed_UPV_3D( node_ptr, 0, false );
-
-  // choose an arbitrary (0.1) time step size just to get the nonzero pattern
-  NatBC_Resis_KG(0.1, temp, temp, lassem_f_ptr, elements, quad_s, node_ptr, 
-      nbc_part, ebc_part, gbc );
-
-  delete temp;
-
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
   
@@ -439,6 +430,9 @@ void PGAssem_FSI_FEM::Assem_mass_residual(
     }
   }
 
+  NatBC_G(0.0, 0.0, lassem_f_ptr, elements, dof_mat*snLocBas, quad_s, lien_ptr,
+      nbc_part, ebc_part);
+
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
 
@@ -497,7 +491,7 @@ void PGAssem_FSI_FEM::Assem_residual(
     {
       lassem_f_ptr->Assem_Residual(curr_time, dt, local_a, local_b,
           elementv, ectrl_x, ectrl_y, ectrl_z, quad_v);
-    
+
       VecSetValues(G, loc_dof, row_index, lassem_f_ptr->Residual, ADD_VALUES);
     }
     else
@@ -509,12 +503,8 @@ void PGAssem_FSI_FEM::Assem_residual(
     }
   }
 
-  // Backflow stabilization
-  BackFlow_G( lassem_f_ptr, elements, dof_mat*snLocBas, quad_s, nbc_part, ebc_part );
-
-  // Resistance BC for G
-  NatBC_Resis_G( dot_sol_np1, sol_np1, lassem_f_ptr, elements, quad_s, node_ptr, 
-      nbc_part, ebc_part, gbc );
+  NatBC_G(curr_time, dt, lassem_f_ptr, elements, dof_mat*snLocBas, quad_s,
+      lien_ptr, nbc_part, ebc_part );
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
@@ -566,13 +556,13 @@ void PGAssem_FSI_FEM::Assem_tangent_residual(
       for(int mm=0; mm<dof_mat; ++mm)
         row_index[dof_mat * ii + mm] = dof_mat * nbc_part -> get_LID(mm, IEN_e[ii]) + mm;
     }
-    
+
     // If elem tag is zero, do fluid assembly; else do solid assembly
     if(alelem_ptr->get_elem_tag(ee) == 0)
     {
       lassem_f_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
           elementv, ectrl_x, ectrl_y, ectrl_z, quad_v);
-      
+
       MatSetValues(K, loc_dof, row_index, loc_dof, row_index,
           lassem_f_ptr->Tangent, ADD_VALUES);
 
@@ -582,7 +572,7 @@ void PGAssem_FSI_FEM::Assem_tangent_residual(
     {
       lassem_s_ptr->Assem_Tangent_Residual(curr_time, dt, local_a, local_b,
           elementv, ectrl_x, ectrl_y, ectrl_z, quad_v);
-      
+
       MatSetValues(K, loc_dof, row_index, loc_dof, row_index,
           lassem_s_ptr->Tangent, ADD_VALUES);
 
@@ -590,13 +580,8 @@ void PGAssem_FSI_FEM::Assem_tangent_residual(
     }
   }
 
-  // Backflow stabilization
-  BackFlow_KG( dt, lassem_f_ptr, elements, dof_mat*snLocBas, quad_s, 
-      nbc_part, ebc_part );
-
-  // Resistance BC for K and G
-  NatBC_Resis_KG( dt, dot_sol_np1, sol_np1, lassem_f_ptr, elements, quad_s, node_ptr,
-      nbc_part, ebc_part, gbc );
+  NatBC_G(curr_time, dt, lassem_f_ptr, elements, dof_mat*snLocBas, quad_s,
+      lien_ptr, nbc_part, ebc_part );
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);

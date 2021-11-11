@@ -18,12 +18,21 @@ int main( int argc, char * argv[] )
 
   Gmsh_FileIO * GIO = new Gmsh_FileIO( gmshFile );
 
-  GIO -> print_info();
+  GIO -> check_FSI_ordering();
 
+  GIO -> print_info();
+  
+  // Write the fluid surface meshes associated with the fluid volume mesh
   GIO -> write_vtp(0,0,true);
   GIO -> write_vtp(1,0,true);
   GIO -> write_vtp(2,0);
-  GIO -> write_vtp(3,0);
+
+  // Write the solid surface meshes associated with the solid volume mesh
+  GIO -> write_vtp(3,1);
+  GIO -> write_vtp(4,1);
+  GIO -> write_vtp(5,1);
+
+  GIO -> write_each_vtu();
 
   const std::string wmname("whole_vol");
   const bool isXML = true;

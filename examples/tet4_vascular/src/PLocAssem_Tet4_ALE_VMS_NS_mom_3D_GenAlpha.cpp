@@ -23,6 +23,12 @@ PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha::PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenA
   
   Zero_sur_Tangent_Residual();
 
+  // Users have to specify the functions for ebc integration in correct order
+  const int num_ebc_fun = 2;
+  flist = new locassem_tet4_ale_vms_ns_funs [num_ebc_fun];
+  flist[0] = &PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha::get_H1;
+  flist[1] = &PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha::get_H2;
+
   // Print the infomation on screen
   print_info();
 }
@@ -33,6 +39,7 @@ PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha::~PLocAssem_Tet4_ALE_VMS_NS_mom_3D_Gen
   delete [] Tangent; Tangent = NULL; delete [] Residual; Residual = NULL;
   delete [] sur_Tangent; sur_Tangent = NULL; 
   delete [] sur_Residual; sur_Residual = NULL;
+  delete [] flist; flist = NULL;
 }
 
 
@@ -148,16 +155,16 @@ void PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha::get_DC(
     double &dc_tau, const double * const &dxi_dx,
     const double &u, const double &v, const double &w ) const
 {
-  //double G11, G12, G13, G22, G23, G33;
-  //get_metric( dxi_dx, G11, G12, G13, G22, G23, G33 );
+  double G11, G12, G13, G22, G23, G33;
+  get_metric( dxi_dx, G11, G12, G13, G22, G23, G33 );
 
-  //dc_tau = G11 * u * u + 2.0 * G12 * u * v + 2.0 * G13 * u * w + G22 * v * v
-  //  + 2.0 * G23 * v * w + G33 * w * w;
+  dc_tau = G11 * u * u + 2.0 * G12 * u * v + 2.0 * G13 * u * w + G22 * v * v
+    + 2.0 * G23 * v * w + G33 * w * w;
 
-  //if(dc_tau > 1.0e-15) dc_tau = rho0 * std::pow(dc_tau, -0.5);
-  //else dc_tau = 0.0;
+  if(dc_tau > 1.0e-15) dc_tau = rho0 * std::pow(dc_tau, -0.5);
+  else dc_tau = 0.0;
 
-  dc_tau = 0.0;
+  //dc_tau = 0.0;
 }
 
 

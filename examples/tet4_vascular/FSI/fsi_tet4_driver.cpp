@@ -38,13 +38,13 @@ int main(int argc, char *argv[])
   int nz_estimate = 300;
 
   // fluid properties
-  double fluid_density = 1.06;
+  double fluid_density = 1.0;
   double fluid_mu = 4.0e-2;
 
   // solid properties
   double solid_density = 1.0;
-  double solid_E = 2.0e6;
-  double solid_nu = 0.5;
+  double solid_E = 1.0e7;
+  double solid_nu = 0.3;
 
   // mesh motion elasticity solver parameters
   double mesh_E  = 1.0;
