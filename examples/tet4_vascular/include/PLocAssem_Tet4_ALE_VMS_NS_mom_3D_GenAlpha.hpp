@@ -210,7 +210,12 @@ class PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha : public IPLocAssem
         const double &t, const double &nx, const double &ny,
         const double &nz, double &gx, double &gy, double &gz ) const
     {
-      const double p0 = -5.0e4;
+      // The inlet pressure is 5 kPa or 5.0e4 dyn/cm2
+      //const double p0 = -5.0e4;
+      
+      // Try smaller pressure magnitude for the CMM paper benchmark comparison
+      // against the thin wall small strain model
+      const double p0 = -5.0e2;
       gx = p0*nx; gy = p0*ny; gz = p0*nz;
     }
 

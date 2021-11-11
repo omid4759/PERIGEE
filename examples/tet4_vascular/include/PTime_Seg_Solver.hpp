@@ -21,40 +21,6 @@ class PTime_Seg_Solver
 
     void print_info() const;
 
-    void TM_ALE_NS_GenAlpha(
-        const bool &restart_init_assembly_flag,
-        const bool &is_ale_flag,
-        const PDNSolution * const &sol_base,
-        const PDNSolution * const &init_velo,
-        const PDNSolution * const &init_disp,
-        const TimeMethod_GenAlpha * const &tmga_ptr,
-        PDNTimeStep * const &time_info,
-        const ICVFlowRate * const flr_ptr,
-        const ALocal_Elem * const &alelem_ptr,
-        const ALocal_IEN * const &lien_ptr,
-        const APart_Node * const &anode_ptr,
-        const FEANode * const &feanode_ptr,
-        const ALocal_NodalBC * const &nbc_part,
-        const ALocal_Inflow_NodalBC * const &infnbc_part,
-        const ALocal_NodalBC * const &nbc_mesh_part,
-        const ALocal_EBC * const &ebc_part,
-        const ALocal_EBC * const &ebc_mesh_part,
-        IGenBC * const &gbc,
-        const Matrix_PETSc * const &bc_mat,
-        const Matrix_PETSc * const &bc_mesh_mat,
-        FEAElement * const &elementv,
-        FEAElement * const &elements,
-        const IQuadPts * const &quad_v,
-        const IQuadPts * const &quad_s,
-        IPLocAssem * const &lassem_solid_ptr,
-        IPLocAssem * const &lassem_mesh_ptr,
-        IPGAssem * const &gassem_ptr,
-        IPGAssem * const &gassem_mesh_ptr,
-        PLinear_Solver_PETSc * const &lsolver_ptr,
-        PLinear_Solver_PETSc * const &lsolver_mesh_ptr,
-        PNonlinear_Seg_Solver * const &nsolver_ptr ) const;
-
-
     void TM_FSI_GenAlpha(
         const bool &restart_init_assembly_flag,
         const PDNSolution * const &sol_base,

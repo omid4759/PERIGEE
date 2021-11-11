@@ -34,56 +34,6 @@ class PNonlinear_Seg_Solver
     void print_info() const;
 
     // --------------------------------------------------------------
-    // GenAlpha_Seg_solve_ALE_NS:
-    // This is a ALE solver for fluid dynamics.
-    //
-    // This solver solves the Navier-Stokes using full Generalized
-    // alpha method (by "full", I mean that the pressure is evaluated
-    // at time step n+alpha_f as well.)
-    //
-    // The mesh update is solved in a segregated algorithm, meaning
-    // that the mesh is updated by solving a harmonic extension problem
-    // only. Then we continue to solve NS to achieve nonlinear
-    // convergence.
-    // --------------------------------------------------------------
-    void GenAlpha_Seg_solve_ALE_NS(
-        const bool &new_tangent_flag,
-        const bool &is_ale_flag,
-        const double &curr_time,
-        const double &dt,
-        const PDNSolution * const &sol_base,
-        const PDNSolution * const &pre_dot_sol,
-        const PDNSolution * const &pre_sol,
-        const TimeMethod_GenAlpha * const &tmga_ptr,
-        const ICVFlowRate * const flr_ptr,
-        const ALocal_Elem * const &alelem_ptr,
-        const ALocal_IEN * const &lien_ptr,
-        const APart_Node * const &anode_ptr,
-        const FEANode * const &feanode_ptr,
-        const ALocal_NodalBC * const &nbc_part,
-        const ALocal_Inflow_NodalBC * const &infnbc_part,
-        const ALocal_NodalBC * const &nbc_mesh_part,
-        const ALocal_EBC * const &ebc_part,
-        const ALocal_EBC * const &ebc_mesh_part,
-        const IGenBC * const &gbc,
-        const Matrix_PETSc * const &bc_mat,
-        const Matrix_PETSc * const &bc_mesh_mat,
-        FEAElement * const &elementv,
-        FEAElement * const &elements,
-        const IQuadPts * const &quad_v,
-        const IQuadPts * const &quad_s,
-        IPLocAssem * const &lassem_solid_ptr,
-        IPLocAssem * const &lassem_mesh_ptr,
-        IPGAssem * const &gassem_ptr,
-        IPGAssem * const &gassem_mesh_ptr,
-        PLinear_Solver_PETSc * const &lsolver_ptr,
-        PLinear_Solver_PETSc * const &lsolver_mesh_ptr,
-        PDNSolution * const &dot_sol,
-        PDNSolution * const &sol,
-        bool &conv_flag, int &nl_counter ) const;
-
-
-    // --------------------------------------------------------------
     // GenAlpha_Seg_solve_FSI:
     // This is the coupled FSI solver.
     // 
@@ -148,12 +98,6 @@ class PNonlinear_Seg_Solver
     {PetscPrintf(PETSC_COMM_WORLD,
         "  === NR ite: %d, r_error: %e, a_error: %e \n",
         count, rel_err, abs_err);}
-
-    void rescale_inflow_value( const double &stime,
-        const ALocal_Inflow_NodalBC * const &infbc,
-        const ICVFlowRate * const &flrate,
-        const PDNSolution * const &sol_base,
-        PDNSolution * const &sol ) const;
 };
 
 #endif
