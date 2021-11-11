@@ -36,7 +36,8 @@ PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha::PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenA
 
 PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha::~PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha()
 {
-  delete [] Tangent; Tangent = NULL; delete [] Residual; Residual = NULL;
+  delete [] Tangent; Tangent = NULL; 
+  delete [] Residual; Residual = NULL;
   delete [] sur_Tangent; sur_Tangent = NULL; 
   delete [] sur_Residual; sur_Residual = NULL;
   delete [] flist; flist = NULL;
