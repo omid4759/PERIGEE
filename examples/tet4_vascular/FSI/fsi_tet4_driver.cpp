@@ -14,17 +14,12 @@
 #include "QuadPts_Gauss_Tet.hpp"
 #include "FEAElement_Triangle3_3D_der0.hpp"
 #include "FEAElement_Tet4.hpp"
-#include "CVFlowRate_Unsteady.hpp"
-#include "CVFlowRate_Linear2Steady.hpp"
-#include "GenBC_Resistance.hpp"
-#include "GenBC_RCR.hpp"
-#include "GenBC_Tools.hpp"
 #include "MaterialModel_NeoHookean_M94_Mixed.hpp"
 #include "MaterialModel_NeoHookean_Incompressible_Mixed.hpp"
 #include "PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha.hpp"
 #include "PLocAssem_Tet4_VMS_Seg_Hyperelastic_3D_FEM_GenAlpha.hpp"
 #include "PLocAssem_Tet4_VMS_Seg_Incompressible.hpp"
-#include "PLocAssem_Tet4_FSI_Mesh_Elastostatic.hpp"
+#include "PLocAssem_Tet4_FSI_Mesh_Laplacian.hpp"
 #include "PGAssem_FSI_FEM.hpp"
 #include "PGAssem_Seg_FEM.hpp"
 #include "PDNSolution_Mixed_UPV_3D.hpp"
@@ -198,7 +193,7 @@ int main(int argc, char *argv[])
    
   ALocal_NodalBC * mesh_locnbc = new ALocal_NodalBC(part_file, rank, "mesh_nbc");
   
-  ALocal_EBC * locebc = new ALocal_EBC_outflow(part_file, rank);
+  ALocal_EBC * locebc = new ALocal_EBC(part_file, rank);
   
   ALocal_EBC * mesh_locebc = new ALocal_EBC(part_file, rank, "mesh_ebc");
   
@@ -208,16 +203,13 @@ int main(int argc, char *argv[])
 
   // ===== Basic Checking =====
   SYS_T::print_fatal_if( size!= PartBasic->get_cpu_size(),
-            "Error: Assigned CPU number does not match the partition. \n");
+      "Error: Assigned CPU number does not match the partition. \n");
 
   SYS_T::commPrint("===> %d processor(s) are assigned for FEM analysis. \n", size);
 
   // ===== Inflow rate function =====
   SYS_T::commPrint("===> Setup inflow flow rate. \n");
-  
-  ICVFlowRate * inflow_rate_ptr = new CVFlowRate_Unsteady( inflow_file.c_str() );
-
-  inflow_rate_ptr->print_info();
+  ICVFlowRate * inflow_rate_ptr = nullptr;
 
   // ===== Quadrature rules and FEM container =====
   SYS_T::commPrint("===> Build quadrature rules. \n");
@@ -270,7 +262,7 @@ int main(int argc, char *argv[])
   }
 
   // Pseudo elastic mesh motion
-  IPLocAssem * locAssem_mesh_ptr = new PLocAssem_Tet4_FSI_Mesh_Elastostatic( mesh_E, mesh_nu );
+  IPLocAssem * locAssem_mesh_ptr = new PLocAssem_Tet4_FSI_Mesh_Laplacian();
 
   // ===== Initial condition =====
   PDNSolution * base = new PDNSolution_Mixed_UPV_3D( pNode, fNode, locinfnbc, 1 );
@@ -308,18 +300,6 @@ int main(int argc, char *argv[])
 
   // ===== GenBC =====
   IGenBC * gbc = nullptr;
-
-  if( GENBC_T::get_genbc_file_type( lpn_file.c_str() ) == 1  )
-    gbc = new GenBC_Resistance( lpn_file.c_str() );
-  else if( GENBC_T::get_genbc_file_type( lpn_file.c_str() ) == 2  )
-    gbc = new GenBC_RCR( lpn_file.c_str(), 1000, initial_step );
-  else
-    SYS_T::print_fatal( "Error: GenBC input file %s format cannot be recongnized.\n", lpn_file.c_str() );
-
-  gbc -> print_info(); 
-
-  SYS_T::print_fatal_if(gbc->get_num_ebc() != locebc->get_num_ebc(),
-      "Error: GenBC number of faces does not match with that in ALocal_EBC.\n");
 
   // ===== Global assembly routine =====
   SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
@@ -417,44 +397,6 @@ int main(int argc, char *argv[])
       sol_record_freq, ttan_renew_freq, final_time );
   SYS_T::commPrint("===> Time marching solver setted up:\n");
   tsolver->print_info();
-
-  // ===== Outlet flowrate recording files =====
-  for(int ff=0; ff<locebc->get_num_ebc(); ++ff)
-  {
-    const double dot_face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-        dot_sol, locAssem_fluid_ptr, elements, quads, locebc, ff );
-
-    const double face_flrate = gloAssem_ptr -> Assem_surface_flowrate(
-        sol, locAssem_fluid_ptr, elements, quads, locebc, ff );
-
-    const double face_avepre = gloAssem_ptr -> Assem_surface_ave_pressure(
-        sol, locAssem_fluid_ptr, elements, quads, locebc, ff );
-
-    // set the gbc initial conditions using the 3D data
-    gbc -> reset_initial_sol( ff, face_flrate, face_avepre, timeinfo->get_time() );
-
-    const double dot_lpn_flowrate = dot_face_flrate;
-    const double lpn_flowrate = face_flrate;
-    const double lpn_pressure = gbc -> get_P( ff, dot_lpn_flowrate, lpn_flowrate );
-
-    if(rank == 0)
-    {
-      std::ofstream ofile;
-
-      // If this is NOT a restart run, generate a new file, otherwise append to
-      // a existing file
-      if( !is_restart )
-        ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::trunc );
-      else
-        ofile.open( locebc->gen_flowfile_name(ff).c_str(), std::ofstream::out | std::ofstream::app );
-
-      // if this is NOT a restart run, record the initial values
-      if( !is_restart )
-        ofile<<timeinfo->get_index()<<'\t'<<timeinfo->get_time()<<'\t'<<face_flrate<<'\t'<<face_avepre<<'\t'<<lpn_pressure<<'\n';
-
-      ofile.close();
-    }
-  }
 
   // ===== FEM analysis =====
   SYS_T::commPrint("===> Start Finite Element Analysis:\n");
