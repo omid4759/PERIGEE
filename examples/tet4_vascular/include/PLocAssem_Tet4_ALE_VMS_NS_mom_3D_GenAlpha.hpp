@@ -211,7 +211,9 @@ class PLocAssem_Tet4_ALE_VMS_NS_mom_3D_GenAlpha : public IPLocAssem
         const double &nz, double &gx, double &gy, double &gz ) const
     {
       // The inlet pressure is 5 kPa or 5.0e4 dyn/cm2
-      const double p0 = -5.0e4;
+      const double wave_length = 10.0;
+      const double omega = 2.0 * MATH_T::PI / wave_length;
+      const double p0 = -5.0e4 * sin(omega * t);
       
       gx = p0*nx; gy = p0*ny; gz = p0*nz;
     }
