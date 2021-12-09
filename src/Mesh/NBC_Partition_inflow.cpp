@@ -11,9 +11,10 @@ NBC_Partition_inflow::NBC_Partition_inflow(
 
   Num_LD.resize(num_nbc);
 
-  actarea.resize(num_nbc); facearea.resize(num_nbc);
-  outvec.resize(num_nbc);  centroid.resize(num_nbc);
-  num_out_bc_pts.resize(num_nbc); outline_pts.resize(num_nbc);
+  bct_velo.resize(num_nbc); num_bct_timept.resize(num_nbc);
+  actarea.resize(num_nbc);  facearea.resize(num_nbc);
+  outvec.resize(num_nbc);   centroid.resize(num_nbc);
+  num_out_bc_pts.resize(num_nbc);    outline_pts.resize(num_nbc);
   cell_nLocBas.resize(num_nbc);      local_tri_ien.resize(num_nbc);
   num_local_node.resize(num_nbc);    num_local_cell.resize(num_nbc);
   local_global_node.resize(num_nbc); local_global_cell.resize(num_nbc);
@@ -23,17 +24,40 @@ NBC_Partition_inflow::NBC_Partition_inflow(
   {
     // Collect the Dirichlet nodes on the ii-th inlet surface
     Num_LD[ii] = 0;
+
+    std::vector<int> local_dir_node;
+
     for(unsigned int jj=0; jj<nbc->get_num_dir_nodes_on_inlet(ii); ++jj)
     {
-      int node_index = static_cast<int>( nbc -> get_dir_nodes_on_inlet(ii, jj) );
+      int node_index = nbc -> get_dir_nodes_on_inlet(ii, jj);
       node_index = mnindex -> get_old2new(node_index);
+
       if(part->isNodeInPart(node_index))
       {
         LDN[ii].push_back(node_index);
+
+        int local_node_idx = nbc -> get_local_dir_nodes_on_inlet(ii, jj);
+        local_dir_node.push_back(local_node_idx);
+
         Num_LD[ii] += 1;
       }
     }
 
+    num_bct_timept[ii] = nbc -> get_num_bct_timept(ii);
+    bct_velo[ii].resize( num_bct_timept[ii] * 3 * Num_LD[ii] );
+
+    for(int tt = 0; tt < num_bct_timept[ii]; ++tt)
+    {
+      for(int jj = 0; jj < Num_LD[ii]; ++jj)
+      {
+        for(int comp = 0; comp < 3; ++comp)
+        {
+          const int offset = tt * 3 * Num_LD[ii] + 3 * jj;
+          bct_velo[ii][offset + comp] = nbc -> get_bct_velo(ii, local_dir_node[jj], tt, comp);
+        }
+      }
+    }
+    
     // Area of the cap surface
     actarea[ii]  = nbc -> get_inf_active_area(ii);
     facearea[ii] = nbc -> get_face_area(ii);
@@ -50,7 +74,7 @@ NBC_Partition_inflow::NBC_Partition_inflow(
     for(int jj=0; jj<3*num_out_bc_pts[ii]; ++jj)
       outline_pts[ii][jj] = nbc->get_outline_pts(ii, jj);
 
-    // Record the geometrical info of the inlet in this CPU
+    // Record the geometric info of the inlet in this CPU
     cell_nLocBas[ii] = nbc -> get_nLocBas(ii);
 
     std::vector<int> local_node, local_elem;
@@ -135,6 +159,10 @@ void NBC_Partition_inflow::write_hdf5( const std::string &FileName ) const
     h5w->write_intScalar( group_id, "Num_LD", Num_LD[ii] );
     
     h5w->write_intVector( group_id, "LDN", LDN[ii] );
+
+    h5w->write_intScalar( group_id, "num_bct_timept", num_bct_timept[ii] );
+
+    h5w->write_doubleVector( group_id, "bct_velo", bct_velo[ii] );
 
     h5w->write_doubleScalar( group_id, "Inflow_active_area", actarea[ii] );
 

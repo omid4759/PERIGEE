@@ -43,6 +43,13 @@ class NBC_Partition_inflow
     // Length: num_nbc
     std::vector<int> Num_LD;
 
+    // Velocity profiles (at discrete sampling times) to be prescribed 
+    // num_nbc times ( num_bct_timept[ii] x 3 x NumLD[ii] )
+    std::vector< std::vector<double> > bct_velo;
+
+    // Number of discrete sampling time points. Length num_nbc.
+    std::vector<int> num_bct_timept;
+
     // active area & full area. Length num_nbc
     std::vector<double> actarea, facearea;
 
