@@ -79,12 +79,23 @@ class INodalBC
     }
 
     // ------------------------------------------------------------------------
-    // get_dir_nodes_on_inlet return the Dirichlet node index on each inlet
-    // surface.
+    // get_dir_nodes_on_inlet return the Dirichlet node's global node ID on
+    // each inlet surface.
     // ------------------------------------------------------------------------
     virtual unsigned int get_dir_nodes_on_inlet( const int &nbc_id, const unsigned int &ii ) const
     {
       SYS_T::print_fatal("Error: INodalBC::get_dir_nodes_on_inlet is not implemented.\n");
+      return 0;
+    }
+
+    // ------------------------------------------------------------------------
+    // get_local_dir_nodes_on_inlet return the Dirichlet node's local index on
+    // each inlet surface.
+    // ------------------------------------------------------------------------
+    virtual unsigned int get_local_dir_nodes_on_inlet( const int &nbc_id,
+        const unsigned int &ii ) const
+    {
+      SYS_T::print_fatal("Error: INodalBC::get_local_dir_nodes_on_inlet is not implemented.\n");
       return 0;
     }
 
@@ -95,6 +106,27 @@ class INodalBC
     virtual unsigned int get_num_dir_nodes_on_inlet( const int &nbc_id ) const
     {
       SYS_T::print_fatal("Error: INodalBC::get_num_dir_nodes_on_inlet is not implemented.\n");
+      return 0;
+    }
+
+    // ------------------------------------------------------------------------
+    // get_bct_velo return the local Dirichlet node's velocity component at
+    // time point tt on each inlet surface
+    // ------------------------------------------------------------------------
+    virtual double get_bct_velo( const int &nbc_id, const int &ii, const int &tt,
+        const int &comp ) const
+    {
+      SYS_T::print_fatal("Error: INodalBC::get_bct_velo is not implemented.\n");
+      return 0.0;
+    }
+
+    // ------------------------------------------------------------------------
+    // get_num_bct_timept return the inlet surface's number of discrete sampling
+    // time points
+    // ------------------------------------------------------------------------
+    virtual int get_num_bct_timept( const int &nbc_id ) const
+    {
+      SYS_T::print_fatal("Error: INodalBC::get_num_bct_timept is not implemented.\n");
       return 0;
     }
 
