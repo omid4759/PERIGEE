@@ -73,9 +73,10 @@ class NodalBC_3D_inflow : public INodalBC
 
     // Access the comp-velocity to be prescribed for dirichlet node ii at
     // time point tt on nbc_id 
+    // Check that num_bct_timept[nbc_id] > 0 prior to accessing
     virtual double get_bct_velo( const int &nbc_id, const int &ii, const int &tt,
         const int &comp ) const
-    { return bct_velo[nbc_id][tt * 3 * num_node[ii] + 3 * ii + comp]; } 
+    { return bct_velo[nbc_id][tt * 3 * num_node[nbc_id] + 3 * ii + comp]; } 
 
     virtual int get_num_bct_timept( const int &nbc_id ) const
     { return num_bct_timept[nbc_id]; }

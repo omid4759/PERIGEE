@@ -25,7 +25,7 @@ NBC_Partition_inflow::NBC_Partition_inflow(
     // Collect the Dirichlet nodes on the ii-th inlet surface
     Num_LD[ii] = 0;
 
-    std::vector<int> local_dir_node;
+    std::vector<int> local_dir_node; local_dir_node.clear();
 
     for(unsigned int jj=0; jj<nbc->get_num_dir_nodes_on_inlet(ii); ++jj)
     {
@@ -44,20 +44,26 @@ NBC_Partition_inflow::NBC_Partition_inflow(
     }
 
     num_bct_timept[ii] = nbc -> get_num_bct_timept(ii);
-    bct_velo[ii].resize( num_bct_timept[ii] * 3 * Num_LD[ii] );
 
-    for(int tt = 0; tt < num_bct_timept[ii]; ++tt)
+    if( num_bct_timept[ii] == 0 || Num_LD[ii] == 0 )
+      bct_velo[ii].clear();
+
+    else
     {
-      for(int jj = 0; jj < Num_LD[ii]; ++jj)
+      bct_velo[ii].resize( num_bct_timept[ii] * 3 * Num_LD[ii] );
+
+      for(int tt = 0; tt < num_bct_timept[ii]; ++tt)
       {
-        for(int comp = 0; comp < 3; ++comp)
+        for(int jj = 0; jj < Num_LD[ii]; ++jj)
         {
           const int offset = tt * 3 * Num_LD[ii] + 3 * jj;
-          bct_velo[ii][offset + comp] = nbc -> get_bct_velo(ii, local_dir_node[jj], tt, comp);
+
+          for(int comp = 0; comp < 3; ++comp)
+            bct_velo[ii][offset + comp] = nbc -> get_bct_velo(ii, local_dir_node[jj], tt, comp);
         }
       }
     }
-    
+
     // Area of the cap surface
     actarea[ii]  = nbc -> get_inf_active_area(ii);
     facearea[ii] = nbc -> get_face_area(ii);
