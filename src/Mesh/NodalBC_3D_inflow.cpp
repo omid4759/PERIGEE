@@ -26,12 +26,18 @@ void NodalBC_3D_inflow::init( const std::vector<std::string> &inffileList,
     const std::vector<Vector_3> &in_outnormal,
     const int &elemtype )
 { 
-  // 1. Clear the container for Dirichlet nodes
+  // 1. Clear containers for Dirichlet nodes
   dir_nodes.clear();
   num_dir_nodes = 0;
 
   dir_nodes_on_inlet.resize( num_nbc );
-  for(int ii=0; ii<num_nbc; ++ii) dir_nodes_on_inlet[ii].clear();
+  local_dir_nodes_on_inlet.resize( num_nbc );
+
+  for(int ii=0; ii<num_nbc; ++ii)
+  {
+    dir_nodes_on_inlet[ii].clear();
+    local_dir_nodes_on_inlet[ii].clear();
+  }
 
   num_dir_nodes_on_inlet.resize( num_nbc );
 
@@ -135,6 +141,7 @@ void NodalBC_3D_inflow::init( const std::vector<std::string> &inffileList,
       {
         dir_nodes.push_back( global_node[ii][jj] );
         dir_nodes_on_inlet[ii].push_back( global_node[ii][jj] );
+        local_dir_nodes_on_inlet[ii].push_back( jj );
       }
     }
 

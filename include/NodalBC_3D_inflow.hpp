@@ -60,14 +60,28 @@ class NodalBC_3D_inflow : public INodalBC
 
     virtual unsigned int get_num_per_nodes() const {return 0;}
 
-    // get the dirichlet-type nodal index on different nbc_id surfaces
+    // get the dirichlet-type global nodal ID on the nbc_id surface
     virtual unsigned int get_dir_nodes_on_inlet( const int &nbc_id, 
         const unsigned int &ii ) const { return dir_nodes_on_inlet[nbc_id][ii]; }
+
+    // get the dirichlet-type local nodal index on the nbc_id surface
+    virtual unsigned int get_local_dir_nodes_on_inlet( const int &nbc_id, 
+        const unsigned int &ii ) const { return local_dir_nodes_on_inlet[nbc_id][ii]; }
 
     virtual unsigned int get_num_dir_nodes_on_inlet( const int &nbc_id ) const
     { return num_dir_nodes_on_inlet[nbc_id]; }
 
-    virtual double get_inf_active_area(const int &nbc_id) const {return inf_active_area[nbc_id];}
+    // Access the comp-velocity to be prescribed for dirichlet node ii at
+    // time point tt on nbc_id 
+    virtual double get_bct_velo( const int &nbc_id, const int &ii, 
+        const int &tt, const int &comp ) const
+    { return bct_velo[nbc_id][tt * 3 * ii + comp]; } 
+
+    virtual int get_num_bct_timept( const int &nbc_id ) const
+    { return num_bct_timept[nbc_id]; }
+
+    virtual double get_inf_active_area(const int &nbc_id) const
+    { return inf_active_area[nbc_id]; }
 
     virtual Vector_3 get_outnormal(const int &nbc_id) const {return outnormal[nbc_id];}
 
@@ -124,8 +138,15 @@ class NodalBC_3D_inflow : public INodalBC
     // number of inlet surfaces
     const int num_nbc;
     
+    // Store global node IDs of Dirichlet (interior) nodes
     // length num_nbc x num_dir_nodes_on_inlet[ii]
     std::vector< std::vector<unsigned int> > dir_nodes_on_inlet;
+
+    // Store local node numbering
+    // length num_nbc x num_dir_nodes_on_inlet[ii]
+    std::vector< std::vector<unsigned int> > local_dir_nodes_on_inlet;
+
+    // length num_nbc
     std::vector<unsigned int> num_dir_nodes_on_inlet;
 
     // All dirichlet nodes stored in a row and the total number of dirichlet
