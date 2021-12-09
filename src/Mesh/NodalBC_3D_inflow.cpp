@@ -36,6 +36,9 @@ void NodalBC_3D_inflow::init( const std::vector<std::string> &inffileList,
   num_dir_nodes_on_inlet.resize( num_nbc );
 
   // 2. Analyze the file type and read in the data
+  bct_velo.resize( num_nbc );
+  num_bct_timept.resize( num_nbc );
+
   num_node.resize( num_nbc );
   num_cell.resize( num_nbc );
   nLocBas.resize(  num_nbc );
@@ -82,6 +85,13 @@ void NodalBC_3D_inflow::init( const std::vector<std::string> &inffileList,
   {
     SYS_T::file_check( inffileList[ii] );
 
+    // Search for bct files for velocity profile assignment
+    std::string bct_basename = SYS_T::gen_capfile_name( "bct_inflow_", ii, "" );
+    std::vector<std::string> bct_files = SYS_T::file_search( "./bct/", bct_basename );
+
+    // Number of bct sampling time points
+    num_bct_timept[ii] = bct_files.size();
+
     if( elemtype == 501 )
     {
       nLocBas[ii] = 3;
@@ -97,6 +107,24 @@ void NodalBC_3D_inflow::init( const std::vector<std::string> &inffileList,
           pt_xyz[ii], tri_ien[ii], global_node[ii], global_cell[ii] );
     }
     else SYS_T::print_fatal("Error: unknown element type.\n");
+
+    if( num_bct_timept[ii] == 0 )
+      bct_velo[ii].clear();
+
+    else
+    {
+      bct_velo[ii].resize( num_bct_timept[ii] * 3 * num_node[ii] );
+
+      for( int tt = 0; tt < num_bct_timept[ii]; ++tt ) {
+
+        std::vector<double> velo = TET_T::read_double_PointData( bct_files[tt], "Velocity", 3 ); 
+
+        const int offset = tt * 3 * num_node[ii]; 
+
+        for( int jj = 0; jj < 3 * num_node[ii]; ++jj )
+          bct_velo[ii][offset + jj] = velo[jj];
+      }
+    }
 
     // Generate the dir-node list. Nodes belonging to the wall are excluded.
     for(unsigned int jj=0; jj<global_node[ii].size(); ++jj)
@@ -262,6 +290,7 @@ void NodalBC_3D_inflow::init( const std::vector<std::string> &inffileList,
     std::cout<<"     nbc_id = "<<ii<<": "<<inffileList[ii]<<" with nodes on ";
     std::cout<<"     "<<wallfile<<" excluded.\n";
     std::cout<<"          num_node: "<<num_node[ii]<<", num_cell: "<<num_cell[ii]<<'\n';
+    std::cout<<"          num_bct_timept: "<<num_bct_timept[ii]<<'\n';
     std::cout<<"          centroid: "<<centroid[ii](0)<<'\t'<<centroid[ii](1)<<'\t'<<centroid[ii](2)<<'\n';
     std::cout<<"          number of outline points is "<<num_out_bc_pts[ii]<<'\n';
     std::cout<<"          outward normal is ["<<outnormal[ii](0)<<'\t'<<outnormal[ii](1)<<'\t'<<outnormal[ii](2)<<"]. \n";

@@ -121,6 +121,9 @@ class NodalBC_3D_inflow : public INodalBC
     NodalBC_3D_inflow() : num_nbc(0) {};
 
     // The dirichlet nodes on each inlet surface
+    // number of inlet surfaces
+    const int num_nbc;
+    
     // length num_nbc x num_dir_nodes_on_inlet[ii]
     std::vector< std::vector<unsigned int> > dir_nodes_on_inlet;
     std::vector<unsigned int> num_dir_nodes_on_inlet;
@@ -130,9 +133,13 @@ class NodalBC_3D_inflow : public INodalBC
     std::vector<unsigned int> dir_nodes;
     unsigned int num_dir_nodes;
 
-    // number of inlet surfaces
-    const int num_nbc;
-    
+    // Velocity profiles (at discrete sampling times) to be prescribed 
+    // num_nbc times ( num_bct_timept[ii] x 3 x num_node[ii] ) in size.
+    std::vector< std::vector<double> > bct_velo;
+
+    // Number of discrete sampling time points. Length num_nbc.
+    std::vector<int> num_bct_timept;
+
     // This is the area calculated by setting the wall nodes to be zero.
     // It is designed to compute the area to give a plug flow profile with
     // a prescribed flow rate. Length num_nbc.
