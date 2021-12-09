@@ -16,6 +16,8 @@
 #include <ctime>
 #include <iomanip>
 #include "petsc.h"
+#include <dirent.h>
+#include "Vec_Tools.hpp"
 
 namespace SYS_T
 {
@@ -468,6 +470,33 @@ namespace SYS_T
     print_fatal_if( !file_exist(fName), 
         "Error: The file %s does not exist. Job is killed. \n", fName.c_str());
   }
+
+  // ----------------------------------------------------------------
+  // List all files in the directory with names including fname.
+  // If directory is invalid, throw an error message and exit code.
+  // ----------------------------------------------------------------
+  inline std::vector<std::string> file_search( const std::string &dir,
+      const std::string &fname )
+  {
+    std::vector<std::string> flist; 
+
+    DIR *dirstream;
+    struct dirent *entry;
+
+    print_fatal_if( ( dirstream = opendir(dir.c_str()) ) == nullptr,
+        "Error: The directory %s does not exist. Job is killed. \n", dir.c_str());
+
+    while( (entry = readdir(dirstream)) != nullptr )
+    {
+      std::string file = entry->d_name;
+
+      if( file.find(fname) != std::string::npos )
+        flist.push_back( dir + file );
+    }
+
+    VEC_T::sort_unique_resize(flist);
+    return flist;
+  } 
 
   // --------------------------------------------------------------------------
   // Execute a system call
