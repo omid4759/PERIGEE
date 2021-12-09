@@ -74,7 +74,7 @@ void TET_T::read_vtu_grid( const std::string &filename,
 
 
 std::vector<int> TET_T::read_int_CellData( const std::string &filename,
-    const std::string &dataname )
+    const std::string &dataname, const int &num_compnt )
 {
   vtkXMLGenericDataObjectReader * reader = vtkXMLGenericDataObjectReader::New();
   reader -> SetFileName( filename.c_str() );
@@ -99,11 +99,13 @@ std::vector<int> TET_T::read_int_CellData( const std::string &filename,
   else
     SYS_T::print_fatal("TET_T::read_int_CellData unknown vtk object type.\n");
 
-  vtkDataArray * cd = celldata->GetScalars( dataname.c_str() );
+  vtkDataArray * cd = celldata->GetArray( dataname.c_str() );
 
-  std::vector<int> data( numcels );
-  for(int ii=0; ii<numcels; ++ii)
-    data[ii] = static_cast<int>( cd->GetComponent(ii, 0) );
+  std::vector<int> data( numcels * num_compnt );
+  for(int ii=0; ii<numcels; ++ii) {
+    for(int jj=0; jj<num_compnt; ++jj)
+      data[ ii*num_compnt + jj ] = static_cast<int>( cd->GetComponent(ii, jj) );
+  }
 
   reader -> Delete();
 
@@ -112,7 +114,7 @@ std::vector<int> TET_T::read_int_CellData( const std::string &filename,
 
 
 std::vector<double> TET_T::read_double_CellData( const std::string &filename,
-    const std::string &dataname )
+    const std::string &dataname, const int &num_compnt )
 {
   vtkXMLGenericDataObjectReader * reader = vtkXMLGenericDataObjectReader::New();
   reader -> SetFileName( filename.c_str() );
@@ -137,11 +139,14 @@ std::vector<double> TET_T::read_double_CellData( const std::string &filename,
   else
     SYS_T::print_fatal("TET_T::read_double_CellData unknown vtk object type.\n");
 
-  vtkDataArray * cd = celldata->GetScalars( dataname.c_str() );
+  vtkDataArray * cd = celldata->GetArray( dataname.c_str() );
 
-  std::vector<double> data( numcels );
+  std::vector<double> data( numcels * num_compnt );
   for(int ii=0; ii<numcels; ++ii)
-    data[ii] = static_cast<double>( cd->GetComponent(ii, 0) );
+  {
+    for(int jj=0; jj<num_compnt; ++jj)
+      data[ ii*num_compnt + jj ] = static_cast<double>( cd->GetComponent(ii, jj) );
+  }
 
   reader -> Delete();
 
@@ -150,7 +155,7 @@ std::vector<double> TET_T::read_double_CellData( const std::string &filename,
 
 
 std::vector<int> TET_T::read_int_PointData( const std::string &filename,
-    const std::string &dataname )
+    const std::string &dataname, const int &num_compnt )
 {
   vtkXMLGenericDataObjectReader * reader = vtkXMLGenericDataObjectReader::New();
   reader -> SetFileName( filename.c_str() );
@@ -175,11 +180,13 @@ std::vector<int> TET_T::read_int_PointData( const std::string &filename,
   else
     SYS_T::print_fatal("TET_T::read_int_PointData unknown vtk object type.\n");
 
-  vtkDataArray * pd = pointdata->GetScalars( dataname.c_str() );
+  vtkDataArray * pd = pointdata->GetArray( dataname.c_str() );
 
-  std::vector<int> data( numpts );
-  for(int ii=0; ii<numpts; ++ii)
-    data[ii] = static_cast<int>( pd->GetComponent(ii, 0) );
+  std::vector<int> data( numpts * num_compnt );
+  for(int ii=0; ii<numpts; ++ii) {
+    for(int jj=0; jj<num_compnt; ++jj)
+      data[ ii*num_compnt + jj ] = static_cast<int>( pd->GetComponent(ii, jj) );
+  }
 
   reader -> Delete();
 
@@ -188,7 +195,7 @@ std::vector<int> TET_T::read_int_PointData( const std::string &filename,
 
 
 std::vector<double> TET_T::read_double_PointData( const std::string &filename,
-    const std::string &dataname )
+    const std::string &dataname, const int &num_compnt )
 {
   vtkXMLGenericDataObjectReader * reader = vtkXMLGenericDataObjectReader::New();
   reader -> SetFileName( filename.c_str() );
@@ -213,11 +220,13 @@ std::vector<double> TET_T::read_double_PointData( const std::string &filename,
   else
     SYS_T::print_fatal("TET_T::read_double_PointData unknown vtk object type.\n");
 
-  vtkDataArray * pd = pointdata->GetScalars( dataname.c_str() );
+  vtkDataArray * pd = pointdata->GetArray( dataname.c_str() );
 
-  std::vector<double> data( numpts );
-  for(int ii=0; ii<numpts; ++ii)
-    data[ii] = static_cast<double>( pd->GetComponent(ii, 0) );
+  std::vector<double> data( numpts * num_compnt );
+  for(int ii=0; ii<numpts; ++ii) {
+    for(int jj=0; jj<num_compnt; ++jj)
+      data[ ii*num_compnt + jj ] = static_cast<double>( pd->GetComponent(ii, jj) );
+  }
 
   reader -> Delete();
 
@@ -232,7 +241,7 @@ void TET_T::read_vtu_grid( const std::string &filename,
 {
   read_vtu_grid(filename, numpts, numcels, pt, ien_array);
   
-  phy_tag = read_int_CellData(filename, "Physics_tag");
+  phy_tag = read_int_CellData(filename, "Physics_tag", 1);
 }
 
 
@@ -244,9 +253,9 @@ void TET_T::read_vtu_grid( const std::string &filename,
 {
   read_vtu_grid(filename, numpts, numcels, pt, ien_array);
   
-  global_node_index = read_int_PointData(filename, "GlobalNodeID"); 
+  global_node_index = read_int_PointData(filename, "GlobalNodeID", 1); 
 
-  global_elem_index = read_int_CellData(filename, "GlobalElementID");
+  global_elem_index = read_int_CellData(filename, "GlobalElementID", 1);
 }
 
 
@@ -297,9 +306,9 @@ void TET_T::read_vtp_grid( const std::string &filename,
 {
   read_vtp_grid(filename, numpts, numcels, pt, ien_array);
   
-  global_node_index = read_int_PointData(filename, "GlobalNodeID"); 
+  global_node_index = read_int_PointData(filename, "GlobalNodeID", 1); 
 
-  global_elem_index = read_int_CellData(filename, "GlobalElementID");
+  global_elem_index = read_int_CellData(filename, "GlobalElementID", 1);
 }
 
 
