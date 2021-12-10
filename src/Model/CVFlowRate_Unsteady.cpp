@@ -163,9 +163,9 @@ void CVFlowRate_Unsteady::print_info() const
     SYS_T::commPrint("  -- nbc_id = %d", nbc_id);
 
     if( is_bct_id(nbc_id) ) 
-      SYS_T::commPrint("     Assigning velocity profiles\n");
+      SYS_T::commPrint("     Assigning velocity profiles");
 
-    SYS_T::commPrint("     w = %e, period =%e \n", w[nbc_id], period[nbc_id]);
+    SYS_T::commPrint("\n     w = %e, period =%e \n", w[nbc_id], period[nbc_id]);
     SYS_T::commPrint("     a[0] + Sum{ a[i] cos(i x w x t) + b[i] sin(i x w x t) }, for i = 1,...,%d. \n", num_of_mode[nbc_id]);
     for(int ii=0; ii<=num_of_mode[nbc_id]; ++ii)
       SYS_T::commPrint("     i = %d, a = %e, b = %e \n", ii, coef_a[nbc_id][ii], coef_b[nbc_id][ii]);
