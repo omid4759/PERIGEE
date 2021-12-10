@@ -330,7 +330,16 @@ int main( int argc, char *argv[] )
   ICVFlowRate * inflow_rate_ptr = nullptr;
 
   if( inflow_type == 0 )
+  {
     inflow_rate_ptr = new CVFlowRate_Unsteady( inflow_file );
+
+    for( int nbc_id = 0; nbc_id < locinfnbc->get_num_nbc(); ++nbc_id )
+    {
+      SYS_T::print_fatal_if( inflow_rate_ptr->is_bct_id(nbc_id) && 
+          locinfnbc->get_num_bct_timept(nbc_id) <= 0,
+          "Error: No BCT files provided for nbc_id = %d. \n", nbc_id ); 
+    }
+  }
   else if( inflow_type == 1 )
     inflow_rate_ptr = new CVFlowRate_Linear2Steady( inflow_thd_time, inflow_file );
   else if( inflow_type == 2 )
