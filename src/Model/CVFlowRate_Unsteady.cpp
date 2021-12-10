@@ -29,7 +29,7 @@ CVFlowRate_Unsteady::CVFlowRate_Unsteady( const std::string &filename )
 
   if( bc_type.compare("Inflow") == 0 || bc_type.compare("INFLOW") == 0 )
   {
-    coef_a.resize(num_nbc); coef_b.resize(num_nbc);
+    bct_id.clear(); coef_a.resize(num_nbc); coef_b.resize(num_nbc);
     num_of_mode.resize(num_nbc); w.resize(num_nbc); period.resize(num_nbc);
   }
   else
@@ -52,6 +52,11 @@ CVFlowRate_Unsteady::CVFlowRate_Unsteady( const std::string &filename )
         sstrm >> num_of_mode[nbc_id];
         sstrm >> w[nbc_id];
         sstrm >> period[nbc_id];
+
+        bool bct_flag;
+        sstrm >> std::boolalpha >> bct_flag;
+
+        if( bct_flag ) bct_id.push_back(nbc_id);
 
         sstrm.clear();
         break;
@@ -156,6 +161,10 @@ void CVFlowRate_Unsteady::print_info() const
   for(int nbc_id=0; nbc_id<num_nbc; ++nbc_id)
   {
     SYS_T::commPrint("  -- nbc_id = %d", nbc_id);
+
+    if( is_bct_id(nbc_id) ) 
+      SYS_T::commPrint("     Assigning velocity profiles\n");
+
     SYS_T::commPrint("     w = %e, period =%e \n", w[nbc_id], period[nbc_id]);
     SYS_T::commPrint("     a[0] + Sum{ a[i] cos(i x w x t) + b[i] sin(i x w x t) }, for i = 1,...,%d. \n", num_of_mode[nbc_id]);
     for(int ii=0; ii<=num_of_mode[nbc_id]; ++ii)

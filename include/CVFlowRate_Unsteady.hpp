@@ -35,10 +35,19 @@ class CVFlowRate_Unsteady : public ICVFlowRate
 
     virtual int get_num_nbc() const { return num_nbc; }
 
+    virtual int get_num_bct() const { return bct_id.size(); }
+
+    virtual bool is_bct_id( const int &nbc_id ) const
+    { return VEC_T::is_invec(bct_id, nbc_id); }
+
     virtual void print_info() const;
 
   private:
     int num_nbc;
+
+    // nbc_id's for which to assign velocity profiles
+    // length num_bct
+    std::vector<int> bct_id;
 
     std::vector< std::vector<double> > coef_a, coef_b;
 

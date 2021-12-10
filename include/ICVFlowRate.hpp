@@ -25,9 +25,14 @@ class ICVFlowRate
 
     virtual int get_num_nbc() const = 0;
 
+    virtual int get_num_bct() const = 0;
+
+    virtual bool is_bct_id( const int &nbc_id ) const = 0;
+
     virtual void print_info() const = 0;
 
   protected:
+
     // ------------------------------------------------------------------------
     // Generate a filename for inlet face nbc_id as Inlet_xxx_flowrate.txt
     // ------------------------------------------------------------------------
