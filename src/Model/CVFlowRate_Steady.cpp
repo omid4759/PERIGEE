@@ -56,7 +56,6 @@ CVFlowRate_Steady::CVFlowRate_Steady( const std::string &filename )
         sstrm >> num_of_mode[nbc_id];
         sstrm >> w[nbc_id];
         sstrm >> period[nbc_id];
-
         sstrm.clear();
         break;
       }
@@ -111,7 +110,7 @@ CVFlowRate_Steady::CVFlowRate_Steady( const std::string &filename )
   // Finish reading the file and close it
   reader.close();
 
-  // Define flow rate to be the smallest value in flow_waveform
+  // Define flow rate to be the value at t=0
   flowrate.resize( num_nbc );
 
   for(int ii=0; ii<num_nbc; ++ii) flowrate[ii] = VEC_T::sum( coef_a[ii] );

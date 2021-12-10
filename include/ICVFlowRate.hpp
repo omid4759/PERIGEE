@@ -13,6 +13,7 @@
 // ==================================================================
 #include <sstream>
 #include <string>
+#include "Sys_Tools.hpp"
 
 class ICVFlowRate
 {
@@ -25,9 +26,17 @@ class ICVFlowRate
 
     virtual int get_num_nbc() const = 0;
 
-    virtual int get_num_bct() const = 0;
+    virtual int get_num_bct() const
+    {
+      SYS_T::print_fatal("Error: ICVFlowRate::get_num_bct is not implemented.\n");
+      return 0;
+    }
 
-    virtual bool is_bct_id( const int &nbc_id ) const = 0;
+    virtual bool is_bct_id( const int &nbc_id ) const
+    {
+      SYS_T::print_fatal("Error: ICVFlowRate::is_bct_id is not implemented.\n");
+      return false;
+    }
 
     virtual void print_info() const = 0;
 
