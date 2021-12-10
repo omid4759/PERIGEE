@@ -37,6 +37,23 @@ class ALocal_Inflow_NodalBC
     virtual int get_Num_LD( const int &nbc_id ) const {return Num_LD[nbc_id];}
 
     // ------------------------------------------------------------------------
+    // Get velocity component to be prescribed for a Dirichlet node in the 
+    // local partition
+    // 0 <= node < Num_LD[nbc_id], 0 <= comp < 3
+    // Note: make sure that Num_LD[nbc_id] > 0 before calling this get function
+    // ------------------------------------------------------------------------
+    virtual double get_bct_velo( const int &nbc_id, const int &node,
+        const int &tt,  const int &comp ) const
+    {return bct_velo[nbc_id][tt * 3 * Num_LD[nbc_id] + 3 * node + comp];}
+
+    // ------------------------------------------------------------------------
+    // Get number of sampling time points for velocity profiles to be assigned
+    // 0 <= node < Num_LD[nbc_id]
+    // ------------------------------------------------------------------------
+    virtual double get_num_bct_timept( const int &nbc_id ) const
+    {return num_bct_timept[nbc_id];}
+
+    // ------------------------------------------------------------------------
     // get the outward normal vector components.
     // ii=0 : x-component; ii=1 : y-component; ii=2 : z-component
     // ------------------------------------------------------------------------
@@ -174,8 +191,15 @@ class ALocal_Inflow_NodalBC
     std::vector<int> Num_LD;
 
     // Global indices of the local Dirichlet nodes (inflow BC)
-    // Length is num_nbc x Num_LD[ii] for 0<= ii < num_nbc
+    // Length is num_nbc x Num_LD[ii] for 0 <= ii < num_nbc
     std::vector< std::vector<int> > LDN;
+
+    // Velocity profiles to be prescribed for local Dirichlet nodes.
+    // num_nbc x ( num_bct_timept[ii] x 3 x Num_LD[ii] )
+    std::vector< std::vector<double> > bct_velo;
+
+    // Number of discrete sampling time points. Length num_nbc.
+    std::vector<int> num_bct_timept;
 
     // Outward normal vector. Length num_nbc
     std::vector<Vector_3> outnormal;

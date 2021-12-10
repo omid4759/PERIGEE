@@ -16,6 +16,8 @@ ALocal_Inflow_NodalBC::ALocal_Inflow_NodalBC(
   // Allocate the size of the member data
   Num_LD.resize(num_nbc); 
   LDN.resize(num_nbc);
+  bct_velo.resize(num_nbc);
+  num_bct_timept.resize(num_nbc);
   outnormal.resize(num_nbc); 
   act_area.resize(num_nbc); 
   ful_area.resize(num_nbc); 
@@ -38,24 +40,32 @@ ALocal_Inflow_NodalBC::ALocal_Inflow_NodalBC(
     subgroup_name.append( SYS_T::to_string(nbc_id) );
 
     Num_LD[nbc_id] = h5r -> read_intScalar( subgroup_name.c_str(), "Num_LD" );
+    num_bct_timept[nbc_id] = h5r -> read_intScalar( subgroup_name.c_str(), "num_bct_timept" );
 
     // If this sub-domain of this CPU contains local inflow bc points, load the LDN array.
-    // Also load the centroid and outline_pts as they three will be used for
-    // generating the flow profile on the inlet at the nodes.
+    // Also load the centroid and outline_pts as they will be used to generate
+    // the flow profile on the inlet at the nodes.
     if( Num_LD[nbc_id] > 0 )
     {
       LDN[nbc_id]            = h5r -> read_intVector(    subgroup_name.c_str(), "LDN" );
       outline_pts[nbc_id]    = h5r -> read_doubleVector( subgroup_name.c_str(), "outline_pts" );
+
+     // If velocity profiles are to be prescribed on this inlet surface
+     if( num_bct_timept[nbc_id] > 0 )
+       bct_velo[nbc_id] = h5r -> read_doubleVector( subgroup_name.c_str(), "bct_velo" );
+     else
+       bct_velo[nbc_id].clear();
     }
     else
     {
       LDN[nbc_id].clear();
+      bct_velo[nbc_id].clear();
       outline_pts[nbc_id].clear();
     }
     
     SYS_T::print_fatal_if( Num_LD[nbc_id] != static_cast<int>( LDN[nbc_id].size() ), "Error: the LDN vector size does not match with the value of Num_LD.\n" );
 
-    // Basic geometrical quantities of the nbc_id-th inlet surface
+    // Basic geometric quantities of the nbc_id-th inlet surface
     act_area[nbc_id]       = h5r -> read_doubleScalar( subgroup_name.c_str(), "Inflow_active_area" );
     ful_area[nbc_id]       = h5r -> read_doubleScalar( subgroup_name.c_str(), "Inflow_full_area" );
     num_out_bc_pts[nbc_id] = h5r -> read_intScalar(    subgroup_name.c_str(), "num_out_bc_pts" );
@@ -90,6 +100,8 @@ ALocal_Inflow_NodalBC::~ALocal_Inflow_NodalBC()
 {
   VEC_T::clean(Num_LD); 
   VEC_T::clean(LDN);
+  VEC_T::clean(bct_velo);
+  VEC_T::clean(num_bct_timept);
   VEC_T::clean(outnormal); 
   VEC_T::clean(act_area); 
   VEC_T::clean(ful_area);
