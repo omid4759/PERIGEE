@@ -24,6 +24,12 @@ class ICVFlowRate
 
     virtual double get_flow_rate( const int &nbc_id, const double &time ) const = 0;
 
+    virtual double get_period( const int &nbc_id ) const
+    {
+      SYS_T::print_fatal("Error: ICVFlowRate::get_period is not implemented.\n");
+      return 0.0;
+    }
+
     virtual int get_num_nbc() const = 0;
 
     virtual int get_num_bct() const

@@ -32,6 +32,8 @@ class CVFlowRate_Unsteady : public ICVFlowRate
 
     virtual double get_flow_rate( const int &nbc_id, const double &time ) const;
 
+    virtual double get_period( const int &nbc_id ) const { return period[nbc_id]; };
+
     virtual int get_num_nbc() const { return num_nbc; }
 
     virtual int get_num_bct() const { return bct_id.size(); }

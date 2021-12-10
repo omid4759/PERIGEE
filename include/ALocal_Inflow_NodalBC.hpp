@@ -50,7 +50,7 @@ class ALocal_Inflow_NodalBC
     // Get number of sampling time points for velocity profiles to be assigned
     // 0 <= node < Num_LD[nbc_id]
     // ------------------------------------------------------------------------
-    virtual double get_num_bct_timept( const int &nbc_id ) const
+    virtual int get_num_bct_timept( const int &nbc_id ) const
     {return num_bct_timept[nbc_id];}
 
     // ------------------------------------------------------------------------
