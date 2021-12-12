@@ -498,8 +498,8 @@ void PNonlinear_CMM_Solver::rescale_inflow_value( const double &stime,
           const double vals_n   = infbc -> get_bct_velo( nbc_id, ii, tt_n,     comp );
           const double vals_np1 = infbc -> get_bct_velo( nbc_id, ii, tt_n + 1, comp );
 
-          vals[comp] = ( vals_n * ( (tt_n + 1) * bct_dt - stime ) + 
-              vals_np1 * ( stime - tt_n * bct_dt ) ) / bct_dt; 
+          vals[comp] = ( vals_n * ( (tt_n + 1) * bct_dt - (stime - period) ) + 
+              vals_np1 * ( stime - period - tt_n * bct_dt ) ) / bct_dt; 
         }
 
         VecSetValues(sol->solution, 3, idx, vals, INSERT_VALUES);
