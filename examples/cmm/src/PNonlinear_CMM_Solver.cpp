@@ -480,16 +480,17 @@ void PNonlinear_CMM_Solver::rescale_inflow_value( const double &stime,
 
     if( flrate->is_bct_id(nbc_id) )
     {
+      // Determine interval for linear interpolation
+      const double period = flrate->get_period( nbc_id );
+      const double bct_dt = period / ( infbc->get_num_bct_timept(nbc_id) - 1);
+      const int tt_n = (int) ( std::fmod( stime, period ) / bct_dt );
+
       for(int ii=0; ii<numnode; ++ii)
       {
         const int node_index = infbc -> get_LDN( nbc_id, ii );
 
         const int idx[3] = { node_index*4+1, node_index*4+2, node_index*4+3 };
 
-        // Determine interval for linear interpolation
-        const double period = flrate->get_period( nbc_id );
-        const double bct_dt = period / ( infbc->get_num_bct_timept(nbc_id) - 1);
-        const int tt_n = (int) ( std::fmod( stime, period ) / bct_dt );
         double vals[3];
 
         for(int comp=0; comp<3; ++comp)
