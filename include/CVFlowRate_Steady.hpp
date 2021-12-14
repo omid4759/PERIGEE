@@ -21,14 +21,25 @@ class CVFlowRate_Steady : public ICVFlowRate
 
     virtual ~CVFlowRate_Steady();
 
+    virtual int get_inflow_type() const { return 1; }
+
     virtual double get_flow_rate(const int &nbc_id, const double &time) const;
 
     virtual int get_num_nbc() const { return num_nbc; }
+
+    virtual int get_num_bct() const { return bct_id.size(); }
+
+    virtual bool is_bct_id( const int &nbc_id ) const
+    { return VEC_T::is_invec(bct_id, nbc_id); }
 
     virtual void print_info() const;
 
   private:
     int num_nbc;
+
+    // nbc_id's for which to assign velocity profiles
+    // length num_bct
+    std::vector<int> bct_id;
 
     std::vector<double> flowrate;
 };

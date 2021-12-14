@@ -31,6 +31,8 @@ class CVFlowRate_Linear2Steady : public ICVFlowRate
 
     virtual ~CVFlowRate_Linear2Steady();
 
+    virtual int get_inflow_type() const { return 2; }
+
     virtual double get_flow_rate( const int &nbc_id, const double &time ) const;
 
     virtual int get_num_nbc() const { return num_nbc; }
