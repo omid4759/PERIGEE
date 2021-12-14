@@ -480,11 +480,6 @@ void PNonlinear_CMM_Solver::rescale_inflow_value( const double &stime,
 
     if( flrate->is_bct_id(nbc_id) )
     {
-      // Determine interval for linear interpolation
-      const double period = flrate->get_period( nbc_id );
-      const double bct_dt = period / ( infbc->get_num_bct_timept(nbc_id) - 1);
-      const int tt_n = (int) ( std::fmod( stime, period ) / bct_dt );
-
       for(int ii=0; ii<numnode; ++ii)
       {
         const int node_index = infbc -> get_LDN( nbc_id, ii );
@@ -495,6 +490,11 @@ void PNonlinear_CMM_Solver::rescale_inflow_value( const double &stime,
 
         if( flrate->get_inflow_type() == 0 ) // pulsatile
         {
+          // Determine interval for linear interpolation
+          const double period = flrate->get_period( nbc_id );
+          const double bct_dt = period / ( infbc->get_num_bct_timept(nbc_id) - 1);
+          const int tt_n = (int) ( std::fmod( stime, period ) / bct_dt );
+
           for(int comp=0; comp<3; ++comp)
           {
             const double vals_n   = infbc -> get_bct_velo( nbc_id, ii, tt_n,     comp );
@@ -504,7 +504,7 @@ void PNonlinear_CMM_Solver::rescale_inflow_value( const double &stime,
                 vals_np1 * ( stime - period - tt_n * bct_dt ) ) / bct_dt; 
           }
         }
-        else if ( flrate->get_inflow_type() == 1 ) // steady
+        else if ( flrate->get_inflow_type() == 2 ) // steady
         {
           for(int comp=0; comp<3; ++comp)
             vals[comp] = infbc -> get_bct_velo( nbc_id, ii, 0, comp );

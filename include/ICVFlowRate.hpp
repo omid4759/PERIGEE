@@ -22,7 +22,7 @@ class ICVFlowRate
 
     virtual ~ICVFlowRate(){};
 
-    // 0: pulsatile. 1: steady. 2: linear-to-steady
+    // 0: pulsatile. 1: linear-to-steady. 2: steady.
     virtual int get_inflow_type() const = 0;
 
     virtual double get_flow_rate( const int &nbc_id, const double &time ) const = 0;
