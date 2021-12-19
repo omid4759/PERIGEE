@@ -343,7 +343,16 @@ int main( int argc, char *argv[] )
   else if( inflow_type == 1 )
     inflow_rate_ptr = new CVFlowRate_Linear2Steady( inflow_thd_time, inflow_file );
   else if( inflow_type == 2 )
+  {
     inflow_rate_ptr = new CVFlowRate_Steady( inflow_file );
+
+    for( int nbc_id = 0; nbc_id < locinfnbc->get_num_nbc(); ++nbc_id )
+    {
+      SYS_T::print_fatal_if( inflow_rate_ptr->is_bct_id(nbc_id) && 
+          locinfnbc->get_num_bct_timept(nbc_id) <= 0,
+          "Error: No BCT files provided for nbc_id = %d. \n", nbc_id ); 
+    }
+  }
   else
     SYS_T::print_fatal("Error: unrecognized inflow_type = %d. \n", inflow_type);
 
