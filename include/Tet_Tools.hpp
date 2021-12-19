@@ -70,16 +70,16 @@ namespace TET_T
   // Output: \para data the data associated with cell/point
   // ----------------------------------------------------------------
   std::vector<int> read_int_CellData( const std::string &filename, 
-      const std::string &dataname, const int &num_compnt );
+      const std::string &dataname, const int &num_compnt = 1 );
 
   std::vector<double> read_double_CellData( const std::string &filename, 
-      const std::string &dataname, const int &num_compnt );
+      const std::string &dataname, const int &num_compnt = 1 );
 
   std::vector<int> read_int_PointData( const std::string &filename, 
-      const std::string &dataname, const int &num_compnt );
+      const std::string &dataname, const int &num_compnt = 1 );
 
   std::vector<double> read_double_PointData( const std::string &filename, 
-      const std::string &dataname, const int &num_compnt );
+      const std::string &dataname, const int &num_compnt = 1 );
 
   // ----------------------------------------------------------------
   // ! read_vtu_grid: read the mesh info just exactly the same way

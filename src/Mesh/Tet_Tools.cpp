@@ -241,7 +241,7 @@ void TET_T::read_vtu_grid( const std::string &filename,
 {
   read_vtu_grid(filename, numpts, numcels, pt, ien_array);
   
-  phy_tag = read_int_CellData(filename, "Physics_tag", 1);
+  phy_tag = read_int_CellData(filename, "Physics_tag");
 }
 
 
@@ -253,9 +253,9 @@ void TET_T::read_vtu_grid( const std::string &filename,
 {
   read_vtu_grid(filename, numpts, numcels, pt, ien_array);
   
-  global_node_index = read_int_PointData(filename, "GlobalNodeID", 1); 
+  global_node_index = read_int_PointData(filename, "GlobalNodeID"); 
 
-  global_elem_index = read_int_CellData(filename, "GlobalElementID", 1);
+  global_elem_index = read_int_CellData(filename, "GlobalElementID");
 }
 
 
@@ -306,9 +306,9 @@ void TET_T::read_vtp_grid( const std::string &filename,
 {
   read_vtp_grid(filename, numpts, numcels, pt, ien_array);
   
-  global_node_index = read_int_PointData(filename, "GlobalNodeID", 1); 
+  global_node_index = read_int_PointData(filename, "GlobalNodeID"); 
 
-  global_elem_index = read_int_CellData(filename, "GlobalElementID", 1);
+  global_elem_index = read_int_CellData(filename, "GlobalElementID");
 }
 
 
