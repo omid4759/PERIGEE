@@ -63,7 +63,9 @@ namespace TET_T
       std::vector<double> &pt, std::vector<int> &ien_array );
 
   // ----------------------------------------------------------------
-  // read integer / double cell or point data from file in vtu / vtp format.
+  // read integer (or double) cell (or point) data from file in vtu (or vtp) format.
+  // The output data length equals the number of cells (or points) x number of
+  // components.
   // Input: \para filename the vtk file name
   //        \para dataname the data property name
   //        \para num_compnt the number of components
