@@ -143,7 +143,9 @@ class NodalBC_3D_inflow : public INodalBC
     // length num_nbc x num_dir_nodes_on_inlet[ii]
     std::vector< std::vector<unsigned int> > dir_nodes_on_inlet;
 
-    // Store local node numbering
+    // Store local node numbering of the inlet nodes (after excluding the wall
+    // nodes) in the cap surface (e.g. vtp file) node list.
+    // This data structure is used to partition the bct_velo.
     // length num_nbc x num_dir_nodes_on_inlet[ii]
     std::vector< std::vector<unsigned int> > local_dir_nodes_on_inlet;
 

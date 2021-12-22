@@ -39,7 +39,7 @@ ALocal_Inflow_NodalBC::ALocal_Inflow_NodalBC(
     std::string subgroup_name(groupbase);
     subgroup_name.append( SYS_T::to_string(nbc_id) );
 
-    Num_LD[nbc_id] = h5r -> read_intScalar( subgroup_name.c_str(), "Num_LD" );
+    Num_LD[nbc_id]         = h5r -> read_intScalar( subgroup_name.c_str(), "Num_LD" );
     num_bct_timept[nbc_id] = h5r -> read_intScalar( subgroup_name.c_str(), "num_bct_timept" );
 
     // If this sub-domain of this CPU contains local inflow bc points, load the LDN array.

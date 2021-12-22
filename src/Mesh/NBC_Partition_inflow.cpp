@@ -11,9 +11,9 @@ NBC_Partition_inflow::NBC_Partition_inflow(
 
   Num_LD.resize(num_nbc);
 
-  bct_velo.resize(num_nbc); num_bct_timept.resize(num_nbc);
-  actarea.resize(num_nbc);  facearea.resize(num_nbc);
-  outvec.resize(num_nbc);   centroid.resize(num_nbc);
+  bct_velo.resize(num_nbc);          num_bct_timept.resize(num_nbc);
+  actarea.resize(num_nbc);           facearea.resize(num_nbc);
+  outvec.resize(num_nbc);            centroid.resize(num_nbc);
   num_out_bc_pts.resize(num_nbc);    outline_pts.resize(num_nbc);
   cell_nLocBas.resize(num_nbc);      local_tri_ien.resize(num_nbc);
   num_local_node.resize(num_nbc);    num_local_cell.resize(num_nbc);
