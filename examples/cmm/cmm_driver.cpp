@@ -70,7 +70,7 @@ int main( int argc, char *argv[] )
   int inflow_type = 0;               // flag for determining inflow type 0 pulsatile flow; 1 linear-to-steady; 2 steady
 
   // LPN file
-  std::string lpn_file("lpn_rcr_input.txt");
+  std::string lpn_file_base("lpn_input_");
 
   // Backflow stabilization
   double bs_beta = 0.2;
@@ -136,7 +136,7 @@ int main( int argc, char *argv[] )
   SYS_T::GetOptionString("-inflow_file",     inflow_file);
   SYS_T::GetOptionReal(  "-inflow_thd_time", inflow_thd_time);
   SYS_T::GetOptionInt(   "-inflow_type",     inflow_type);
-  SYS_T::GetOptionString("-lpn_file",        lpn_file);
+  SYS_T::GetOptionString("-lpn_file_base",   lpn_file_base);
   SYS_T::GetOptionReal(  "-nl_rtol",         nl_rtol);
   SYS_T::GetOptionReal(  "-nl_atol",         nl_atol);
   SYS_T::GetOptionReal(  "-nl_dtol",         nl_dtol);
@@ -196,7 +196,7 @@ int main( int argc, char *argv[] )
   else
     SYS_T::print_fatal("Error: unrecognized inflow_type = %d. \n", inflow_type);
 
-  SYS_T::cmdPrint(      "-lpn_file:",        lpn_file);
+  SYS_T::cmdPrint(      "-lpn_file_base:",   lpn_file_base);
   SYS_T::cmdPrint(      "-nl_rtol:",         nl_rtol);
   SYS_T::cmdPrint(      "-nl_atol:",         nl_atol);
   SYS_T::cmdPrint(      "-nl_dtol:",         nl_dtol);
@@ -239,7 +239,7 @@ int main( int argc, char *argv[] )
     cmdh5w->write_intScalar(     "sol_record_freq", sol_record_freq);
     cmdh5w->write_intScalar(     "nqp_tet",         nqp_tet);
     cmdh5w->write_intScalar(     "nqp_tri",         nqp_tri);
-    cmdh5w->write_string(        "lpn_file",        lpn_file);
+    cmdh5w->write_string(        "lpn_file_base",   lpn_file_base);
     cmdh5w->write_string(        "date",            SYS_T::get_date() );
     cmdh5w->write_string(        "time",            SYS_T::get_time() );
 
@@ -438,11 +438,11 @@ int main( int argc, char *argv[] )
   // ===== LPN models =====
   std::vector<IGenBC *> gbc_list( num_gbc_types, nullptr );
 
-  gbc_list[0] = new GenBC_Resistance( lpn_file );
-  gbc_list[1] = new GenBC_RCR( lpn_file, 1000, initial_step );
-  gbc_list[2] = new GenBC_Inductance( lpn_file );
-  gbc_list[3] = new GenBC_Coronary( lpn_file, 1000, initial_step, initial_index );
-  gbc_list[4] = new GenBC_Pressure( lpn_file, initial_time );
+  gbc_list[0] = new GenBC_Resistance( lpn_file_base + "resis.txt" );
+  gbc_list[1] = new GenBC_RCR( lpn_file_base + "rcr.txt", 1000, initial_step );
+  gbc_list[2] = new GenBC_Inductance( lpn_file_base + "induc.txt" );
+  gbc_list[3] = new GenBC_Coronary( lpn_file_base + "cor.txt", 1000, initial_step, initial_index );
+  gbc_list[4] = new GenBC_Pressure( lpn_file_base + "pres.txt", initial_time );
 
   int num_ebc = 0;
   for(int ii=0; ii<num_gbc_types; ++ii)
