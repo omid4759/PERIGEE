@@ -39,8 +39,9 @@ int main( int argc, char *argv[] )
   hid_t prepcmd_file = H5Fopen("preprocessor_cmd.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
   HDF5_Reader * cmd_h5r = new HDF5_Reader( prepcmd_file );
   
-  const int cmmBC_type  = cmd_h5r -> read_intScalar("/", "cmmBC_type");
-  const int ringBC_type = cmd_h5r -> read_intScalar("/", "ringBC_type");
+  const int cmmBC_type    = cmd_h5r -> read_intScalar("/", "cmmBC_type");
+  const int ringBC_type   = cmd_h5r -> read_intScalar("/", "ringBC_type");
+  const int num_gbc_types = cmd_h5r -> read_intScalar("/", "gbcNum");
 
   delete cmd_h5r; H5Fclose(prepcmd_file);
 
@@ -435,36 +436,34 @@ int main( int argc, char *argv[] )
   PDNTimeStep * timeinfo = new PDNTimeStep(initial_index, initial_time, initial_step);
 
   // ===== LPN models =====
-  IGenBC * gbc = nullptr;
+  std::vector<IGenBC *> gbc_list( num_gbc_types, nullptr );
 
-  if( GENBC_T::get_genbc_file_type( lpn_file ) == 1  )
-    gbc = new GenBC_Resistance( lpn_file );
-  else if( GENBC_T::get_genbc_file_type( lpn_file ) == 2  )
-    gbc = new GenBC_RCR( lpn_file, 1000, initial_step );
-  else if( GENBC_T::get_genbc_file_type( lpn_file ) == 3  )
-    gbc = new GenBC_Inductance( lpn_file );
-  else if( GENBC_T::get_genbc_file_type( lpn_file ) == 4  )
-    gbc = new GenBC_Coronary( lpn_file, 1000, initial_step, initial_index );
-  else if( GENBC_T::get_genbc_file_type( lpn_file ) == 5  )
-    gbc = new GenBC_Pressure( lpn_file, initial_time );
-  else
-    SYS_T::print_fatal( "Error: GenBC input file %s format cannot be recongnized.\n", lpn_file.c_str() );
+  gbc_list[0] = new GenBC_Resistance( lpn_file );
+  gbc_list[1] = new GenBC_RCR( lpn_file, 1000, initial_step );
+  gbc_list[2] = new GenBC_Inductance( lpn_file );
+  gbc_list[3] = new GenBC_Coronary( lpn_file, 1000, initial_step, initial_index );
+  gbc_list[4] = new GenBC_Pressure( lpn_file, initial_time );
 
-  gbc -> print_info();
+  int num_ebc = 0;
+  for(int ii=0; ii<num_gbc_types; ++ii)
+  {
+    gbc_list[ii] -> print_info();
+    num_ebc += gbc_list[ii] -> get_num_ebc(); 
+  }
 
   // Make sure the gbc number of faces matches that of ALocal_EBC
-  SYS_T::print_fatal_if(gbc->get_num_ebc() != locebc->get_num_ebc(),
+  SYS_T::print_fatal_if( num_ebc != locebc->get_num_ebc(),
       "Error: GenBC number of faces does not match with that in ALocal_EBC.\n");
 
   // ===== Global assembly =====
   SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
 
   IPGAssem * gloAssem_ptr = new PGAssem_Tet_CMM_GenAlpha( locAssem_ptr, elements, quads,
-      GMIptr, locElem, locIEN, pNode, locnbc, locringnbc, locebc, gbc, nz_estimate );
+      GMIptr, locElem, locIEN, pNode, locnbc, locringnbc, locebc, gbc_list, nz_estimate );
 
   SYS_T::commPrint("===> Assembly nonzero estimate matrix ... \n");
   gloAssem_ptr->Assem_nonzero_estimate( locElem, locAssem_ptr,
-      elements, quads, locIEN, pNode, locnbc, locringnbc, locebc, gbc );
+      elements, quads, locIEN, pNode, locnbc, locringnbc, locebc, gbc_list );
 
   SYS_T::commPrint("===> Matrix nonzero structure fixed. \n");
   gloAssem_ptr->Fix_nonzero_err_str();
@@ -533,11 +532,11 @@ int main( int argc, char *argv[] )
         sol, locAssem_ptr, elements, quads, locebc, ff );
 
     // set the gbc initial conditions using the 3D data
-    gbc -> reset_initial_sol( ff, face_flrate, face_avepre, timeinfo->get_time(), is_restart );
+    gbc_list -> reset_initial_sol( ff, face_flrate, face_avepre, timeinfo->get_time(), is_restart );
 
     const double dot_lpn_flowrate = dot_face_flrate;
     const double lpn_flowrate = face_flrate;
-    const double lpn_pressure = gbc -> get_P( ff, dot_lpn_flowrate, lpn_flowrate, timeinfo->get_time() );
+    const double lpn_pressure = gbc_list -> get_P( ff, dot_lpn_flowrate, lpn_flowrate, timeinfo->get_time() );
 
     // Create the txt files and write the initial flow rates
     if(rank == 0)
@@ -565,7 +564,7 @@ int main( int argc, char *argv[] )
   MPI_Barrier(PETSC_COMM_WORLD);
 
   // Write all 0D solutions into a file
-  if( rank == 0 ) gbc -> write_0D_sol ( initial_index, initial_time );
+  if( rank == 0 ) gbc_list -> write_0D_sol ( initial_index, initial_time );
 
   // ===== Inlet data recording files =====
   for(int ff=0; ff<locinfnbc->get_num_nbc(); ++ff)
@@ -601,19 +600,20 @@ int main( int argc, char *argv[] )
 
   tsolver->TM_CMM_GenAlpha(is_restart, base, dot_sol, sol, dot_sol_wall_disp, sol_wall_disp,
       tm_galpha_ptr, timeinfo, inflow_rate_ptr, locElem, locIEN, pNode, fNode,
-      locnbc, locinfnbc, locringnbc, locebc, locebc_wall, gbc, pmat, elementv, elements, elementw,
+      locnbc, locinfnbc, locringnbc, locebc, locebc_wall, gbc_list, pmat, elementv, elements, elementw,
       quadv, quads, locAssem_ptr, gloAssem_ptr, lsolver, nsolver);
 
   // ===== Print complete solver info =====
   lsolver -> print_info();
 
   // ===== Deallocate memory =====
+  for( auto gbc : gbc_list ) delete gbc; 
   delete fNode; delete locIEN; delete GMIptr; delete PartBasic; delete locElem;
   delete locnbc; delete locinfnbc; delete locringnbc; delete locebc; delete locebc_wall;
   delete pNode; delete inflow_rate_ptr; delete quadv; delete quads; delete elementv;
   delete elements; delete elementw; delete pmat; delete tm_galpha_ptr;
   delete locAssem_ptr; delete base; delete sol; delete dot_sol;
-  delete sol_wall_disp; delete dot_sol_wall_disp; delete timeinfo; delete gbc;
+  delete sol_wall_disp; delete dot_sol_wall_disp; delete timeinfo;
   delete gloAssem_ptr; delete lsolver; delete nsolver; delete tsolver;
 
   PetscFinalize();

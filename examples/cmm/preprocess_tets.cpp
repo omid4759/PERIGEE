@@ -43,6 +43,8 @@ int main( int argc, char * argv[] )
   // Define basic problem settins
   const int dofNum = 4; // degree-of-freedom for the physical problem
   const int dofMat = 4; // degree-of-freedom in the matrix problem
+  const int gbcNum = 5; // number of genBC types
+
   const std::string part_file("./apart/part");
   
   // Element options: 501 linear tets, 502 quadratic tets
@@ -132,6 +134,7 @@ int main( int argc, char * argv[] )
   cout << "---- Problem definition ----\n";
   cout << " dofNum: "            << dofNum            << endl;
   cout << " dofMat: "            << dofMat            << endl;
+  cout << " gbcNum: "            << gbcNum            << endl;
   cout << "====  Command Line Arguments/ ===="<<endl;
 
   // Check if the vtu geometry files exist on disk
@@ -193,6 +196,7 @@ int main( int argc, char * argv[] )
   cmdh5w->write_intScalar("in_ncommon",     in_ncommon);
   cmdh5w->write_intScalar("dofNum",         dofNum);
   cmdh5w->write_intScalar("dofMat",         dofMat);
+  cmdh5w->write_intScalar("gbcNum",         gbcNum);
   cmdh5w->write_intScalar("elemType",       elemType);
   cmdh5w->write_intScalar("ringBC_type",    ringBC_type);
   cmdh5w->write_intScalar("cmmBC_type",     cmmBC_type);
