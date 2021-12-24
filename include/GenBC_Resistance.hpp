@@ -24,6 +24,8 @@ class GenBC_Resistance : public IGenBC
 
     virtual int get_num_ebc() const {return num_ebc;}
 
+    virtual std::vector<int> get_ebc_ids() const {return ebc_ids;}
+
     // We do not perform boundary check. Users are responsible to
     // make sure 0 <= ii < num_ebc;
     virtual double get_m( const int &ii, const double &dot_Q, const double &Q ) const
@@ -60,6 +62,9 @@ class GenBC_Resistance : public IGenBC
 
   private:
     int num_ebc; // number of elemental boundary faces
+
+    // vector storing all ebc_ids
+    std::vector<int> ebc_ids;
     
     // vector storing the resistance and pressure offset values
     // on the faces, with length num_ebc

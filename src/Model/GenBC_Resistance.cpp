@@ -32,33 +32,30 @@ GenBC_Resistance::GenBC_Resistance( const std::string &lpn_filename )
       || bc_type.compare("resistance") == 0 
       || bc_type.compare("RESISTANCE") == 0 )
   {
-    resis.resize( num_ebc ); pres_offset.resize( num_ebc );
-    Q0.resize( num_ebc ); P0.resize( num_ebc );
+    resis.clear(); pres_offset.clear(); Q0.clear(); P0.clear();
+    ebc_ids.clear();
   }
   else SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Resistance.\n", lpn_filename.c_str());
  
   // Read files for each ebc to define the parameters for LPN
-  int counter = 0;
   while( std::getline(reader, sline) )
   {
     if( sline[0] != '#' && !sline.empty() )
     {
       sstrm.str( sline );
       int face_id;
-      sstrm >> face_id;
-      
-      if(face_id != counter) SYS_T::print_fatal("Error: GenBC_Resistance the input file %s has wrong format in the face id column (the first column). \n", lpn_filename.c_str());
-      
-      sstrm >> resis[ counter ];
-      sstrm >> pres_offset[ counter ];
+      double res, pd;
 
+      sstrm >> face_id >> res >> pd;
       sstrm.clear();
-      
-      counter += 1;
+
+      resis.push_back( res );
+      pres_offset.push_back( pd );
+      ebc_ids.push_back( face_id );
     }
   }
 
-  if(counter != num_ebc ) SYS_T::print_fatal("Error: GenBC_Resistance the input file %s does not contain complete data for outlet faces. \n", lpn_filename.c_str());
+  if( (int) ebc_ids.size() != num_ebc ) SYS_T::print_fatal("Error: GenBC_Resistance the input file %s does not contain complete data for outlet faces. \n", lpn_filename.c_str());
 
   reader.close();
 

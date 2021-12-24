@@ -26,10 +26,15 @@ class IGenBC
     virtual void print_info() const = 0;
 
     // --------------------------------------------------------------
-    // return the number of faces with elemental boundary condtiions.
-    // This value is assumed to match the num_ebc in ALocal_EBC. 
+    // return the number of faces with this elemental boundary condition.
+    // The sum of all num_ebc's is assumed to match the num_ebc in ALocal_EBC. 
     // --------------------------------------------------------------
     virtual int get_num_ebc() const = 0;
+
+    // --------------------------------------------------------------
+    // return all ebc_ids with this elemental boundary condition.
+    // --------------------------------------------------------------
+    virtual std::vector<int> get_ebc_ids() const = 0;
 
     // --------------------------------------------------------------
     // Get the dP/dQ for surface ii
