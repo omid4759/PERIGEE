@@ -57,6 +57,8 @@ class GenBC_Coronary : public IGenBC
 
     virtual int get_num_ebc() const { return num_ebc; }
 
+    virtual std::vector<int> get_ebc_ids() const { return ebc_ids; }
+
     virtual double get_m( const int &ii, const double &in_dot_Q, const double &in_Q ) const;
 
     virtual double get_n( const int &ii, const double &in_dot_Q, const double &in_Q ) const 
@@ -92,6 +94,9 @@ class GenBC_Coronary : public IGenBC
 
     // Total number of outlet surfaces
     int num_ebc;
+
+    // vector storing all ebc_ids
+    std::vector<int> ebc_ids;
 
     // Vectors storing the Ra, Ca, Ra_micro, Cim, Rv, Pd, and alpha_Pim.
     // alpha_Pim stores the scaling values for all coronary outlet faces. 
@@ -134,9 +139,6 @@ class GenBC_Coronary : public IGenBC
     // face (which is a coronary outlet) and output the ODE derivatives to K.
     void F_coronary( const int &ii, const double * const &pi, const double &q, 
         const double &dPimdt, double * const &K ) const;
-
-    // Evaluate the RCR ODE for the ii-th outlet face and return the result.
-    double F_RCR( const int &ii, const double &pi, const double &q ) const;
 
     // Pre-compute dPim/dt at the begining of the ODE integration for the 
     // ii-th outlet face, 0 <= ii < num_ebc
