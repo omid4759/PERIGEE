@@ -101,6 +101,8 @@ GenBC_Pressure::GenBC_Pressure( const std::string &lpn_filename, const double &i
     // Finish reading the file and close it
     reader.close();
 
+    SYS_T::commPrint( "===> GenBC_Pressure data are read in from %s.\n", lpn_filename.c_str() );
+
     // Initialize P0 by setting it to be get_P at time = 0.0
     P0.resize( num_ebc );
     for(int ii = 0; ii < num_ebc; ++ii)

@@ -36,6 +36,8 @@ GenBC_Resistance::GenBC_Resistance( const std::string &lpn_filename )
     {
       SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Resistance.\n", lpn_filename.c_str());
     }
+
+    Q0.resize(num_ebc); P0.resize(num_ebc);
  
     // Read files for each ebc to define the parameters for LPN
     while( std::getline(reader, sline) )
