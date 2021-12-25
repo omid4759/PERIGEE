@@ -4,6 +4,7 @@ GenBC_Inductance::GenBC_Inductance( const std::string &lpn_filename )
 {
   num_ebc = 0;
   induct.clear(); pres_offset.clear(); ebc_ids.clear();
+  Q0.clear(); P0.clear();
 
   // Now read the values of induct_L and induct_p from disk file lpn_filename
   if( SYS_T::file_exist( lpn_filename ) )

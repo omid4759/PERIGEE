@@ -7,6 +7,7 @@ GenBC_RCR::GenBC_RCR( const std::string &lpn_filename, const int &in_N,
 {
   num_ebc = 0;
   Rp.clear(); C.clear(); Rd.clear(); Pd.clear(); ebc_ids.clear();
+  Q0.clear(); Pi0.clear();
 
   // Now read the lpn files for num_ebc, Rd, C, and Rp
   if( SYS_T::file_exist( lpn_filename ) ) 
