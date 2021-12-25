@@ -5,75 +5,79 @@ GenBC_RCR::GenBC_RCR( const std::string &lpn_filename, const int &in_N,
 : N( in_N ), h( dt3d/static_cast<double>(N) ),
   absTol( 1.0e-8 ), relTol( 1.0e-5 )
 {
+  num_ebc = 0;
+  Rp.clear(); C.clear(); Rd.clear(); Pd.clear(); ebc_ids.clear();
+
   // Now read the lpn files for num_ebc, Rd, C, and Rp
-  SYS_T::file_check( lpn_filename ); // make sure the file is on the disk
-
-  std::ifstream reader;
-  reader.open( lpn_filename.c_str(), std::ifstream::in );
-
-  std::istringstream sstrm;
-  std::string sline;
-  std::string bc_type;
-
-  // The first non-commented line should be
-  // RCR num_ebc
-  while( std::getline(reader, sline) )
+  if( SYS_T::file_exist( lpn_filename ) ) 
   {
-    if( sline[0] != '#' && !sline.empty() )
+
+    std::ifstream reader;
+    reader.open( lpn_filename.c_str(), std::ifstream::in );
+
+    std::istringstream sstrm;
+    std::string sline;
+    std::string bc_type;
+
+    // The first non-commented line should be
+    // RCR num_ebc
+    while( std::getline(reader, sline) )
     {
-      sstrm.str(sline);
-      sstrm >> bc_type;
-      sstrm >> num_ebc;
-      sstrm.clear();
-      break;
+      if( sline[0] != '#' && !sline.empty() )
+      {
+        sstrm.str(sline);
+        sstrm >> bc_type >> num_ebc;
+        sstrm.clear();
+        break;
+      }
     }
-  }
 
-  // Check the file's bc_type matches RCR
-  if( bc_type.compare("RCR") ==0 
-      || bc_type.compare("rcr") == 0 
-      || bc_type.compare("Rcr") == 0 )
-  {
-    Rp.clear(); C.clear(); Rd.clear(); Pd.clear(); ebc_ids.clear();
-    Q0.resize( num_ebc ); Pi0.resize( num_ebc );
-  }
-  else SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Resistance.\n", lpn_filename.c_str());
-
-  // Read files for each ebc to set the values of Rp, C, and Rd
-  while( std::getline(reader, sline) )
-  {
-    if( sline[0] != '#' && !sline.empty() )
+    // Check the file's bc_type matches RCR
+    if( bc_type.compare("RCR") != 0 
+        && bc_type.compare("rcr") != 0 
+        && bc_type.compare("Rcr") != 0 )
     {
-      sstrm.str( sline );
-      int face_id;
-      double rp, c, rd, pd;
-
-      sstrm >> face_id >> rp >> c >> rd >> pd;
-      sstrm.clear();
-
-      Rp.push_back( rp );
-      C.push_back(   c );
-      Rd.push_back( rd );
-      Pd.push_back( pd );
-      ebc_ids.push_back( face_id );
+      SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Resistance.\n", lpn_filename.c_str());
     }
-  }
 
-  if( (int) ebc_ids.size() != num_ebc ) SYS_T::print_fatal("Error: GenBC_RCR the input file %s does not contain complete data for outlet faces. \n", lpn_filename.c_str());
+     Q0.resize( num_ebc ); Pi0.resize( num_ebc );
 
-  reader.close();
+    // Read files for each ebc to set the values of Rp, C, and Rd
+    while( std::getline(reader, sline) )
+    {
+      if( sline[0] != '#' && !sline.empty() )
+      {
+        sstrm.str( sline );
+        int face_id;
+        double rp, c, rd, pd;
 
-  SYS_T::commPrint( "===> GenBC_RCR data are read in from %s.\n", lpn_filename.c_str() );
+        sstrm >> face_id >> rp >> c >> rd >> pd;
+        sstrm.clear();
 
-  // Set a zero initial value. They should be reset based on the initial
-  // 3D solutions.
-  for(int ii=0; ii<num_ebc; ++ii)
-  {
-    Q0[ii] = 0.0; Pi0[ii] = 0.0;
+        Rp.push_back( rp );
+        C.push_back(   c );
+        Rd.push_back( rd );
+        Pd.push_back( pd );
+        ebc_ids.push_back( face_id );
+      }
+    }
 
-    // Make sure C and Rd are nonzero  
-    SYS_T::print_fatal_if(C[ii]==0.0, "Error: GenBC_RCR C cannot be zero.\n");
-    SYS_T::print_fatal_if(Rd[ii]==0.0, "Error: GenBC_RCR Rd cannot be zero.\n");
+    if( (int) ebc_ids.size() != num_ebc ) SYS_T::print_fatal("Error: GenBC_RCR the input file %s does not contain complete data for outlet faces. \n", lpn_filename.c_str());
+
+    reader.close();
+
+    SYS_T::commPrint( "===> GenBC_RCR data are read in from %s.\n", lpn_filename.c_str() );
+
+    // Set a zero initial value. They should be reset based on the initial
+    // 3D solutions.
+    for(int ii=0; ii<num_ebc; ++ii)
+    {
+      Q0[ii] = 0.0; Pi0[ii] = 0.0;
+
+      // Make sure C and Rd are nonzero  
+      SYS_T::print_fatal_if(C[ii]==0.0, "Error: GenBC_RCR C cannot be zero.\n");
+      SYS_T::print_fatal_if(Rd[ii]==0.0, "Error: GenBC_RCR Rd cannot be zero.\n");
+    }
   }
 }
 
