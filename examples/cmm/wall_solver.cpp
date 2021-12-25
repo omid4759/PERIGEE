@@ -262,7 +262,7 @@ int main( int argc, char *argv[] )
 
   // The following objects are not needed in the prestress wall solver
   ICVFlowRate * inflow_rate_ptr = nullptr;
-  IGenBC * gbc = nullptr;
+  std::vector<IGenBC *> gbc_list; gbc_list.clear();
   ALocal_Inflow_NodalBC * locinfnbc = nullptr;
   ALocal_EBC * locebc = nullptr;
   IQuadPts * quadv = nullptr;
@@ -270,7 +270,7 @@ int main( int argc, char *argv[] )
   tsolver->TM_Prestress( is_record_sol, prestress_disp_tol, 
       base, dot_sol, sol, dot_sol_wall_disp, sol_wall_disp,
       tm_galpha_ptr, timeinfo, inflow_rate_ptr, locElem, locIEN, pNode, fNode,
-      locnbc, locinfnbc, locringnbc, locebc, locebc_wall, gbc, pmat, elementv, elements, elementw,
+      locnbc, locinfnbc, locringnbc, locebc, locebc_wall, gbc_list, pmat, elementv, elements, elementw,
       quadv, quads, locAssem_ptr, gloAssem_ptr, lsolver, nsolver );
 
   // ===== Append wall prestress to h5 file =====
