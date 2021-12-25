@@ -446,17 +446,24 @@ int main( int argc, char *argv[] )
 
   int num_ebc = 0;
   std::vector<int> ebc_ids; ebc_ids.clear();
-  for( const auto& gbc : gbc_list )
+  std::vector<int> gbc_type( locebc->get_num_ebc(), 0);
+  std::vector<int> gbc_idx(  locebc->get_num_ebc(), 0);
+
+  for( int ii=0; ii<num_gbc_types; ++ii )
   {
-    gbc -> print_info();
-    num_ebc += gbc -> get_num_ebc(); 
-    for( int jj = 0; jj < gbc->get_num_ebc(); ++jj )
+    gbc_list[ii] -> print_info();
+    num_ebc += gbc_list[ii] -> get_num_ebc(); 
+    for( int jj = 0; jj < gbc_list[ii]->get_num_ebc(); ++jj )
     {
-      if(  gbc->get_ebc_id(jj) < locebc->get_num_ebc() )
-        ebc_ids.push_back( gbc->get_ebc_id(jj) );
+      int idx = gbc_list[ii]->get_ebc_id(jj);
+      if( idx < locebc->get_num_ebc() )
+      {
+        ebc_ids.push_back( idx );
+        gbc_type[ idx ] = ii;
+        gbc_idx[  idx ] = jj;
+      }
       else
         SYS_T::print_fatal("Error: Expecting GenBC ebc_id < num_ebc.\n");
-
     }
   }
 
@@ -466,7 +473,7 @@ int main( int argc, char *argv[] )
   SYS_T::print_fatal_if( num_ebc != locebc->get_num_ebc(),
       "Error: GenBC number of faces does not match with that in ALocal_EBC.\n");
 
-  SYS_T::print_fatal_if( num_ebc != (int) ebc_ids,
+  SYS_T::print_fatal_if( num_ebc != (int) ebc_ids.size(),
       "Error: GenBC not specified for all ebc faces.\n");
 
   // ===== Global assembly =====
@@ -546,11 +553,13 @@ int main( int argc, char *argv[] )
         sol, locAssem_ptr, elements, quads, locebc, ff );
 
     // set the gbc initial conditions using the 3D data
-    gbc_list -> reset_initial_sol( ff, face_flrate, face_avepre, timeinfo->get_time(), is_restart );
+    gbc_list[ gbc_type[ff] ] -> reset_initial_sol( gbc_idx[ff], face_flrate, face_avepre,
+        timeinfo->get_time(), is_restart );
 
     const double dot_lpn_flowrate = dot_face_flrate;
     const double lpn_flowrate = face_flrate;
-    const double lpn_pressure = gbc_list -> get_P( ff, dot_lpn_flowrate, lpn_flowrate, timeinfo->get_time() );
+    const double lpn_pressure = gbc_list[ gbc_type[ff] ] -> get_P( gbc_idx[ff],
+        dot_lpn_flowrate, lpn_flowrate, timeinfo->get_time() );
 
     // Create the txt files and write the initial flow rates
     if(rank == 0)
@@ -578,7 +587,8 @@ int main( int argc, char *argv[] )
   MPI_Barrier(PETSC_COMM_WORLD);
 
   // Write all 0D solutions into a file
-  if( rank == 0 ) gbc_list -> write_0D_sol ( initial_index, initial_time );
+  if( rank == 0 )
+    for (const auto& gbc : gbc_list ) gbc -> write_0D_sol ( initial_index, initial_time );
 
   // ===== Inlet data recording files =====
   for(int ff=0; ff<locinfnbc->get_num_nbc(); ++ff)
