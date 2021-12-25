@@ -28,10 +28,8 @@ class GenBC_Resistance : public IGenBC
 
     // We do not perform boundary check. Users are responsible to
     // make sure 0 <= ii < num_ebc;
-    virtual double get_m( const int &ii, const double &dot_Q, const double &Q ) const
-    {
-      return resis[ii];
-    }
+    virtual double get_m( const int &ii, const double &dot_Q, const double &Q,
+        const double &curr_time ) const;
 
     // We do not perform boundary check. Users are responsible to
     // make sure 0 <= ii < num_ebc;
@@ -43,7 +41,7 @@ class GenBC_Resistance : public IGenBC
     // We do not perform boundary check. Users are responsible to
     // make sure 0 <= ii < num_ebc;
     virtual double get_P( const int &ii, const double &dot_Q, const double &Q,
-       const double &time = 0.0 ) const;
+       const double &curr_time = 0.0 ) const;
 
     virtual double get_P0( const int &ii ) const
     {
@@ -58,6 +56,10 @@ class GenBC_Resistance : public IGenBC
     }
 
   private:
+
+    // Determine interval for linear interpolation
+    int get_interp_ttn( const int &ii, const double &curr_time ) const;
+
     int num_ebc; // number of elemental boundary faces
 
     // vector storing all ebc_ids

@@ -55,6 +55,7 @@ GenBC_Resistance::GenBC_Resistance( const std::string &lpn_filename )
           SYS_T::print_fatal_if( num_timept < 2,
               "Error: GenBC_Resistance number of timepoints must be >= 2. \n" );
 
+          time[ii].resize( num_timept );
           resis[ii].resize( num_timept );
           pres_offset[ii].resize( num_timept );
 
@@ -97,7 +98,7 @@ void GenBC_Resistance::print_info() const
   for(int ii=0; ii<num_ebc; ++ii)
   {
     SYS_T::commPrint( "     ebcid = %d, num_timept = %d \n", ebc_ids[ii], (int) resis[ii].size() );
-    if( resis[ii],size() < 10)
+    if( resis[ii].size() < 10)
     {
       for( int tt = 0; tt < (int) resis[ii].size(); ++tt )
         SYS_T::commPrint( "     t = %e, R = %e, Pd = %e \n", time[ii][tt], resis[ii][tt], pres_offset[ii][tt] );
@@ -105,34 +106,56 @@ void GenBC_Resistance::print_info() const
   }
 }
 
-double GenBC_Resistance::get_P( const int &ii, const double &dot_Q, const double &Q,
-       const double &time ) const
+double GenBC_Resistance::get_m( const int &ii, const double &dot_Q, const double &Q,
+    const double &curr_time ) const
 {
-  // Determine interval for linear interpolation
   const int num_timept = time[ii].size();
   const double period = time[ii][num_timept - 1];
-  const double time_fmod = std::fmod( time, period );
+  const double time_fmod = std::fmod( curr_time, period );
 
-  int tt_n;
-  double dt, res, pd;
+  const int tt_n = get_interp_ttn( ii, curr_time );
+  const double dt = time[ii][tt_n + 1] - time[ii][tt_n]; 
+
+  const double res = ( resis[ii][tt_n] * ( time[ii][tt_n + 1] - time_fmod ) +
+      resis[ii][tt_n + 1] * ( time_fmod - time[ii][tt_n] ) ) / dt;
+
+  return res;
+}
+
+double GenBC_Resistance::get_P( const int &ii, const double &dot_Q, const double &Q,
+       const double &curr_time ) const
+{
+  const int num_timept = time[ii].size();
+  const double period = time[ii][num_timept - 1];
+  const double time_fmod = std::fmod( curr_time, period );
+
+  const int tt_n = get_interp_ttn( ii, curr_time );
+  const double dt = time[ii][tt_n + 1] - time[ii][tt_n]; 
+
+  const double res = ( resis[ii][tt_n] * ( time[ii][tt_n + 1] - time_fmod ) +
+      resis[ii][tt_n + 1] * ( time_fmod - time[ii][tt_n] ) ) / dt;
+
+  const double pd = ( pres_offset[ii][tt_n] * ( time[ii][tt_n + 1] - time_fmod ) +
+      pres_offset[ii][tt_n + 1] * ( time_fmod - time[ii][tt_n] ) ) / dt;
+
+  return res * Q + pd;
+}
+
+
+int GenBC_Resistance::get_interp_ttn( const int &ii, const double &curr_time ) const
+{
+  const int num_timept = time[ii].size();
+  const double period = time[ii][num_timept - 1];
+  const double time_fmod = std::fmod( curr_time, period );
 
   for(int tt = 0; tt < num_timept - 1; ++tt)
   {
     if( time_fmod >= time[ii][tt] && time_fmod < time[ii][tt + 1] )
-    {
-      tt_n = tt;
-      dt = time[ii][tt + 1] - time[ii][tt];
-      break;
-    }
+      return tt;
   }
 
-  res = ( res[ii][tt_n] * ( time[ii][tt_n + 1] - time_fmod ) +
-      res[ii][tt_n + 1] * ( time_fmod - time[ii][tt_n] ) ) / dt;
-
-  pd = ( pres_offset[ii][tt_n] * ( time[ii][tt_n + 1] - time_fmod ) +
-      pres_offset[ii][tt_n + 1] * ( time_fmod - time[ii][tt_n] ) ) / dt;
-
-  return res * Q + pd;
+  SYS_T::print_fatal("Error: GenBC_Resistance interpolation tt_n not found.\n");
+  return -1;
 }
 
 // EOF

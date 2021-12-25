@@ -1343,7 +1343,8 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_KG(
     const double resis_val = P_n + a_f * (P_np1 - P_n);
 
     // Get the (potentially approximated) m := dP/dQ
-    const double m_val = gbc_list[ gbc_type[ebc_id] ] -> get_m( gbc_idx[ebc_id], dot_flrate, flrate );
+    const double m_val = gbc_list[ gbc_type[ebc_id] ] -> get_m( gbc_idx[ebc_id], dot_flrate, flrate,
+        curr_time + dt );
 
     // Get the (potentially approximated) n := dP/d(dot_Q)
     const double n_val = gbc_list[ gbc_type[ebc_id] ] -> get_n( gbc_idx[ebc_id], dot_flrate, flrate );

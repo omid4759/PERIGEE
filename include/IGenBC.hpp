@@ -44,7 +44,7 @@ class IGenBC
     // the resistance value on this bc.
     // --------------------------------------------------------------
     virtual double get_m( const int &ii, const double &dot_Q,
-       const double &Q ) const = 0;
+       const double &Q, const double &time ) const = 0;
 
     // --------------------------------------------------------------
     // Get the dP/d(dot_Q) for surface ii
