@@ -140,6 +140,7 @@ void PTime_CMM_Solver::TM_CMM_GenAlpha(
   if( ebc_part->get_num_ebc() > 0 )
   {
     gbc_type.resize( ebc_part->get_num_ebc() );
+    gbc_idx.resize(  ebc_part->get_num_ebc() );
 
     for( int ii = 0; ii < (int) gbc_list.size(); ++ii )
     {    

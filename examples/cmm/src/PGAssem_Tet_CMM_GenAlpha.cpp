@@ -1208,6 +1208,7 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_G(
   if( num_ebc > 0 )
   {
     gbc_type.resize(num_ebc);
+    gbc_idx.resize(num_ebc);
 
     for( int ii = 0; ii < (int) gbc_list.size(); ++ii )
     {
@@ -1310,6 +1311,7 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_KG(
   if( num_ebc > 0 )
   {
     gbc_type.resize(num_ebc);
+    gbc_idx.resize(num_ebc);
 
     for( int ii = 0; ii < (int) gbc_list.size(); ++ii )
     {
