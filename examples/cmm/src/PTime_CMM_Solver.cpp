@@ -78,7 +78,7 @@ void PTime_CMM_Solver::TM_CMM_GenAlpha(
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
     const ALocal_EBC * const &ebc_wall_part,
-    IGenBC * const &gbc,
+    const std::vector<IGenBC *> &gbc_list,
     const Matrix_PETSc * const &bc_mat,
     FEAElement * const &elementv,
     FEAElement * const &elements,
@@ -134,6 +134,23 @@ void PTime_CMM_Solver::TM_CMM_GenAlpha(
       time_info->get_time(), time_info->get_step(), time_info->get_index(),
       SYS_T::get_time().c_str());
 
+  std::vector<int> gbc_type; gbc_type.clear();
+  std::vector<int> gbc_idx;  gbc_idx.clear();
+
+  if( ebc_part->get_num_ebc() > 0 )
+  {
+    gbc_type.resize( ebc_part->get_num_ebc() );
+
+    for( int ii = 0; ii < (int) gbc_list.size(); ++ii )
+    {    
+      for( int jj = 0; jj < gbc_list[ii]->get_num_ebc(); ++jj )
+      {    
+        gbc_type[ gbc_list[ii]->get_ebc_id(jj) ] = ii;
+        gbc_idx[  gbc_list[ii]->get_ebc_id(jj) ] = jj;
+      }    
+    }    
+  }
+
   // Enter into time integration
   while( time_info->get_time() < final_time )
   {
@@ -153,7 +170,7 @@ void PTime_CMM_Solver::TM_CMM_GenAlpha(
         time_info->get_time(), time_info->get_step(), 
         sol_base, pre_dot_sol, pre_sol, pre_dot_sol_wall_disp, pre_sol_wall_disp,
         tmga_ptr, flr_ptr, alelem_ptr, lien_ptr, anode_ptr, feanode_ptr,
-        nbc_part, infnbc_part, ringnbc_part, ebc_part, ebc_wall_part, gbc, bc_mat,
+        nbc_part, infnbc_part, ringnbc_part, ebc_part, ebc_wall_part, gbc_list, bc_mat,
         elementv, elements, elementw, quad_v, quad_s, lassem_fluid_ptr, gassem_ptr,
         lsolver_ptr, cur_dot_sol, cur_sol, cur_dot_sol_wall_disp, cur_sol_wall_disp,
         nl_counter );
@@ -201,11 +218,12 @@ void PTime_CMM_Solver::TM_CMM_GenAlpha(
       // Calculate the 0D pressure from LPN model
       const double dot_lpn_flowrate = dot_face_flrate;
       const double lpn_flowrate = face_flrate;
-      const double lpn_pressure = gbc -> get_P( face, dot_lpn_flowrate, lpn_flowrate, 
-          time_info->get_time() );
+      const double lpn_pressure = gbc_list[ gbc_type[face] ] -> get_P( gbc_idx[face],
+          dot_lpn_flowrate, lpn_flowrate, time_info->get_time() );
 
       // Update the initial values in genbc
-      gbc -> reset_initial_sol( face, lpn_flowrate, lpn_pressure, time_info->get_time(), false );
+      gbc_list[ gbc_type[face] ] -> reset_initial_sol( gbc_idx[face],
+          lpn_flowrate, lpn_pressure, time_info->get_time(), false );
 
       // On CPU 0, write the time, flow rate, averaged pressure, and 0D calculated
       // pressure into the txt file, which is first generated in the driver
@@ -221,7 +239,7 @@ void PTime_CMM_Solver::TM_CMM_GenAlpha(
    
     // Write all 0D solutions into a file
     if( SYS_T::get_MPI_rank() == 0 )
-      gbc -> write_0D_sol ( time_info->get_index(), time_info->get_time() );
+      for( const auto &gbc : gbc_list) gbc -> write_0D_sol ( time_info->get_index(), time_info->get_time() );
 
     MPI_Barrier(PETSC_COMM_WORLD);
 
@@ -278,7 +296,7 @@ void PTime_CMM_Solver::TM_Prestress(
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
     ALocal_EBC * const &ebc_wall_part,
-    IGenBC * const &gbc,
+    const std::vector<IGenBC *> &gbc_list,
     const Matrix_PETSc * const &bc_mat,
     FEAElement * const &elementv,
     FEAElement * const &elements,
@@ -341,7 +359,7 @@ void PTime_CMM_Solver::TM_Prestress(
         time_info->get_time(), time_info->get_step(), 
         sol_base, pre_dot_sol, pre_sol, pre_dot_sol_wall_disp, pre_sol_wall_disp,
         tmga_ptr, flr_ptr, alelem_ptr, lien_ptr, anode_ptr, feanode_ptr,
-        nbc_part, infnbc_part, ringnbc_part, ebc_part, ebc_wall_part, gbc, bc_mat,
+        nbc_part, infnbc_part, ringnbc_part, ebc_part, ebc_wall_part, gbc_list, bc_mat,
         elementv, elements, elementw, quad_v, quad_s, lassem_fluid_ptr, gassem_ptr,
         lsolver_ptr, cur_dot_sol, cur_sol, cur_dot_sol_wall_disp, cur_sol_wall_disp,
         prestress_conv_flag, nl_counter );
