@@ -445,15 +445,23 @@ int main( int argc, char *argv[] )
   gbc_list[4] = new GenBC_Pressure( lpn_file_base + "pres.txt", initial_time );
 
   int num_ebc = 0;
-  for(int ii=0; ii<num_gbc_types; ++ii)
+  std::vector<int> ebc_ids; ebc_ids.clear();
+  for( auto gbc : gbc_list )
   {
-    gbc_list[ii] -> print_info();
-    num_ebc += gbc_list[ii] -> get_num_ebc(); 
+    gbc -> print_info();
+    num_ebc += gbc -> get_num_ebc(); 
+    for( int jj = 0; jj < gbc->get_num_ebc(); ++jj )
+      ebc_ids.push_back( gbc->get_ebc_id(jj) );
   }
+
+  VEC_T::sort_unique_resize( ebc_ids );
 
   // Make sure the gbc number of faces matches that of ALocal_EBC
   SYS_T::print_fatal_if( num_ebc != locebc->get_num_ebc(),
       "Error: GenBC number of faces does not match with that in ALocal_EBC.\n");
+
+  SYS_T::print_fatal_if( num_ebc != (int) ebc_ids,
+      "Error: GenBC not specified for all ebc faces.\n");
 
   // ===== Global assembly =====
   SYS_T::commPrint("===> Initializing Mat K and Vec G ... \n");
