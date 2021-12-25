@@ -23,6 +23,8 @@ class GenBC_Pressure : public IGenBC
 
     virtual int get_num_ebc() const {return num_ebc;}
 
+    virtual std::vector<int> get_ebc_ids() const {return ebc_ids;}
+
     virtual double get_m( const int &ii, const double &dot_Q, const double &Q ) const
     {
       return 0.0;
@@ -49,6 +51,9 @@ class GenBC_Pressure : public IGenBC
 
   private:
     int num_ebc;
+
+    // vector storing all ebc_ids
+    std::vector<int> ebc_ids;
 
     // length num_ebc x num_of_mode[ii], 0 <= ii < num_ebc
     std::vector< std::vector<double> > coef_a, coef_b;
