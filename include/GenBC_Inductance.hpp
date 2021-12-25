@@ -30,7 +30,7 @@ class GenBC_Inductance : public IGenBC
     // We do not perform boundary check. Users are responsible to
     // make sure 0 <= ii < num_ebc;
     virtual double get_m( const int &ii, const double &dot_Q,
-       const double &Q ) const
+       const double &Q, const double &curr_time ) const
     {
       return 0.0;
     }

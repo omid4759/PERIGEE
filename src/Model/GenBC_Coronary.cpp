@@ -217,7 +217,8 @@ void GenBC_Coronary::write_0D_sol( const int &curr_index, const double &curr_tim
   ofile.close();
 }
 
-double GenBC_Coronary::get_m( const int &ii, const double &in_dot_Q, const double &in_Q ) const
+double GenBC_Coronary::get_m( const int &ii, const double &in_dot_Q, const double &in_Q,
+    const double &curr_time ) const
 {
   double diff = std::abs(in_Q) * relTol;
 

@@ -25,7 +25,8 @@ class GenBC_Pressure : public IGenBC
 
     virtual int get_ebc_id( const int &ii ) const {return ebc_ids[ii];}
 
-    virtual double get_m( const int &ii, const double &dot_Q, const double &Q ) const
+    virtual double get_m( const int &ii, const double &dot_Q, const double &Q,
+        const double &curr_time) const
     {
       return 0.0;
     }

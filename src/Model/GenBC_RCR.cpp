@@ -95,7 +95,7 @@ void GenBC_RCR::print_info() const
 
 
 double GenBC_RCR::get_m( const int &ii, const double &in_dot_Q,
-   const double &in_Q ) const
+   const double &in_Q, const double &curr_time ) const
 {
   double diff = std::abs(in_Q) * relTol;
 
