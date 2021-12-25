@@ -24,6 +24,8 @@ class GenBC_RCR : public IGenBC
 
     virtual int get_num_ebc() const {return num_ebc;}
 
+    virtual std::vector<int> get_ebc_ids() const {return ebc_ids;}
+
     virtual double get_m( const int &ii, const double &in_dot_Q,
        const double &in_Q ) const;
 
@@ -58,6 +60,9 @@ class GenBC_RCR : public IGenBC
     const double absTol, relTol;
 
     int num_ebc;
+
+    // vector storing all ebc_ids
+    std::vector<int> ebc_ids;
 
     // Vectors storing the Rp, C, and Rd values on each outlet faces
     // the length of the following 4 vectors are num_ebc

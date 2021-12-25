@@ -32,33 +32,30 @@ GenBC_Inductance::GenBC_Inductance( const std::string &lpn_filename )
       || bc_type.compare("inductance") == 0 
       || bc_type.compare("INDUCTANCE") == 0 )
   {
-    induct.resize( num_ebc ); pres_offset.resize( num_ebc );
+    induct.clear(); pres_offset.clear(); ebc_ids.clear();
     Q0.resize( num_ebc ); P0.resize( num_ebc );
   }
   else SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Inductance.\n", lpn_filename.c_str());
  
   // Read files for each ebc to define the parameters for LPN
-  int counter = 0;
   while( std::getline(reader, sline) )
   {
     if( sline[0] != '#' && !sline.empty() )
     {
       sstrm.str( sline );
       int face_id;
-      sstrm >> face_id;
-      
-      if(face_id != counter) SYS_T::print_fatal("Error: GenBC_Inductance the input file %s has wrong format in the face id column (the first column). \n", lpn_filename.c_str());
-      
-      sstrm >> induct[ counter ];
-      sstrm >> pres_offset[ counter ];
+      double L, pd;
 
+      sstrm >> face_id >> L >> pd;
       sstrm.clear();
-      
-      counter += 1;
+
+      induct.push_back( L );
+      pres_offset.push_back( pd );
+      ebc_ids.push_back( face_id );  
     }
   }
 
-  if(counter != num_ebc ) SYS_T::print_fatal("Error: GenBC_Inductance the input file %s does not contain complete data for outlet faces. \n", lpn_filename.c_str());
+  if( (int) ebc_ids.size() != num_ebc ) SYS_T::print_fatal("Error: GenBC_Inductance the input file %s does not contain complete data for outlet faces. \n", lpn_filename.c_str());
 
   reader.close();
 

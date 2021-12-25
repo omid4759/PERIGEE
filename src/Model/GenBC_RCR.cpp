@@ -34,37 +34,32 @@ GenBC_RCR::GenBC_RCR( const std::string &lpn_filename, const int &in_N,
       || bc_type.compare("rcr") == 0 
       || bc_type.compare("Rcr") == 0 )
   {
-    Rd.resize( num_ebc ); C.resize( num_ebc ); 
-    Rp.resize( num_ebc ); Pd.resize( num_ebc );
+    Rp.clear(); C.clear(); Rd.clear(); Pd.clear(); ebc_ids.clear();
     Q0.resize( num_ebc ); Pi0.resize( num_ebc );
   }
   else SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Resistance.\n", lpn_filename.c_str());
 
   // Read files for each ebc to set the values of Rp, C, and Rd
-  int counter = 0;
   while( std::getline(reader, sline) )
   {
     if( sline[0] != '#' && !sline.empty() )
     {
       sstrm.str( sline );
       int face_id;
-      sstrm >> face_id;
+      double rp, c, rd, pd;
 
-      // Make sure the face_id, the first column in the file are listed
-      // from 0 to ebc_id - 1
-      if(face_id != counter) SYS_T::print_fatal("Error: GenBC_RCR the input file %s has wrong format in the face id column (the first column). \n", lpn_filename.c_str());
-
-      sstrm >> Rp[ counter ];
-      sstrm >> C[ counter ];
-      sstrm >> Rd[ counter ];
-      sstrm >> Pd[ counter ];
-
+      sstrm >> face_id >> rp >> c >> rd >> pd;
       sstrm.clear();
-      counter += 1;
+
+      Rp.push_back( rp );
+      C.push_back(   c );
+      Rd.push_back( rd );
+      Pd.push_back( pd );
+      ebc_ids.push_back( face_id );
     }
   }
 
-  if(counter != num_ebc ) SYS_T::print_fatal("Error: GenBC_RCR the input file %s does not contain complete data for outlet faces. \n", lpn_filename.c_str());
+  if( (int) ebc_ids.size() != num_ebc ) SYS_T::print_fatal("Error: GenBC_RCR the input file %s does not contain complete data for outlet faces. \n", lpn_filename.c_str());
 
   reader.close();
 
