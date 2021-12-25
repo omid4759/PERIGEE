@@ -24,7 +24,7 @@ class GenBC_RCR : public IGenBC
 
     virtual int get_num_ebc() const {return num_ebc;}
 
-    virtual std::vector<int> get_ebc_ids() const {return ebc_ids;}
+    virtual int get_ebc_id( const int &ii ) const {return ebc_ids[ii];}
 
     virtual double get_m( const int &ii, const double &in_dot_Q,
        const double &in_Q ) const;

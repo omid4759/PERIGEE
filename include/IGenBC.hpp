@@ -32,9 +32,9 @@ class IGenBC
     virtual int get_num_ebc() const = 0;
 
     // --------------------------------------------------------------
-    // return all ebc_ids with this elemental boundary condition.
+    // return the ii-th ebc_id with this elemental boundary condition.
     // --------------------------------------------------------------
-    virtual std::vector<int> get_ebc_ids() const = 0;
+    virtual int get_ebc_id( const int &ii ) const = 0;
 
     // --------------------------------------------------------------
     // Get the dP/dQ for surface ii

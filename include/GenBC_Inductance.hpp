@@ -25,7 +25,7 @@ class GenBC_Inductance : public IGenBC
 
     virtual int get_num_ebc() const {return num_ebc;}
 
-    virtual std::vector<int> get_ebc_ids() const {return ebc_ids;}
+    virtual int get_ebc_id( const int &ii ) const {return ebc_ids[ii];}
 
     // We do not perform boundary check. Users are responsible to
     // make sure 0 <= ii < num_ebc;
