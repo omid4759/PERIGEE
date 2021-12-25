@@ -11,7 +11,7 @@ PGAssem_Tet_CMM_GenAlpha::PGAssem_Tet_CMM_GenAlpha(
     const ALocal_NodalBC * const &part_nbc,
     const ALocal_Ring_NodalBC * const &part_ringnbc,
     const ALocal_EBC * const &part_ebc,
-    const IGenBC * const &gbc,
+    const std::vector<IGenBC *> &gbc_list,
     const int &in_nz_estimate )
 : nLocBas( agmi_ptr->get_nLocBas() ),
   dof_sol( pnode_ptr->get_dof() ),
@@ -54,7 +54,7 @@ PGAssem_Tet_CMM_GenAlpha::PGAssem_Tet_CMM_GenAlpha(
   Release_nonzero_err_str();
 
   Assem_nonzero_estimate( alelem_ptr, locassem_ptr, 
-      elements, quads, aien_ptr, pnode_ptr, part_nbc, part_ringnbc, part_ebc, gbc );
+      elements, quads, aien_ptr, pnode_ptr, part_nbc, part_ringnbc, part_ebc, gbc_list );
 
   // Obtain the precise dnz and onz count
   std::vector<int> Kdnz, Konz;
@@ -300,7 +300,7 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_nonzero_estimate(
     const ALocal_NodalBC * const &nbc_part,
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
-    const IGenBC * const &gbc )
+    const std::vector<IGenBC *> &gbc_list )
 {
   const int nElem = alelem_ptr->get_nlocalele();
   const int loc_dof = dof_mat * nLocBas;
@@ -329,7 +329,7 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_nonzero_estimate(
   PDNSolution * temp = new PDNSolution_NS( node_ptr, 0, false );
 
   // 0.1 is an (arbitrarily chosen) nonzero time step size feeding the NatBC_Resis_KG 
-  NatBC_Resis_KG(0.0, 0.1, temp, temp, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc );
+  NatBC_Resis_KG(0.0, 0.1, temp, temp, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc_list );
 
   delete temp;
 
@@ -439,7 +439,7 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_residual(
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
     const ALocal_EBC * const &ebc_wall_part,
-    const IGenBC * const &gbc )
+    const std::vector<IGenBC *> &gbc_list )
 {
   const int nElem = alelem_ptr->get_nlocalele();
   const int loc_dof = dof_mat * nLocBas;
@@ -496,7 +496,7 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_residual(
   WallMembrane_G( curr_time, dt, sol_a, sol_b, sol_wall_disp, lassem_ptr, elementw, quad_s, nbc_part, ringnbc_part, ebc_wall_part );
 
   // Resistance type boundary condition
-  NatBC_Resis_G( curr_time, dt, dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc );
+  NatBC_Resis_G( curr_time, dt, dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc_list );
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
@@ -530,7 +530,7 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_tangent_residual(
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
     const ALocal_EBC * const &ebc_wall_part,
-    const IGenBC * const &gbc )
+    const std::vector<IGenBC *> &gbc_list )
 {
   const int nElem = alelem_ptr->get_nlocalele();
   const int loc_dof = dof_mat * nLocBas;
@@ -592,7 +592,7 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_tangent_residual(
 
   // Resistance type boundary condition
   // To be modified by the shell approach
-  NatBC_Resis_KG( curr_time, dt, dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc );
+  NatBC_Resis_KG( curr_time, dt, dot_sol_np1, sol_np1, lassem_ptr, elements, quad_s, nbc_part, ringnbc_part, ebc_part, gbc_list );
 
   VecAssemblyBegin(G);
   VecAssemblyEnd(G);
@@ -1193,7 +1193,7 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_G(
     const ALocal_NodalBC * const &nbc_part,
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
-    const IGenBC * const &gbc )
+    const std::vector<IGenBC *> &gbc_list )
 {
   PetscScalar * Res = new PetscScalar [snLocBas * 3];
   PetscInt * srow_idx = new PetscInt [snLocBas * 3];
@@ -1201,6 +1201,23 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_G(
   double * sctrl_x = new double [snLocBas];
   double * sctrl_y = new double [snLocBas];
   double * sctrl_z = new double [snLocBas];
+
+  std::vector<int> gbc_type; gbc_type.clear();
+  std::vector<int> gbc_idx;  gbc_idx.clear();
+
+  if( num_ebc > 0 )
+  {
+    gbc_type.resize(num_ebc);
+
+    for( int ii = 0; ii < (int) gbc_list.size(); ++ii )
+    {
+      for( int jj = 0; jj < gbc_list[ii]->get_num_ebc(); ++jj )
+      {
+        gbc_type[ gbc_list[ii]->get_ebc_id(jj) ] = ii;
+        gbc_idx[  gbc_list[ii]->get_ebc_id(jj) ] = jj;
+      }
+    }
+  } 
 
   for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
   {
@@ -1213,8 +1230,8 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_G(
         element_s, quad_s, ebc_part, ebc_id );
 
     // Get the (pressure) value on the outlet surface for traction evaluation    
-    const double P_n   = gbc -> get_P0( ebc_id );
-    const double P_np1 = gbc -> get_P( ebc_id, dot_flrate, flrate, curr_time + dt );
+    const double P_n   = gbc_list[ gbc_type[ebc_id] ] -> get_P0( gbc_idx[ebc_id] );
+    const double P_np1 = gbc_list[ gbc_type[ebc_id] ] -> get_P( gbc_idx[ebc_id], dot_flrate, flrate, curr_time + dt );
 
     // P_{n+alpha_f}
     // lassem_ptr->get_model_para_1() gives alpha_f 
@@ -1266,7 +1283,7 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_KG(
     const ALocal_NodalBC * const &nbc_part,
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
-    const IGenBC * const &gbc )
+    const std::vector<IGenBC *> &gbc_list )
 {
   const double a_f = lassem_ptr -> get_model_para_1();
 
@@ -1287,6 +1304,23 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_KG(
   double * sctrl_y = new double [snLocBas];
   double * sctrl_z = new double [snLocBas];
 
+  std::vector<int> gbc_type; gbc_type.clear();
+  std::vector<int> gbc_idx;  gbc_idx.clear();
+
+  if( num_ebc > 0 )
+  {
+    gbc_type.resize(num_ebc);
+
+    for( int ii = 0; ii < (int) gbc_list.size(); ++ii )
+    {
+      for( int jj = 0; jj < gbc_list[ii]->get_num_ebc(); ++jj )
+      {
+        gbc_type[ gbc_list[ii]->get_ebc_id(jj) ] = ii;
+        gbc_idx[  gbc_list[ii]->get_ebc_id(jj) ] = jj;
+      }
+    }
+  } 
+
   for(int ebc_id = 0; ebc_id < num_ebc; ++ebc_id)
   {
     // Calculate dot flow rate for face with ebc_id and MPI_Allreduce them
@@ -1300,17 +1334,17 @@ void PGAssem_Tet_CMM_GenAlpha::NatBC_Resis_KG(
         element_s, quad_s, ebc_part, ebc_id );
 
     // Get the (pressure) value on the outlet surface for traction evaluation    
-    const double P_n   = gbc -> get_P0( ebc_id );
-    const double P_np1 = gbc -> get_P( ebc_id, dot_flrate, flrate, curr_time + dt );
+    const double P_n   = gbc_list[ gbc_type[ebc_id] ] -> get_P0( gbc_idx[ebc_id] );
+    const double P_np1 = gbc_list[ gbc_type[ebc_id] ] -> get_P( gbc_idx[ebc_id], dot_flrate, flrate, curr_time + dt );
 
     // P_n+alpha_f 
     const double resis_val = P_n + a_f * (P_np1 - P_n);
 
     // Get the (potentially approximated) m := dP/dQ
-    const double m_val = gbc -> get_m( ebc_id, dot_flrate, flrate );
+    const double m_val = gbc_list[ gbc_type[ebc_id] ] -> get_m( gbc_idx[ebc_id], dot_flrate, flrate );
 
     // Get the (potentially approximated) n := dP/d(dot_Q)
-    const double n_val = gbc -> get_n( ebc_id, dot_flrate, flrate );
+    const double n_val = gbc_list[ gbc_type[ebc_id] ] -> get_n( gbc_idx[ebc_id], dot_flrate, flrate );
 
     // Define alpha_f * n + alpha_f * gamma * dt * m
     // coef a^t a enters as the consistent tangent for the resistance-type bc
@@ -1408,7 +1442,7 @@ void PGAssem_Tet_CMM_GenAlpha::Assem_matrix_free_K( const Vec &XX,
     const ALocal_NodalBC * const &nbc_part,
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
-    const IGenBC * const &gbc,
+    const std::vector<IGenBC *> &gbc_list,
     Vec &YY )
 {
 }

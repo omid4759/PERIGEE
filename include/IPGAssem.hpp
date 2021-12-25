@@ -156,7 +156,7 @@ class IPGAssem
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
-        const IGenBC * const &gbc )
+        const std::vector<IGenBC *> &gbc_list )
     {SYS_T::commPrint("Warning: Assem_nonzero_estimate() is not implemented. \n");}
 
     virtual void Assem_nonzero_estimate( 
@@ -339,7 +339,7 @@ class IPGAssem
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
         const ALocal_EBC * const &ebc_wall_part,
-        const IGenBC * const &gbc )
+        const std::vector<IGenBC *> &gbc_list )
     {SYS_T::commPrint("Warning: Assem_residual() is not implemented. \n");}
 
 
@@ -498,7 +498,7 @@ class IPGAssem
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
         const ALocal_EBC * const &ebc_wall_part,
-        const IGenBC * const &gbc )
+        const std::vector<IGenBC *> &gbc_list )
     {SYS_T::commPrint("Warning: Assem_tangent_residual() is not implemented. \n");}
     
 

@@ -36,7 +36,7 @@ class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
         const ALocal_NodalBC * const &part_nbc,
         const ALocal_Ring_NodalBC * const &part_ringnbc,
         const ALocal_EBC * const &part_ebc,
-        const IGenBC * const &gbc,
+        const std::vector<IGenBC *> &gbc_list,
         const int &in_nz_estimate=60 );
 
     // Destructor
@@ -53,7 +53,7 @@ class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
-        const IGenBC * const &gbc );
+        const std::vector<IGenBC *> &gbc_list );
 
     // Assemble mass matrix and residual vector
     virtual void Assem_mass_residual(
@@ -94,7 +94,7 @@ class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
         const ALocal_EBC * const &ebc_wall_part,
-        const IGenBC * const &gbc );
+        const std::vector<IGenBC *> &gbc_list );
 
     // Assemble the residual vector and tangent matrix 
     // for the CMM equations
@@ -120,7 +120,7 @@ class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
         const ALocal_EBC * const &ebc_wall_part,
-        const IGenBC * const &gbc );
+        const std::vector<IGenBC *> &gbc_list );
 
     // Assembly routine for the surface integrals of flow rate and
     // pressure
@@ -172,7 +172,7 @@ class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
-        const IGenBC * const &gbci,
+        const std::vector<IGenBC *> &gbc_list,
         Vec &YY );
 
   private:
@@ -245,7 +245,7 @@ class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
-        const IGenBC * const &gbc );
+        const std::vector<IGenBC *> &gbc_list );
 
     // Note: to be replaced by the SHELL approach
     void NatBC_Resis_KG( const double &curr_time, const double &dt,
@@ -257,7 +257,7 @@ class PGAssem_Tet_CMM_GenAlpha : public IPGAssem
         const ALocal_NodalBC * const &nbc_part,
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
-        const IGenBC * const &gbc );
+        const std::vector<IGenBC *> &gbc_list );
 
     // Wall integral for thin-walled linear membrane
     void WallMembrane_G( const double &curr_time,

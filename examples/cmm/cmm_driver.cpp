@@ -588,7 +588,7 @@ int main( int argc, char *argv[] )
 
   // Write all 0D solutions into a file
   if( rank == 0 )
-    for (const auto& gbc : gbc_list ) gbc -> write_0D_sol ( initial_index, initial_time );
+    for (const auto &gbc : gbc_list ) gbc -> write_0D_sol ( initial_index, initial_time );
 
   // ===== Inlet data recording files =====
   for(int ff=0; ff<locinfnbc->get_num_nbc(); ++ff)
@@ -631,7 +631,7 @@ int main( int argc, char *argv[] )
   lsolver -> print_info();
 
   // ===== Deallocate memory =====
-  for( const auto& gbc : gbc_list ) delete gbc; 
+  for( const auto &gbc : gbc_list ) delete gbc; 
   delete fNode; delete locIEN; delete GMIptr; delete PartBasic; delete locElem;
   delete locnbc; delete locinfnbc; delete locringnbc; delete locebc; delete locebc_wall;
   delete pNode; delete inflow_rate_ptr; delete quadv; delete quads; delete elementv;
