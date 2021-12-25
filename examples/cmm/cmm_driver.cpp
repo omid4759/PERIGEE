@@ -446,12 +446,18 @@ int main( int argc, char *argv[] )
 
   int num_ebc = 0;
   std::vector<int> ebc_ids; ebc_ids.clear();
-  for( auto gbc : gbc_list )
+  for( const auto& gbc : gbc_list )
   {
     gbc -> print_info();
     num_ebc += gbc -> get_num_ebc(); 
     for( int jj = 0; jj < gbc->get_num_ebc(); ++jj )
-      ebc_ids.push_back( gbc->get_ebc_id(jj) );
+    {
+      if(  gbc->get_ebc_id(jj) < locebc->get_num_ebc() )
+        ebc_ids.push_back( gbc->get_ebc_id(jj) );
+      else
+        SYS_T::print_fatal("Error: Expecting GenBC ebc_id < num_ebc.\n");
+
+    }
   }
 
   VEC_T::sort_unique_resize( ebc_ids );
@@ -615,7 +621,7 @@ int main( int argc, char *argv[] )
   lsolver -> print_info();
 
   // ===== Deallocate memory =====
-  for( auto gbc : gbc_list ) delete gbc; 
+  for( const auto& gbc : gbc_list ) delete gbc; 
   delete fNode; delete locIEN; delete GMIptr; delete PartBasic; delete locElem;
   delete locnbc; delete locinfnbc; delete locringnbc; delete locebc; delete locebc_wall;
   delete pNode; delete inflow_rate_ptr; delete quadv; delete quads; delete elementv;
