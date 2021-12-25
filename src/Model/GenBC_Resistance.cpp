@@ -3,7 +3,8 @@
 GenBC_Resistance::GenBC_Resistance( const std::string &lpn_filename )
 {
   num_ebc = 0;
-  resis.clear(); pres_offset.clear(); Q0.clear(); P0.clear(); ebc_ids.clear();
+  time.clear(); resis.clear(); pres_offset.clear();
+  Q0.clear(); P0.clear(); ebc_ids.clear();
 
   // Now read the values of resis_R and resis_Pd from disk file lpn_filename
   if( SYS_T::file_exist( lpn_filename ) )
@@ -37,23 +38,38 @@ GenBC_Resistance::GenBC_Resistance( const std::string &lpn_filename )
       SYS_T::print_fatal("Error: the outflow model in %s does not match GenBC_Resistance.\n", lpn_filename.c_str());
     }
 
+    time.resize(num_ebc); resis.resize(num_ebc); pres_offset.resize(num_ebc);
     Q0.resize(num_ebc); P0.resize(num_ebc);
  
     // Read files for each ebc to define the parameters for LPN
-    while( std::getline(reader, sline) )
+    for( int ii=0; ii<num_ebc; ++ii )
     {
-      if( sline[0] != '#' && !sline.empty() )
+      while( std::getline(reader, sline) )
       {
-        sstrm.str( sline );
-        int face_id;
-        double res, pd;
+        if( sline[0] != '#' && !sline.empty() )
+        {
+          sstrm.str( sline );
+          int face_id, num_timept;
+          sstrm >> face_id >> num_timept;
 
-        sstrm >> face_id >> res >> pd;
-        sstrm.clear();
+          SYS_T::print_fatal_if( num_timept < 2,
+              "Error: GenBC_Resistance number of timepoints must be >= 2. \n" );
 
-        resis.push_back( res );
-        pres_offset.push_back( pd );
-        ebc_ids.push_back( face_id );
+          resis[ii].resize( num_timept );
+          pres_offset[ii].resize( num_timept );
+
+          for( int tt=0; tt<num_timept; ++tt)
+          {
+            std::getline(reader, sline);
+            sstrm.str( sline );
+            sstrm >> time[ii][tt] >> resis[ii][tt] >> pres_offset[ii][tt];
+            sstrm.clear();
+          }
+
+          sstrm.clear();
+          ebc_ids.push_back( face_id );
+          break;
+        }
       }
     }
 
@@ -79,7 +95,44 @@ void GenBC_Resistance::print_info() const
 {
   SYS_T::commPrint("===> GenBC_Resistance : \n");
   for(int ii=0; ii<num_ebc; ++ii)
-    SYS_T::commPrint( "     ebcid = %d, R = %e, Pd = %e \n", ebc_ids[ii], resis[ii], pres_offset[ii] );
+  {
+    SYS_T::commPrint( "     ebcid = %d, num_timept = %d \n", ebc_ids[ii], (int) resis[ii].size() );
+    if( resis[ii],size() < 10)
+    {
+      for( int tt = 0; tt < (int) resis[ii].size(); ++tt )
+        SYS_T::commPrint( "     t = %e, R = %e, Pd = %e \n", time[ii][tt], resis[ii][tt], pres_offset[ii][tt] );
+    }
+  }
+}
+
+double GenBC_Resistance::get_P( const int &ii, const double &dot_Q, const double &Q,
+       const double &time ) const
+{
+  // Determine interval for linear interpolation
+  const int num_timept = time[ii].size();
+  const double period = time[ii][num_timept - 1];
+  const double time_fmod = std::fmod( time, period );
+
+  int tt_n;
+  double dt, res, pd;
+
+  for(int tt = 0; tt < num_timept - 1; ++tt)
+  {
+    if( time_fmod >= time[ii][tt] && time_fmod < time[ii][tt + 1] )
+    {
+      tt_n = tt;
+      dt = time[ii][tt + 1] - time[ii][tt];
+      break;
+    }
+  }
+
+  res = ( res[ii][tt_n] * ( time[ii][tt_n + 1] - time_fmod ) +
+      res[ii][tt_n + 1] * ( time_fmod - time[ii][tt_n] ) ) / dt;
+
+  pd = ( pres_offset[ii][tt_n] * ( time[ii][tt_n + 1] - time_fmod ) +
+      pres_offset[ii][tt_n + 1] * ( time_fmod - time[ii][tt_n] ) ) / dt;
+
+  return res * Q + pd;
 }
 
 // EOF

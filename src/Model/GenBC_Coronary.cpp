@@ -73,8 +73,8 @@ GenBC_Coronary::GenBC_Coronary( const std::string &lpn_filename,
         if( sline[0] != '#' && !sline.empty() )
         {
           sstrm.str( sline );
-          int face_id;
-          double ra, ca, ramicro, cim, rv, pd, numpimdata, alphapim;
+          int face_id, numpimdata;
+          double ra, ca, ramicro, cim, rv, pd, alphapim;
 
           sstrm >> face_id >> ra >> ca >> ramicro >> cim >> rv >> pd >> numpimdata >> alphapim;
 
@@ -114,6 +114,7 @@ GenBC_Coronary::GenBC_Coronary( const std::string &lpn_filename,
           SYS_T::print_fatal_if( Time_data[ii][0] > 0.0, "Error: Pim data does not start from 0.\n" );
 
           sstrm.clear();
+          ebc_ids.push_back( face_id );
           break;
         }
       }
@@ -176,7 +177,7 @@ GenBC_Coronary::GenBC_Coronary( const std::string &lpn_filename,
                 Pi0[ii][jj] = restart_0D_sol[ii][jj];
  
                 // Precalculate dPimdt values needed for integrating coronary ODEs.
-                if( num_Pim_data[ii]>0 ) get_dPim_dt(ii, temp_time, temp_time + N * h);
+                get_dPim_dt(ii, temp_time, temp_time + N * h);
               }
             }
             break;

@@ -43,10 +43,7 @@ class GenBC_Resistance : public IGenBC
     // We do not perform boundary check. Users are responsible to
     // make sure 0 <= ii < num_ebc;
     virtual double get_P( const int &ii, const double &dot_Q, const double &Q,
-       const double &time = 0.0 ) const
-    {
-      return resis[ii] * Q + pres_offset[ii];
-    }
+       const double &time = 0.0 ) const;
 
     virtual double get_P0( const int &ii ) const
     {
@@ -66,9 +63,9 @@ class GenBC_Resistance : public IGenBC
     // vector storing all ebc_ids
     std::vector<int> ebc_ids;
     
-    // vector storing the resistance and pressure offset values
-    // on the faces, with length num_ebc
-    std::vector<double> resis, pres_offset;
+    // vectors storing the (time-varying) resistance and pressure offset values
+    // on the faces, with length num_ebc and the corresponding time vector
+    std::vector< std::vector<double> > time, resis, pres_offset;
 
     // Vectors storing the Q0 and P0 on each outlet surface
     std::vector<double> Q0, P0;
