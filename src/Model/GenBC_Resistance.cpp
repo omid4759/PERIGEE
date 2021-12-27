@@ -51,6 +51,7 @@ GenBC_Resistance::GenBC_Resistance( const std::string &lpn_filename )
           sstrm.str( sline );
           int face_id, num_timept;
           sstrm >> face_id >> num_timept;
+          sstrm.clear();
 
           SYS_T::print_fatal_if( num_timept < 2,
               "Error: GenBC_Resistance number of timepoints must be >= 2. \n" );
@@ -98,7 +99,7 @@ void GenBC_Resistance::print_info() const
   for(int ii=0; ii<num_ebc; ++ii)
   {
     SYS_T::commPrint( "     ebcid = %d, num_timept = %d \n", ebc_ids[ii], (int) resis[ii].size() );
-    if( resis[ii].size() < 10)
+    if( resis[ii].size() <= 20)
     {
       for( int tt = 0; tt < (int) resis[ii].size(); ++tt )
         SYS_T::commPrint( "     t = %e, R = %e, Pd = %e \n", time[ii][tt], resis[ii][tt], pres_offset[ii][tt] );
