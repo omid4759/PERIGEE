@@ -67,10 +67,18 @@ class APart_Node
     virtual int get_node_ghost(const int &ii) const {return node_ghost[ii];}
 
     // ------------------------------------------------------------------------
-    // node_loc maps from [0, nlocalnode) to their global/volume mesh index
+    // node_loc maps from [0, nlocalnode) to their new global/volume mesh index
     // 0 <= index < nlocalnode
     // ------------------------------------------------------------------------
     virtual int get_node_loc(const int &ii) const {return node_loc[ii];}
+
+    // ------------------------------------------------------------------------
+    // node_loc_original maps from [0, nlocalnode) to their old
+    // global/volume mesh index (prior to old2new mapping).
+    // 0 <= index < nlocalnode
+    // ------------------------------------------------------------------------
+    virtual int get_node_loc_original(const int &ii) const
+    {return node_loc_original[ii];}
 
     // ------------------------------------------------------------------------
     // Determine if a global mesh node with index belongs to this subdomain.
@@ -133,6 +141,10 @@ class APart_Node
     // The three vectors have lengths nlocghonode, nlocalnode, nghostnode, resp.
     // ------------------------------------------------------------------------
     std::vector<int> local_to_global, node_ghost, node_loc;
+
+    // original (prior to old2new mapping) indices of node_loc
+    // length nlocalnode
+    std::vector<int> node_loc_original;
 };
 
 #endif

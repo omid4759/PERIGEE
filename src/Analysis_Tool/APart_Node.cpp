@@ -23,6 +23,7 @@ APart_Node::APart_Node( const std::string &fbasename, const int &rank )
     node_ghost.clear();
   
   node_loc = h5r->read_intVector("Local_Node", "node_loc");
+  node_loc_original = h5r->read_intVector("Local_Node", "node_loc_original");
 
   dof = h5r->read_intScalar("Global_Mesh_Info", "dofNum");
 
