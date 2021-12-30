@@ -60,20 +60,13 @@ PDNSolution_NS::PDNSolution_NS(
 {
   if( pNode->get_dof() != 4 ) SYS_T::print_fatal("Error: PDNSolution_NS : the APart_Node gives wrong dof number. \n");
 
+  SYS_T::file_check( init_vtu );
+
   std::vector<double> init_velo = TET_T::read_double_PointData( init_vtu, velo_name, 3 );
   std::vector<double> init_pres = TET_T::read_double_PointData( init_vtu, pres_name, 1 );
 
   double value[4];
   const int nlocalnode = pNode->get_nlocalnode();
-
-  if(is_print)
-  {
-    SYS_T::commPrint("===> Initial solution: Read the following fields from %s\n", init_vtu);
-    SYS_T::commPrint("                       pres = %s \n",   pres_name);
-    SYS_T::commPrint("                       velo_x = %s \n", velo_name);
-    SYS_T::commPrint("                       velo_y = %s \n", velo_name);
-    SYS_T::commPrint("                       velo_z = %s \n", velo_name);
-  }
 
   for(int ii=0; ii<nlocalnode; ++ii)
   {
@@ -92,6 +85,16 @@ PDNSolution_NS::PDNSolution_NS(
   }
 
   Assembly_GhostUpdate();
+
+  if(is_print)
+  {
+    SYS_T::commPrint("===> Initial solution: Read the following fields from %s\n", init_vtu);
+    SYS_T::commPrint("                       pres = %s \n",   pres_name);
+    SYS_T::commPrint("                       velo_x = %s \n", velo_name);
+    SYS_T::commPrint("                       velo_y = %s \n", velo_name);
+    SYS_T::commPrint("                       velo_z = %s \n", velo_name);
+  }
+
 }
 
 PDNSolution_NS::~PDNSolution_NS()

@@ -100,12 +100,15 @@ int main( int argc, char *argv[] )
   int    sol_record_freq = 1;        // frequency for recording the solution
 
   // Restart options
+  bool   is_restart_vtu = false;     // read initial velo, pres fields from vtu
   bool   is_restart = false;
   int    restart_index = 0;          // restart solution time index
   double restart_time = 0.0;         // restart time
   double restart_step = 1.0e-3;      // restart simulation time step size
-  std::string restart_name = "SOL_"; // restart solution base name
-  std::string restart_disp_name = "SOL_disp_"; // restart disp solution base name
+
+  std::string restart_name = "SOL_";             // restart solution base name
+  std::string restart_disp_name = "SOL_disp_";   // restart disp solution base name
+  std::string init_vtu_name = "init_fields.vtu"; // initial condition vtu name
 
   PetscInitialize(&argc, &argv, (char *)0, PETSC_NULL);
 
@@ -150,6 +153,7 @@ int main( int argc, char *argv[] )
   SYS_T::GetOptionInt(   "-ttan_freq",       ttan_renew_freq);
   SYS_T::GetOptionInt(   "-sol_rec_freq",    sol_record_freq);
   SYS_T::GetOptionString("-sol_name",        sol_bName);
+  SYS_T::GetOptionBool(  "-is_restart_vtu",  is_restart_vtu);
   SYS_T::GetOptionBool(  "-is_restart",      is_restart);
   SYS_T::GetOptionInt(   "-restart_index",   restart_index);
   SYS_T::GetOptionReal(  "-restart_time",    restart_time);
@@ -211,6 +215,12 @@ int main( int argc, char *argv[] )
   SYS_T::cmdPrint(      "-ttan_freq:",       ttan_renew_freq);
   SYS_T::cmdPrint(      "-sol_rec_freq:",    sol_record_freq);
   SYS_T::cmdPrint(      "-sol_name:",        sol_bName);
+
+  if(is_restart_vtu)
+  {
+    SYS_T::commPrint(   "-is_restart_vtu: true \n");
+    SYS_T::cmdPrint(    "-init_vtu_name:",     init_vtu_name);
+  }
 
   if(is_restart)
   {
@@ -388,7 +398,12 @@ int main( int argc, char *argv[] )
   // base generates a parabolic velocity profile at the inlet with unit flow rate
   PDNSolution * base = new PDNSolution_NS( pNode, fNode, locinfnbc, 1 );
   
-  PDNSolution * sol = new PDNSolution_NS( pNode, 0 );
+  PDNSolution * sol;
+
+  if( is_restart_vtu )
+    sol = new PDNSolution_NS( pNode, init_vtu_name );
+  else
+    sol = new PDNSolution_NS( pNode, 0 );
 
   PDNSolution * dot_sol = new PDNSolution_NS( pNode, 0 );
 
