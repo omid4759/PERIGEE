@@ -88,11 +88,11 @@ PDNSolution_NS::PDNSolution_NS(
 
   if(is_print)
   {
-    SYS_T::commPrint("===> Initial solution: Read the following fields from %s\n", init_vtu);
-    SYS_T::commPrint("                       pres = %s \n",   pres_name);
-    SYS_T::commPrint("                       velo_x = %s \n", velo_name);
-    SYS_T::commPrint("                       velo_y = %s \n", velo_name);
-    SYS_T::commPrint("                       velo_z = %s \n", velo_name);
+    SYS_T::commPrint("===> Initial solution: Read the following fields from %s\n", init_vtu.c_str());
+    SYS_T::commPrint("                       pres = %s \n",   pres_name.c_str());
+    SYS_T::commPrint("                       velo_x = %s \n", velo_name.c_str());
+    SYS_T::commPrint("                       velo_y = %s \n", velo_name.c_str());
+    SYS_T::commPrint("                       velo_z = %s \n", velo_name.c_str());
   }
 
 }
