@@ -13,6 +13,7 @@
 #include "PDNSolution.hpp"
 #include "FEANode.hpp"
 #include "ALocal_Inflow_NodalBC.hpp"
+#include "Tet_Tools.hpp"
 
 class PDNSolution_NS : public PDNSolution
 {
@@ -24,6 +25,12 @@ class PDNSolution_NS : public PDNSolution
 
     PDNSolution_NS( const APart_Node * const &pNode, 
         const int &type, const bool &isprint = true );
+
+    // Initialize from vtu file with velocity and pressure fields
+    PDNSolution_NS( const APart_Node * const &pNode_ptr, const std::string &init_vtu,
+        const std::string &velo_name = "Velocity",
+        const std::string &pres_name = "Pressure",
+        const bool &isprint = true );
 
     virtual ~PDNSolution_NS();
 

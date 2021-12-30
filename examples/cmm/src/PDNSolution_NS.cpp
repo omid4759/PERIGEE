@@ -50,6 +50,50 @@ PDNSolution_NS::PDNSolution_NS(
   }
 }
 
+PDNSolution_NS::PDNSolution_NS(
+    const APart_Node * const &pNode, 
+    const std::string &init_vtu,
+    const std::string &velo_name,
+    const std::string &pres_name,
+    const bool &isprint )
+: PDNSolution( pNode ), is_print(isprint)
+{
+  if( pNode->get_dof() != 4 ) SYS_T::print_fatal("Error: PDNSolution_NS : the APart_Node gives wrong dof number. \n");
+
+  std::vector<double> init_velo = TET_T::read_double_PointData( init_vtu, velo_name, 3 );
+  std::vector<double> init_pres = TET_T::read_double_PointData( init_vtu, pres_name, 1 );
+
+  double value[4];
+  const int nlocalnode = pNode->get_nlocalnode();
+
+  if(is_print)
+  {
+    SYS_T::commPrint("===> Initial solution: Read the following fields from %s\n", init_vtu);
+    SYS_T::commPrint("                       pres = %s \n",   pres_name);
+    SYS_T::commPrint("                       velo_x = %s \n", velo_name);
+    SYS_T::commPrint("                       velo_y = %s \n", velo_name);
+    SYS_T::commPrint("                       velo_z = %s \n", velo_name);
+  }
+
+  for(int ii=0; ii<nlocalnode; ++ii)
+  {
+    const int pos = pNode->get_node_loc(ii) * 4;
+    const int location[4] = { pos, pos + 1, pos +2, pos + 3 };
+
+    // Access original node idx prior to old2new mapping
+    const int original_idx = pNode->get_node_loc_original(ii);
+
+    value[0] = init_pres[original_idx];
+    value[1] = init_velo[3 * original_idx + 0];
+    value[2] = init_velo[3 * original_idx + 1];
+    value[3] = init_velo[3 * original_idx + 2];
+
+    VecSetValues(solution, 4, location, value, INSERT_VALUES);
+  }
+
+  Assembly_GhostUpdate();
+}
+
 PDNSolution_NS::~PDNSolution_NS()
 {}
 
