@@ -54,7 +54,7 @@ class PGAssem_Tet_Wall : public IPGAssem
         const ALocal_Ring_NodalBC * const &ringnbc_part,
         const ALocal_EBC * const &ebc_part,
         const ALocal_EBC * const &ebc_wall_part,
-        const IGenBC * const &gbc );
+        const std::vector<IGenBC *> &gbc_list );
 
     // Update wall prestress at all surface quadrature points
     virtual void Update_Wall_Prestress(
