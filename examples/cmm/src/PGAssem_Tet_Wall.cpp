@@ -261,7 +261,7 @@ void PGAssem_Tet_Wall::Assem_tangent_residual(
     const ALocal_Ring_NodalBC * const &ringnbc_part,
     const ALocal_EBC * const &ebc_part,
     const ALocal_EBC * const &ebc_wall_part,
-    const IGenBC * const &gbc )
+    const std::vector<IGenBC *> &gbc_list )
 {
   // Residual & tangent contributions from the thin-walled linear membrane in CMM
   WallMembrane_KG( curr_time, dt, sol_a, sol_b, sol_wall_disp, lassem_ptr, elementw, quad_s, nbc_part, ringnbc_part, ebc_wall_part );
