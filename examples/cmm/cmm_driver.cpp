@@ -154,6 +154,7 @@ int main( int argc, char *argv[] )
   SYS_T::GetOptionInt(   "-sol_rec_freq",    sol_record_freq);
   SYS_T::GetOptionString("-sol_name",        sol_bName);
   SYS_T::GetOptionBool(  "-is_restart_vtu",  is_restart_vtu);
+  SYS_T::GetOptionString("-init_vtu_name",   init_vtu_name);
   SYS_T::GetOptionBool(  "-is_restart",      is_restart);
   SYS_T::GetOptionInt(   "-restart_index",   restart_index);
   SYS_T::GetOptionReal(  "-restart_time",    restart_time);
