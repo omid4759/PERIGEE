@@ -8,12 +8,19 @@
 // The solution has 3 dofs, that is the three componenet of displacement.
 // ==================================================================
 #include "PDNSolution.hpp"
+#include "Tet_Tools.hpp"
 
 class PDNSolution_Wall_Disp : public PDNSolution
 {
   public:
     PDNSolution_Wall_Disp( const APart_Node * const &pNode,
         const int &type, const bool &isprint = true );
+
+    // Initialize from vtu file with displacement fields
+    PDNSolution_Wall_Disp( const APart_Node * const &pNode,
+        const std::string &init_vtu,
+        const std::string &disp_name = "WallDisp",
+        const bool &isprint = true );
 
     ~PDNSolution_Wall_Disp();
 

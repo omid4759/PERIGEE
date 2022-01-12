@@ -399,16 +399,20 @@ int main( int argc, char *argv[] )
   PDNSolution * base = new PDNSolution_NS( pNode, fNode, locinfnbc, 1 );
   
   PDNSolution * sol;
+  PDNSolution * sol_wall_disp;
 
   if( is_restart_vtu )
+  {
     sol = new PDNSolution_NS( pNode, init_vtu_name );
+    sol_wall_disp = new PDNSolution_Wall_Disp( pNode, init_vtu_name );
+  }
   else
+  {
     sol = new PDNSolution_NS( pNode, 0 );
+    sol_wall_disp = new PDNSolution_Wall_Disp( pNode, 0 );
+  }
 
   PDNSolution * dot_sol = new PDNSolution_NS( pNode, 0 );
-
-  PDNSolution * sol_wall_disp = new PDNSolution_Wall_Disp( pNode, 0 );
-  
   PDNSolution * dot_sol_wall_disp = new PDNSolution_Wall_Disp( pNode, 0 );
 
   if( is_restart )
