@@ -34,6 +34,12 @@ set(METIS_DIR /home/luqs/lib/metis-5.0.3)
 # Modify the HDF5_ROOT, pointing to your hdf5 library location
 set(HDF5_ROOT /home/luqs/lib/hdf5-1.8.16)
 
+# ==========================WOMERSLY CHANGE==========================
+# Complex Bessel Directory is added.
+set(BESSEL_DIR /home/luqs/lib/complex-bessel)
+MESSAGE(STATUS "Bessel fun Dir = " ${BESSEL_DIR})
+# ==========================WOMERSLY CHANGE==========================
+
 # ========================================================
 # Setup the libraries
 # You do NOT have to modify anything in this part
@@ -47,8 +53,18 @@ find_package(HDF5 REQUIRED)
 include_directories(${VTK_INCLUDE_DIRS})
 include_directories(${PETSC_INC})
 
+# ==========================WOMERSLY CHANGE==========================
+include_directories(${BESSEL_DIR}/include)
+include_directories(${BESSEL_DIR}/include/complex_bessel_bits)
+# ==========================WOMERSLY CHANGE==========================
+
 set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${VTK_LIBRARIES})
 set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${PETSC_LIB})
+
+# ==========================WOMERSLY CHANGE==========================
+LINK_DIRECTORIES( ${BESSEL_DIR}/lib )
+set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} complex_bessel)
+# ==========================WOMERSLY CHANGE==========================
 
 if(PETSC_METIS)
   set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${PETSC_METIS_LIB})
