@@ -18,6 +18,7 @@
 // ==================================================================
 #include "IPart.hpp"
 #include "INodalBC.hpp"
+#include "Map_Node_Index.hpp"
 
 class NBC_Partition_inflow
 {
@@ -66,7 +67,7 @@ class NBC_Partition_inflow
 
     // local cell IEN array
     // num_nbc times (cell_nLocBas[ii] x num_local_cell[ii])
-    std::vector< std::vector<int> > local_tri_ien;
+    std::vector< std::vector<int> > local_cell_ien;
 
     // local node's global index
     // num_nbc x num_local_node[ii]

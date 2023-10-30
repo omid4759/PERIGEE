@@ -43,7 +43,7 @@ void FEAElement_Tet10::print_info() const
 {
   SYS_T::commPrint("Tet10: ");
   SYS_T::commPrint("10-node tetrahedral element with up to 2nd derivatives. \n");
-  PetscPrintf(PETSC_COMM_WORLD, "elemType: %d \n", get_Type());
+  SYS_T::commPrint("elemType: %d \n", get_Type());
   SYS_T::commPrint("Note: Jacobian and inverse Jacobian are evaluated. \n");
 }
 
@@ -150,7 +150,7 @@ void FEAElement_Tet10::buildBasis( const IQuadPts * const &quad,
       zt += ctrl_z[ii] * dR_dt[ii];
     }
   
-    Matrix_double_3by3_Array mdrdx(xr, xs, xt, yr, ys, yt, zr, zs, zt);
+    FE_T::Matrix_double_3by3_Array mdrdx(xr, xs, xt, yr, ys, yt, zr, zs, zt);
 
     detJac[qua] = mdrdx.det(); // detJac = |dx/dr|
  
@@ -178,23 +178,21 @@ void FEAElement_Tet10::buildBasis( const IQuadPts * const &quad,
     }
 
     // Setup the 6x6 matrix
-    Matrix_double_6by6_Array LHS(xr, xs, xt, yr, ys, yt, zr, zs, zt);
+    FE_T::Matrix_double_6by6_Array LHS(xr, xs, xt, yr, ys, yt, zr, zs, zt);
 
     // LU factorization
     LHS.LU_fac();
 
     for(int ii=0; ii<10; ++ii)
     {
-      const double RHS[6] { d2R_drr[ii] - dR_dx[q10+ii] * xrr - dR_dy[q10+ii] * yrr - dR_dz[q10+ii] * zrr,
+      const std::array<double, 6> RHS {{ d2R_drr[ii] - dR_dx[q10+ii] * xrr - dR_dy[q10+ii] * yrr - dR_dz[q10+ii] * zrr,
       d2R_drs[ii] - dR_dx[q10+ii] * xrs - dR_dy[q10+ii] * yrs - dR_dz[q10+ii] * zrs,
       d2R_drt[ii] - dR_dx[q10+ii] * xrt - dR_dy[q10+ii] * yrt - dR_dz[q10+ii] * zrt,
       d2R_dss[ii] - dR_dx[q10+ii] * xss - dR_dy[q10+ii] * yss - dR_dz[q10+ii] * zss,
       d2R_dst[ii] - dR_dx[q10+ii] * xst - dR_dy[q10+ii] * yst - dR_dz[q10+ii] * zst,
-      d2R_dtt[ii] - dR_dx[q10+ii] * xtt - dR_dy[q10+ii] * ytt - dR_dz[q10+ii] * ztt };
+      d2R_dtt[ii] - dR_dx[q10+ii] * xtt - dR_dy[q10+ii] * ytt - dR_dz[q10+ii] * ztt }};
 
-      double sol[6] {0.0};
-
-      LHS.LU_solve(RHS, sol);
+      const auto sol = LHS.LU_solve(RHS);
 
       d2R_dxx[q10+ii] = sol[0];
       d2R_dyy[q10+ii] = sol[1];
@@ -212,7 +210,7 @@ double FEAElement_Tet10::get_h( const double * const &ctrl_x,
 {
   double x,y,z,r;
 
-  MATH_T::get_tet_sphere_info(
+  FE_T::get_tet_sphere_info(
       ctrl_x[0], ctrl_x[1], ctrl_x[2], ctrl_x[3],
       ctrl_y[0], ctrl_y[1], ctrl_y[2], ctrl_y[3],
       ctrl_z[0], ctrl_z[1], ctrl_z[2], ctrl_z[3],
@@ -399,9 +397,9 @@ void FEAElement_Tet10::get_Jacobian(const int &quaindex,
 std::array<double,9> FEAElement_Tet10::get_Jacobian(const int &quaindex) const
 {
   ASSERT( quaindex >= 0 && quaindex < numQuapts, "FEAElement_Tet10::get_Jacobian function error.\n" );
-  return { dx_dr[9*quaindex], dx_dr[9*quaindex+1], dx_dr[9*quaindex+2], 
+  return {{ dx_dr[9*quaindex], dx_dr[9*quaindex+1], dx_dr[9*quaindex+2], 
     dx_dr[9*quaindex+3], dx_dr[9*quaindex+4], dx_dr[9*quaindex+5], 
-    dx_dr[9*quaindex+6], dx_dr[9*quaindex+7], dx_dr[9*quaindex+8] };
+    dx_dr[9*quaindex+6], dx_dr[9*quaindex+7], dx_dr[9*quaindex+8] }};
 }
 
 void FEAElement_Tet10::get_invJacobian(const int &quaindex,
@@ -414,9 +412,9 @@ void FEAElement_Tet10::get_invJacobian(const int &quaindex,
 std::array<double,9> FEAElement_Tet10::get_invJacobian(const int &quaindex) const
 {
   ASSERT( quaindex >= 0 && quaindex < numQuapts, "FEAElement_Tet10::get_invJacobian function error.\n" );
-  return { dr_dx[9*quaindex], dr_dx[9*quaindex+1], dr_dx[9*quaindex+2], 
+  return {{ dr_dx[9*quaindex], dr_dx[9*quaindex+1], dr_dx[9*quaindex+2], 
     dr_dx[9*quaindex+3], dr_dx[9*quaindex+4], dr_dx[9*quaindex+5], 
-    dr_dx[9*quaindex+6], dr_dx[9*quaindex+7], dr_dx[9*quaindex+8] };
+    dr_dx[9*quaindex+6], dr_dx[9*quaindex+7], dr_dx[9*quaindex+8] }};
 }
 
 // EOF

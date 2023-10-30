@@ -147,7 +147,7 @@ void FEAElement_Tet10_v2::buildBasis( const IQuadPts * const &quad,
       zt += ctrl_z[ii] * dR_dt[ii];
     }
   
-    Matrix_double_3by3_Array mdrdx(xr, xs, xt, yr, ys, yt, zr, zs, zt);
+    FE_T::Matrix_double_3by3_Array mdrdx(xr, xs, xt, yr, ys, yt, zr, zs, zt);
 
     detJac[qua] = mdrdx.det(); // detJac = |dx/dr|
  
@@ -175,23 +175,21 @@ void FEAElement_Tet10_v2::buildBasis( const IQuadPts * const &quad,
     }
 
     // Setup the 6x6 matrix
-    Matrix_double_6by6_Array LHS(xr, xs, xt, yr, ys, yt, zr, zs, zt);
+    FE_T::Matrix_double_6by6_Array LHS(xr, xs, xt, yr, ys, yt, zr, zs, zt);
 
     // LU factorization
     LHS.LU_fac();
 
     for(int ii=0; ii<10; ++ii)
     {
-      const double RHS[6] { d2R_drr[ii] - dR_dx[q10+ii] * xrr - dR_dy[q10+ii] * yrr - dR_dz[q10+ii] * zrr,
+      const std::array<double, 6> RHS {{ d2R_drr[ii] - dR_dx[q10+ii] * xrr - dR_dy[q10+ii] * yrr - dR_dz[q10+ii] * zrr,
         d2R_drs[ii] - dR_dx[q10+ii] * xrs - dR_dy[q10+ii] * yrs - dR_dz[q10+ii] * zrs,
         d2R_drt[ii] - dR_dx[q10+ii] * xrt - dR_dy[q10+ii] * yrt - dR_dz[q10+ii] * zrt,
         d2R_dss[ii] - dR_dx[q10+ii] * xss - dR_dy[q10+ii] * yss - dR_dz[q10+ii] * zss,
         d2R_dst[ii] - dR_dx[q10+ii] * xst - dR_dy[q10+ii] * yst - dR_dz[q10+ii] * zst,
-        d2R_dtt[ii] - dR_dx[q10+ii] * xtt - dR_dy[q10+ii] * ytt - dR_dz[q10+ii] * ztt };
+        d2R_dtt[ii] - dR_dx[q10+ii] * xtt - dR_dy[q10+ii] * ytt - dR_dz[q10+ii] * ztt }};
 
-      double sol[6] {0.0};
-
-      LHS.LU_solve(RHS, sol);
+      const auto sol = LHS.LU_solve(RHS);
 
       d2R_dxx[q10+ii] = sol[0];
       d2R_dyy[q10+ii] = sol[1];
@@ -209,7 +207,7 @@ double FEAElement_Tet10_v2::get_h( const double * const &ctrl_x,
 {
   double x,y,z,r;
 
-  MATH_T::get_tet_sphere_info(
+  FE_T::get_tet_sphere_info(
       ctrl_x[0], ctrl_x[1], ctrl_x[2], ctrl_x[3],
       ctrl_y[0], ctrl_y[1], ctrl_y[2], ctrl_y[3],
       ctrl_z[0], ctrl_z[1], ctrl_z[2], ctrl_z[3],

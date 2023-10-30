@@ -135,20 +135,18 @@ void FEAElement_Triangle6::buildBasis( const IQuadPts * const &quad,
     const double a32 = dy_ds * dy_ds;
     const double a33 = 2 * dx_ds * dy_ds;
 
-    Matrix_double_3by3_Array LHS(a11, a12, a13, a21, a22, a23, a31, a32, a33);
+    FE_T::Matrix_double_3by3_Array LHS(a11, a12, a13, a21, a22, a23, a31, a32, a33);
 
     // LU factorization
     LHS.LU_fac();
 
     for(int ii=0; ii<6; ++ii)
     {
-      const double RHS[3] { d2R_drr[ii] - dR_dx[offset+ii] * xrr - dR_dy[offset+ii] * yrr,
+      const std::array<double, 3> RHS {{ d2R_drr[ii] - dR_dx[offset+ii] * xrr - dR_dy[offset+ii] * yrr,
         d2R_drs[ii] - dR_dx[offset+ii] * xrs - dR_dy[offset+ii] * yrs,
-        d2R_dss[ii] - dR_dx[offset+ii] * xss - dR_dy[offset+ii] * yss };
+        d2R_dss[ii] - dR_dx[offset+ii] * xss - dR_dy[offset+ii] * yss }};
 
-      double sol[3] {0.0};
-
-      LHS.LU_solve(RHS, sol);
+      const auto sol = LHS.LU_solve(RHS);
 
       d2R_dxx[offset+ii] = sol[0];
       d2R_dyy[offset+ii] = sol[1];

@@ -1,25 +1,24 @@
 #ifndef ICVFLOWRATE_HPP
 #define ICVFLOWRATE_HPP
-// ==================================================================
+// ============================================================================
 // ICVFlowRate.hpp
 //
 // Interface file for the cardiovascular inflow flow rate function.
 //
-// This function shall have two instantiations: steady case and 
-// unsteady case.
+// This function shall have two instantiations: steady case and unsteady case.
 //
 // Author: Ju Liu
 // Date created: Aug. 6 2017
-// ==================================================================
+// ============================================================================
 #include <sstream>
 #include <string>
 
 class ICVFlowRate
 {
   public:
-    ICVFlowRate(){};
+    ICVFlowRate() = default;
 
-    virtual ~ICVFlowRate(){};
+    virtual ~ICVFlowRate() = default;
 
     virtual double get_flow_rate( const int &nbc_id, const double &time ) const = 0;
 

@@ -17,8 +17,7 @@
 // Date: Apr. 7 2021
 // ============================================================================
 #include "INodalBC.hpp"
-#include "Tet_Tools.hpp"
-#include "Vector_3.hpp"
+#include "VTK_Tools.hpp"
 
 class NodalBC_3D_ring : public INodalBC
 {
@@ -34,9 +33,9 @@ class NodalBC_3D_ring : public INodalBC
         const std::vector< Vector_3 > &outlet_outnormal,
         const int &nFunc,
         const int &in_ring_bc_type,
-        const int &elemtype = 501 );
+        const int &elemtype );
 
-    virtual ~NodalBC_3D_ring() {};
+    virtual ~NodalBC_3D_ring() = default;
 
     virtual unsigned int get_dir_nodes(const unsigned int &ii) const
     {return dir_nodes[ii];}
@@ -71,7 +70,7 @@ class NodalBC_3D_ring : public INodalBC
     std::vector<unsigned int> dir_nodes;
     unsigned int num_dir_nodes;
 
-    NodalBC_3D_ring() : ring_bc_type(0) {};
+    NodalBC_3D_ring() = delete; 
 
     // Ring node bc type
     // type = 0 : all dof of ring nodes are assigned as essential bc (clamped)

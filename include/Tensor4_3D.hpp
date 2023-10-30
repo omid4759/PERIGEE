@@ -2,21 +2,22 @@
 #define TENSOR4_3D_HPP
 // ============================================================================
 // Tensor4_3D.hpp
+//
 // This is a 4th-order tensor in 3D. There are 3^4 = 81 double entries in this 
 // object, which are stored in an array. The indices are arranged in the 
 // following way:
 //           ten[27i + 9j + 3k + l] = t_{ijkl}
-// This mapping is inspired from the Matrix_3x3, where a matrix is mapped to an
+// This mapping is inspired from the Tensor2_3D, where a matrix is mapped to an
 // array as
 //           mat[3i + j] = A_{ij}.
 //
-// The designed purpose is to ease the handling of stiffness tensor in solid 
-// mechanics.
+// The design purpose is primarily to handle the stiffness tensor arising in 
+// solid mechanics.
 //
 // Author: Ju Liu
 // Date: July 3rd 2016
 // ============================================================================
-#include "Matrix_3x3.hpp"
+#include "Tensor2_3D.hpp"
 
 class Tensor4_3D
 {
@@ -32,6 +33,8 @@ class Tensor4_3D
 
     // Copy constructor
     Tensor4_3D( const Tensor4_3D &source );
+
+    Tensor4_3D( const std::array<double, 81> &source );
 
     // Destructor
     ~Tensor4_3D();
@@ -123,21 +126,21 @@ class Tensor4_3D
     // invC is the inverse of C
     // see Holzapfel book p.229 eqn. (6.84).
     // ------------------------------------------------------------------------
-    void gen_P( const Matrix_3x3 &C, const Matrix_3x3 &invC );
+    void gen_P( const Tensor2_3D &C, const Tensor2_3D &invC );
 
-    void gen_P( const Matrix_3x3 &C ) { gen_P( C, inverse(C) ); }
+    void gen_P( const Tensor2_3D &C ) { gen_P( C, Ten2::inverse(C) ); }
 
     // ------------------------------------------------------------------------
     // Generate Projector Ptilde = invC O invC - 1/3 invC x invC
     // invC is assumed to be the right Cauchy-Green tensor 
     // see Holzapfel book p. 255, eqn. (6.170).
     // ------------------------------------------------------------------------
-    void gen_Ptilde( const Matrix_3x3 &invC );
+    void gen_Ptilde( const Tensor2_3D &invC );
 
     // ------------------------------------------------------------------------
     // generate a random 4th-order tensor (mainly used for debuggin)
     // ------------------------------------------------------------------------
-    void gen_rand();
+    void gen_rand(const double &left = -1.0, const double &right = 1.0);
 
     // ------------------------------------------------------------------------
     // generate a zero 4th-order tensor
@@ -158,8 +161,8 @@ class Tensor4_3D
     //            ten_ijkl += val * mleft_ij  * mright_kl
     // This is often used in the evaluation of the stiffness tensor.
     // ------------------------------------------------------------------------
-    void add_OutProduct( const double &val, const Matrix_3x3 &mleft,
-        const Matrix_3x3 &mright );
+    void add_OutProduct( const double &val, const Tensor2_3D &mleft,
+        const Tensor2_3D &mright );
 
     // ------------------------------------------------------------------------
     // add a tensor product of 4 vectors which is formed in the following way,
@@ -195,8 +198,8 @@ class Tensor4_3D
     // for invertible and symmetric 2nd-order tensor C.
     // Holzapfel book, p. 254
     // ------------------------------------------------------------------------
-    void add_SymmProduct( const double &val, const Matrix_3x3 &mleft,
-        const Matrix_3x3 &mright );
+    void add_SymmProduct( const double &val, const Tensor2_3D &mleft,
+        const Tensor2_3D &mright );
 
     // ------------------------------------------------------------------------
     // add the out-product of two 2nd-order tensor in a symmetric fashion,
@@ -214,8 +217,8 @@ class Tensor4_3D
     // genereate the last term by
     //         add_SymmOutProduct(-2/3, Cinv, Siso);
     // ------------------------------------------------------------------------
-    void add_SymmOutProduct( const double &val, const Matrix_3x3 &mleft,
-        const Matrix_3x3 &mright );
+    void add_SymmOutProduct( const double &val, const Tensor2_3D &mleft,
+        const Tensor2_3D &mright );
 
     // ------------------------------------------------------------------------
     // Matrix update for the tensor:
@@ -225,28 +228,28 @@ class Tensor4_3D
     // This is mainly designed for the push-forward/pull-back operator for the
     // tensor. A is often the deformation gradient.
     // MatMult_1 : ten[iJKL] = A[iI] ten[IJKL]
-    void MatMult_1( const Matrix_3x3 &source );
+    void MatMult_1( const Tensor2_3D &source );
 
     // MatMult_2 : ten[IjKL] = A[jJ] ten[IJKL]
-    void MatMult_2( const Matrix_3x3 &source ); 
+    void MatMult_2( const Tensor2_3D &source ); 
 
     // MatMult_3 : ten[IJkL] = A[kK] ten[IJKL]
-    void MatMult_3( const Matrix_3x3 &source );
+    void MatMult_3( const Tensor2_3D &source );
 
     // MatMult_4 : ten[IJKl] = A[lL] ten[IJKL]
-    void MatMult_4( const Matrix_3x3 &source );
+    void MatMult_4( const Tensor2_3D &source );
 
     // ------------------------------------------------------------------------
     // Contraction with a 2nd-order tensor
     // ------------------------------------------------------------------------
     // Left contraction: A_ij ten_ijkl = B_kl
-    Matrix_3x3 LeftContraction( const Matrix_3x3 &source ) const;
+    Tensor2_3D LeftContraction( const Tensor2_3D &source ) const;
 
     // Right contraction: ten_ijkl A_kl = B_ij 
-    Matrix_3x3 RightContraction( const Matrix_3x3 &source ) const;
+    Tensor2_3D RightContraction( const Tensor2_3D &source ) const;
 
     // Left & Right contraction A_ij ten_ijkl B_kl
-    double LnRContraction( const Matrix_3x3 &Left, const Matrix_3x3 &Right ) const;
+    double LnRContraction( const Tensor2_3D &Left, const Tensor2_3D &Right ) const;
 
     // Tensor contraction in_ijkl ten_ijkl
     double Ten4Contraction( const Tensor4_3D &input ) const;
@@ -288,10 +291,10 @@ class Tensor4_3D
 };
 
 // Right contraction: return ten_ijkl source_kl
-Matrix_3x3 operator*( const Tensor4_3D &ten, const Matrix_3x3 &source );
+Tensor2_3D operator*( const Tensor4_3D &ten, const Tensor2_3D &source );
 
 // Left contraction: return source_ij ten_ijkl
-Matrix_3x3 operator*( const Matrix_3x3 &source, const Tensor4_3D &ten );
+Tensor2_3D operator*( const Tensor2_3D &source, const Tensor4_3D &ten );
 
 // Tensor multiplication: return tleft_ijmn tright_mnkl
 Tensor4_3D operator*( const Tensor4_3D &tleft, const Tensor4_3D &tright );
@@ -299,33 +302,38 @@ Tensor4_3D operator*( const Tensor4_3D &tleft, const Tensor4_3D &tright );
 // Return scalar multiplication on the input tensor
 Tensor4_3D operator*( const double &val, const Tensor4_3D &input );
 
-Tensor4_3D gen_symm_id();
+namespace Ten4
+{
+  Tensor4_3D gen_zero();
 
-// ------------------------------------------------------------------------
-// Generate Projector P = SymmId4 - 1/3 invC x C
-// P_IJKL = SymmID_IJKL - 1/3 invC_IJ C_KL
-// C is assumed to be the right Cauchy-Green tensor
-// invC is the inverse of C
-// see Holzapfel book p.229 eqn. (6.84).
-// ------------------------------------------------------------------------
-Tensor4_3D gen_P( const Matrix_3x3 &C, const Matrix_3x3 &invC );
+  Tensor4_3D gen_symm_id();
 
-Tensor4_3D gen_P( const Matrix_3x3 &C );
+  // ------------------------------------------------------------------------
+  // Generate Projector P = SymmId4 - 1/3 invC x C
+  // P_IJKL = SymmID_IJKL - 1/3 invC_IJ C_KL
+  // C is assumed to be the right Cauchy-Green tensor
+  // invC is the inverse of C
+  // see Holzapfel book p.229 eqn. (6.84).
+  // ------------------------------------------------------------------------
+  Tensor4_3D gen_P( const Tensor2_3D &C, const Tensor2_3D &invC );
 
-// ------------------------------------------------------------------------
-// Generate Projector Pt = transpose of P = SymmId4 - 1/3 C x invC
-// P_IJKL = SymmID_IJKL - 1/3 C_IJ invC_KL
-// C is assumed to be the right Cauchy-Green tensor
-// invC is the inverse of C
-// see Holzapfel book p.229 eqn. (6.84).
-// ------------------------------------------------------------------------
-Tensor4_3D gen_Pt( const Matrix_3x3 &C );
+  Tensor4_3D gen_P( const Tensor2_3D &C );
 
-// ------------------------------------------------------------------------
-// Generate Projector Ptilde = invC O invC - 1/3 invC x invC
-// invC is assumed to be the right Cauchy-Green tensor 
-// see Holzapfel book p. 255, eqn. (6.170).
-// ------------------------------------------------------------------------
-Tensor4_3D gen_Ptilde( const Matrix_3x3 &invC );
+  // ------------------------------------------------------------------------
+  // Generate Projector Pt = transpose of P = SymmId4 - 1/3 C x invC
+  // P_IJKL = SymmID_IJKL - 1/3 C_IJ invC_KL
+  // C is assumed to be the right Cauchy-Green tensor
+  // invC is the inverse of C
+  // see Holzapfel book p.229 eqn. (6.84).
+  // ------------------------------------------------------------------------
+  Tensor4_3D gen_Pt( const Tensor2_3D &C );
+
+  // ------------------------------------------------------------------------
+  // Generate Projector Ptilde = invC O invC - 1/3 invC x invC
+  // invC is assumed to be the right Cauchy-Green tensor 
+  // see Holzapfel book p. 255, eqn. (6.170).
+  // ------------------------------------------------------------------------
+  Tensor4_3D gen_Ptilde( const Tensor2_3D &invC );
+}
 
 #endif

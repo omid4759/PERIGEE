@@ -18,6 +18,8 @@
 #include <ctime>
 #include <cmath>
 #include <vector>
+#include <array>
+#include <random>
 
 class Vector_3
 {
@@ -57,6 +59,8 @@ class Vector_3
 
     std::vector<double> to_std_vec() const;
 
+    std::array<double, 3> to_std_array() const;
+
     const double& x() const {return vec[0];}
     double& x() {return vec[0];}
 
@@ -72,7 +76,7 @@ class Vector_3
 
     void gen_val(const double &val);
 
-    void gen_rand();
+    void gen_rand(const double &left =-1.0, const double &right = 1.0);
 
     void gen_e1() {vec[0]=1.0; vec[1]=0.0; vec[2]=0.0;}
     
@@ -98,16 +102,22 @@ class Vector_3
     double vec[3];
 };
 
-// calculate the distance between two vector by L2 norm
-double dist( const Vector_3 &a, const Vector_3 &b );
-
-// calculate the dot product of two vectors
-double dot_product( const Vector_3 &a, const Vector_3 &b );
-
-// calculate the cross product of two vectors
-Vector_3 cross_product( const Vector_3 &a, const Vector_3 &b );
-
 // calculate a scalar product of a input vector
 Vector_3 operator*( const double &val, const Vector_3 &source );
+
+namespace Vec3
+{
+  // calculate the distance between two vector by L2 norm
+  double dist( const Vector_3 &a, const Vector_3 &b );
+
+  // calculate the dot product of two vectors
+  double dot_product( const Vector_3 &a, const Vector_3 &b );
+
+  // calculate the cross product of two vectors
+  Vector_3 cross_product( const Vector_3 &a, const Vector_3 &b );
+
+  // return the normalized input vector, and normalization is made by its L2 norm
+  Vector_3 normalize( const Vector_3 &val );
+}
 
 #endif

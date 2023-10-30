@@ -11,7 +11,6 @@
 // Author: Ju Liu
 // Date created: Nov. 6 2013
 // ============================================================================
-#include <array>
 #include "IQuadPts.hpp"
 #include "FEANode.hpp"
 
@@ -19,10 +18,10 @@ class FEAElement
 {
   public:
     // Constructor
-    FEAElement(){};
+    FEAElement() = default;
     
     // Destructor
-    virtual ~FEAElement(){};
+    virtual ~FEAElement() = default;
 
     // Return this element's dimension
     virtual int get_elemDim() const = 0;
@@ -62,6 +61,12 @@ class FEAElement
         const double * const &ctrl_y ) const
     {SYS_T::commPrint("Warning: get_h is not implemented. \n"); return 0.0;}
 
+    virtual double get_h( const std::array<std::vector<double>,3> pts ) const
+    {return get_h( &pts[0][0], &pts[1][0], &pts[2][0] );}
+
+    virtual double get_h( const std::array<std::vector<double>,2> pts ) const
+    {return get_h( &pts[0][0], &pts[1][0] );}
+
     // ------------------------------------------------------------------------
     // Build Basis function quadrature info
     // ------------------------------------------------------------------------
@@ -71,10 +76,18 @@ class FEAElement
         const double * const &ctrl_z )
     {SYS_T::commPrint("Warning: buildBasis() is not implemented. \n");}
 
+    virtual void buildBasis( const IQuadPts * const &quad_rule,
+        const std::array<std::vector<double>,3> &pts )
+    {buildBasis(quad_rule, &pts[0][0], &pts[1][0], &pts[2][0]);}
+
     // Build 2D basis -- FEM
     virtual void buildBasis( const IQuadPts * const &quad_rule,
         const double * const &ctrl_x, const double * const &ctrl_y )
     {SYS_T::commPrint("Warning: buildBasis() is not implemented. \n");}
+
+    virtual void buildBasis( const IQuadPts * const &quad_rule,
+        const std::array<std::vector<double>,2> &pts )
+    {buildBasis(quad_rule, &pts[0][0], &pts[1][0]);}
 
     // ------------------------------------------------------------------------
     // Get functions : Obtain the value of basis functions and their derivatives.
@@ -209,10 +222,10 @@ class FEAElement
     // and shell elements.
     // Reference: TJRH Linear finite element book page 386.
     // ------------------------------------------------------------------------    
-    virtual Matrix_3x3 get_rotationMatrix( const int &quaindex ) const 
+    virtual Tensor2_3D get_rotationMatrix( const int &quaindex ) const 
     {
       SYS_T::commPrint("Warning: get_rotationMatrix is not implemented. \n"); 
-      return Matrix_3x3();
+      return Tensor2_3D();
     }
 
     // ------------------------------------------------------------------------
@@ -223,7 +236,7 @@ class FEAElement
     // product will point in the outward direction with respect to the volume
     // element. To ensure the ordering, some special procedure may need to be
     // performed in the preprocessor to check and order the nodal indices.
-    // See, ElemBC_3D_tet4::resetTriIEN_outwardnormal() function for example
+    // See, ElemBC_3D::resetSurIEN_outwardnormal() function for example
     // for the ordering of a triangle element that belongs to a tetrahedron
     // surface.
     // This function is called in FEAElement_Triangle3_3D_der0.
@@ -243,13 +256,21 @@ class FEAElement
     // calculate the "root" of the tangential vector.
     // This function is, for example, called in FEAElement_Line2_3D_der0.
     // ------------------------------------------------------------------------
-    virtual void get_normal_out( const int &quaindex,
-        const double &sur_pt_x, const double &sur_pt_y,
-        const double &sur_pt_z, const double &intpt_x, 
-        const double &intpt_y, const double &intpt_z,
-        double &nx, double &ny, double &nz, double &length ) const
-    {SYS_T::commPrint("Warning: get_normal_out is not implemented. \n");}
+    virtual Vector_3 get_normal_out( const int &quaindex,
+        const std::vector< Vector_3> &sur_pt, const Vector_3 &int_pt, 
+        double &length ) const
+    {
+      SYS_T::commPrint("Warning: get_normal_out is not implemented. \n");
+      return Vector_3();
+    }
 
+    virtual Vector_3 get_normal_out( const int &quaindex,
+        const Vector_3 &sur_pt, const Vector_3 &int_pt, 
+        double &length ) const
+    {
+      SYS_T::commPrint("Warning: get_normal_out is not implemented. \n");
+      return Vector_3();
+    }
 };
 
 #endif

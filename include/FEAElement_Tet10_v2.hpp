@@ -11,7 +11,7 @@
 //
 // Tet10 : 10-node tet element, aka, quadratic tet.
 //
-//                     u
+//                     t
 //                     ^
 //                     |
 //                     3
@@ -39,8 +39,7 @@
 // Date created: Nov. 3 2019
 // ==================================================================
 #include "FEAElement.hpp"
-#include "Math_Tools.hpp"
-#include "Matrix_double_6by6_Array.hpp"
+#include "FE_Tools.hpp"
 
 class FEAElement_Tet10_v2 : public FEAElement
 {
