@@ -428,13 +428,13 @@ int main(int argc, char *argv[])
   // ===== Initial condition =====
   PDNSolution * base = new PDNSolution_V( pNode_v, fNode, locinfnbc, 1, true, "base" ); 
   
-  PDNSolution * velo = new PDNSolution_V(pNode_v, fNode, fluid_density, fluid_mu, 2, true, "velo");
-  PDNSolution * disp = new PDNSolution_V(pNode_v, fNode, fluid_density, fluid_mu, 2, true, "disp");
-  PDNSolution * pres = new PDNSolution_P(pNode_p, fNode, 2, true, "pres");
+  PDNSolution * velo = new PDNSolution_V(pNode_v, 0, true, "velo");
+  PDNSolution * disp = new PDNSolution_V(pNode_v, 0, true, "disp");
+  PDNSolution * pres = new PDNSolution_P(pNode_p, 0, true, "pres");
 
-  PDNSolution * dot_velo = new PDNSolution_V(pNode_v, fNode, fluid_density, fluid_mu, 3, true, "dot_velo");
-  PDNSolution * dot_disp = new PDNSolution_V(pNode_v, fNode, fluid_density, fluid_mu, 3, true, "dot_disp");
-  PDNSolution * dot_pres = new PDNSolution_P(pNode_p, 3, true, "dot_pres");
+  PDNSolution * dot_velo = new PDNSolution_V(pNode_v, 0, true, "dot_velo");
+  PDNSolution * dot_disp = new PDNSolution_V(pNode_v, 0, true, "dot_disp");
+  PDNSolution * dot_pres = new PDNSolution_P(pNode_p, 0, true, "dot_pres");
   
   if( is_restart )
   {

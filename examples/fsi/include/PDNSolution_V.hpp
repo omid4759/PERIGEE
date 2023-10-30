@@ -10,7 +10,6 @@
 // Author: Ju Liu
 // Date: Dec. 29 2021 
 // ============================================================================
-#include <complex_bessel.h>
 #include "PDNSolution.hpp"
 #include "FEANode.hpp"
 #include "ALocal_InflowBC.hpp"
@@ -27,13 +26,6 @@ class PDNSolution_V : public PDNSolution
         const ALocal_InflowBC * const &infbc,
         const int &type, const bool &isprint = false,
         const std::string &in_name = "solution_kinematics" );
-
-    PDNSolution_V( const APart_Node * const &pNode,
-        const FEANode * const &fNode,
-	const double &rho,
-	const double &vis_mu,
-	const int &type, const bool &isprint = false,
-	const std::string &in_name = "solution_kinematics" );
 
     virtual ~PDNSolution_V() {};
 
@@ -55,18 +47,6 @@ class PDNSolution_V : public PDNSolution
     void Init_flow_parabolic( const APart_Node * const &pNode_ptr,
         const FEANode * const &fNode_ptr,
         const ALocal_InflowBC * const &infbc );
-
-    // --------------------------------------------------------------
-    // case 2: generate full Womersley solution
-    // --------------------------------------------------------------
-    void Init_flow_womersley( const APart_Node * const &pNode_ptr,
-        const FEANode * const &fNode_ptr, const double &rho, const double &vis_mu );
-
-    // --------------------------------------------------------------
-    // case 3: generate full Womersley dot solution
-    // --------------------------------------------------------------
-    void Init_flow_womersley_dot( const APart_Node * const &pNode_ptr,
-        const FEANode * const &fNode_ptr, const double &rho, const double &vis_mu );
 };
 
 #endif
