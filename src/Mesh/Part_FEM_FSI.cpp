@@ -97,6 +97,13 @@ Part_FEM_FSI::Part_FEM_FSI( const IMesh * const &mesh,
 
   nlocalnode_fluid = static_cast<int>( node_loc_fluid.size() );
   nlocalnode_solid = static_cast<int>( node_loc_solid.size() );
+
+  is_direction_basis = false;
+  loc_basis_r.clear();
+  loc_basis_l.clear();
+  loc_basis_c.clear();
+  node_locgho_solid.clear();
+  nlocghonode_s = 0;
 }
 
 Part_FEM_FSI::Part_FEM_FSI( const IMesh * const &mesh,
@@ -107,6 +114,9 @@ Part_FEM_FSI::Part_FEM_FSI( const IMesh * const &mesh,
     const std::vector<int> &phytag,
     const std::vector<int> &node_f,
     const std::vector<int> &node_s,
+    const std::vector<Vector_3> &basis_r,
+    const std::vector<Vector_3> &basis_l,
+    const std::vector<Vector_3> &basis_c,
     const int &in_cpu_rank,
     const int &in_cpu_size,
     const int &in_elemType,
@@ -196,6 +206,34 @@ Part_FEM_FSI::Part_FEM_FSI( const IMesh * const &mesh,
 
   nlocalnode_fluid = static_cast<int>( node_loc_fluid.size() );
   nlocalnode_solid = static_cast<int>( node_loc_solid.size() );
+
+  // Generate the node_locgho_solid
+  node_locgho_solid.resize(nlocghonode);
+  loc_basis_r.clear();
+  loc_basis_l.clear();
+  loc_basis_c.clear();
+
+  int index = 0;
+  for(int ii=0; ii<nlocghonode; ++ii)
+  {
+    int aux_index = local_to_global[ii]; // new global index
+    aux_index = mnindex->get_new2old(aux_index); // back to old global index
+    if( VEC_T::is_invec(node_s, aux_index) )
+    {
+      node_locgho_solid[ii] = index; // record local solid node index
+      index += 1;
+
+      const int pos = VEC_T::get_pos( node_s, aux_index );
+      loc_basis_r.push_back( basis_r[pos] );
+      loc_basis_l.push_back( basis_l[pos] );
+      loc_basis_c.push_back( basis_c[pos] );
+    }
+    else node_locgho_solid[ii] = -1;
+  }
+
+  nlocghonode_s = VEC_T::get_size( node_locgho_solid );
+  is_direction_basis = true;
+  std::cout<<"-- proc "<<cpu_rank<<" Local direction basis vectors generated. \n";
 }
 
 Part_FEM_FSI::~Part_FEM_FSI()
@@ -304,6 +342,19 @@ void Part_FEM_FSI::write( const std::string &inputFileName ) const
   h5w -> write_intScalar( group_id_7, "start_idx", start_idx );
 
   H5Gclose( group_id_7 );
+
+  if( is_direction_basis )
+  {
+    hid_t group_id_8 = H5Gcreate(file_id, "/directionBasis_loc", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    h5w -> write_intScalar( group_id_8, "nlocghonode_s", nlocghonode_s );
+    h5w -> write_intVector( group_id_8, "node_locgho_solid", node_locgho_solid );
+    h5w -> write_Vector3_Vector( group_id_8, "loc_basis_r", loc_basis_r );
+    h5w -> write_Vector3_Vector( group_id_8, "loc_basis_l", loc_basis_l );
+    h5w -> write_Vector3_Vector( group_id_8, "loc_basis_c", loc_basis_c );
+
+    H5Gclose( group_id_8 );
+  }
 
   // Finish writing, clean up
   delete h5w;
