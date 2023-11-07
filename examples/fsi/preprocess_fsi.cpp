@@ -519,7 +519,7 @@ int main( int argc, char * argv[] )
     part_p -> write( part_file_p );
 
     IPart * part_v = new Part_FEM_FSI( mesh_v, global_part, mnindex_v, IEN_v,
-        ctrlPts, phy_tag, v_node_f, v_node_s,
+        ctrlPts, phy_tag, v_node_f, v_node_s, basis_r, basis_l, basis_c,
         proc_rank, cpu_size, elemType, 1, dof_fields[1], start_idx_v[proc_rank], true );
 
     part_v -> print_part_loadbalance_edgecut();

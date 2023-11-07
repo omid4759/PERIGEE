@@ -32,6 +32,25 @@ class Part_FEM_FSI : public Part_FEM
         const int &in_start_idx,
         const bool &in_is_geo_field );
 
+    Part_FEM_FSI( const IMesh * const &mesh,
+        const IGlobal_Part * const &gpart,
+        const Map_Node_Index * const &mnindex,
+        const IIEN * const &IEN,
+        const std::vector<double> &ctrlPts,
+        const std::vector<int> &phytag,
+        const std::vector<int> &node_f,
+        const std::vector<int> &node_s,
+	const std::vector<Vector_3> &basis_r,
+	const std::vector<Vector_3> &basis_l,
+	const std::vector<Vector_3> &basis_c,
+        const int &in_cpu_rank,
+        const int &in_cpu_size,
+        const int &in_elemType,
+        const int &field,
+        const int &in_dof,
+        const int &in_start_idx,
+        const bool &in_is_geo_field );
+
     virtual ~Part_FEM_FSI();
 
     virtual void write( const std::string &inputFileName ) const;
@@ -56,6 +75,20 @@ class Part_FEM_FSI : public Part_FEM
 
     // Flag that determines if the field is a geometry field
     const bool is_geo_field;
+
+    // Flag that determines if the solid nodes contain direction vecter information
+    bool is_direction_basis;
+
+    // local direction vecters. Letters r, l, and c denotes the radial, longitudinal,
+    // and circumferential directions, respectively.
+    std::vector<Vector_3> loc_basis_r, loc_basis_l, loc_basis_c;
+
+    // A vector with length of nlocghonode, mapping from the total local nodes
+    // to the local solid nodes. When here goes a solid node, the mapping
+    // returns the local solid node index, otherwise return -1.
+    std::vector<int> node_locgho_solid;
+
+    int nlocghonode_s;
 };
 
 #endif
