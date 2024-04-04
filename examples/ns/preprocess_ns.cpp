@@ -264,26 +264,37 @@ int main( int argc, char * argv[] )
 
   std::vector<std::string> dir_list {};
   std::vector<std::string> weak_list {};
+  std::vector<int> node_index_change {};
+
   for(int ii=0; ii<num_inlet; ++ii)
+  {
     dir_list.push_back( sur_file_in[ii] );
+    node_index_change.push_back(0);
+  }
 
   for(int ii=0; ii<num_rotated_inlet; ++ii)
+  {
     dir_list.push_back( rotated_sur_file_in[ii] );
+    node_index_change.push_back(fixed_nFunc);
+  }
   
   if (wall_model_type == 0)
   {
     dir_list.push_back( sur_file_wall );
     dir_list.push_back( rotated_sur_file_wall );
+    node_index_change.push_back(0);
+    node_index_change.push_back(fixed_nFunc);
   }
   else if (wall_model_type == 1 || wall_model_type == 2)
     weak_list.push_back( sur_file_wall );
   else
     SYS_T::print_fatal("Unknown wall model type.");
 
+
   NBC_list[0] = new NodalBC( nFunc );
-  NBC_list[1] = new NodalBC( dir_list, nFunc );
-  NBC_list[2] = new NodalBC( dir_list, nFunc );
-  NBC_list[3] = new NodalBC( dir_list, nFunc );
+  NBC_list[1] = new NodalBC( dir_list, nFunc, node_index_change);
+  NBC_list[2] = new NodalBC( dir_list, nFunc, node_index_change );
+  NBC_list[3] = new NodalBC( dir_list, nFunc, node_index_change );
 
   // Inflow BC info
   std::vector< Vector_3 > inlet_outvec( sur_file_in.size() );

@@ -47,6 +47,45 @@ NodalBC::NodalBC( const std::vector<std::string> &vtkfileList,
   std::cout<<"     is generated."<<std::endl;
 }
 
+NodalBC::NodalBC( const std::vector<std::string> &vtkfileList, 
+    const int &nFunc, const std::vector<int> &index_increment )
+{
+  dir_nodes.clear();
+  per_slave_nodes.clear();
+  per_master_nodes.clear();
+  num_per_nodes = 0;
+
+  SYS_T::print_fatal_if(VEC_T::get_size(vtkfileList) != VEC_T::get_size(index_increment),
+    "Error: the length of index_increment should match with vtkfileList");
+
+  for( int ii=0; ii<VEC_T::get_size(vtkfileList); ++ii )
+  {
+    const auto vtkfile = vtkfileList[ii];
+    SYS_T::file_check( vtkfile );
+
+    const auto gnode = VTK_T::read_int_PointData(vtkfile, "GlobalNodeID");
+  
+    for(unsigned int jj=0; jj<gnode.size(); ++jj)
+    {
+      const int actual_GNID = gnode[jj] + index_increment[ii];
+      SYS_T::print_fatal_if( actual_GNID<0 || actual_GNID>=nFunc, "Error: the nodal index %d is not in the range [0, %d)! \n", actual_GNID, nFunc);
+
+      dir_nodes.push_back( static_cast<unsigned int>(actual_GNID) );
+    }
+  }
+  
+  VEC_T::sort_unique_resize(dir_nodes);
+
+  num_dir_nodes = dir_nodes.size();
+
+  Create_ID( nFunc );
+
+  std::cout<<"===> NodalBC specified by \n";
+  for( const auto &vtkfile : vtkfileList )
+    std::cout<<"     "<<vtkfile<<"\n";
+  std::cout<<"     is generated."<<std::endl;
+}
+
 NodalBC::NodalBC( const std::vector<std::string> &vtkfileList,
     const int &nFunc, const int &type )
 {
