@@ -17,6 +17,7 @@
 #include "NodalBC_3D_inflow.hpp"
 #include "ElemBC_3D_outflow.hpp"
 #include "ElemBC_3D_wall_turbulence.hpp"
+#include "ElemBC_3D_sliding_interface.hpp"
 #include "NBC_Partition.hpp"
 #include "NBC_Partition_inflow.hpp"
 #include "EBC_Partition_outflow.hpp"
@@ -53,12 +54,16 @@ int main( int argc, char * argv[] )
   const std::string sur_file_wall     = paras["sur_file_wall"].as<std::string>();
   const std::string sur_file_out_base = paras["sur_file_out_base"].as<std::string>();
 
+  const std::string fixed_interface   = paras["fixed_interface"].as<std::string>();
+
   const int num_rotated_inlet                 = paras["num_rotated_inlet"].as<int>();
   const int num_rotated_outlet                = paras["num_rotated_outlet"].as<int>();
   const std::string rotated_geo_file          = paras["rotated_geo_file"].as<std::string>();
   const std::string rotated_sur_file_in_base  = paras["rotated_sur_file_in_base"].as<std::string>();
   const std::string rotated_sur_file_wall     = paras["rotated_sur_file_wall"].as<std::string>();
-  const std::string rotated_sur_file_out_base = paras["rotated_sur_file_out_base"].as<std::string>(); 
+  const std::string rotated_sur_file_out_base = paras["rotated_sur_file_out_base"].as<std::string>();
+
+  const std::string rotated_interface         = paras["rotated_interface"].as<std::string>();
 
   const std::string part_file         = paras["part_file"].as<std::string>();
   const int cpu_size                  = paras["cpu_size"].as<int>();
@@ -83,10 +88,12 @@ int main( int argc, char * argv[] )
   cout<<" -sur_file_in_base: "<<sur_file_in_base<<endl;
   cout<<" -sur_file_wall: "<<sur_file_wall<<endl;
   cout<<" -sur_file_out_base: "<<sur_file_out_base<<endl;
+  cout<<" -fixed_interface: "<<fixed_interface<<endl;
   cout<<" -rotated_geo_file: "<<rotated_geo_file<<endl;
   cout<<" -rotated_sur_file_in_base: "<<rotated_sur_file_in_base<<endl;
   cout<<" -rotated_sur_file_wall: "<<rotated_sur_file_wall<<endl;
   cout<<" -rotated_sur_file_out_base: "<<rotated_sur_file_out_base<<endl;
+  cout<<" -rotated_interface: "<<rotated_interface<<endl;
   cout<<" -part_file: "<<part_file<<endl;
   cout<<" -cpu_size: "<<cpu_size<<endl;
   cout<<" -in_ncommon: "<<in_ncommon<<endl;
@@ -101,6 +108,8 @@ int main( int argc, char * argv[] )
   SYS_T::file_check(geo_file); cout<<geo_file<<" found. \n";
 
   SYS_T::file_check(sur_file_wall); cout<<sur_file_wall<<" found. \n";
+
+  SYS_T::file_check(fixed_interface); cout<<fixed_interface<<" found. \n";
 
   // Generate the inlet file names and check existance
   std::vector< std::string > sur_file_in;
@@ -140,6 +149,8 @@ int main( int argc, char * argv[] )
   SYS_T::file_check(rotated_geo_file); cout<<rotated_geo_file<<" found. \n";
 
   SYS_T::file_check(rotated_sur_file_wall); cout<<rotated_sur_file_wall<<" found. \n";
+
+  SYS_T::file_check(rotated_interface); cout<<rotated_interface<<" found. \n";
 
   // Generate the inlet file names and check existance
   std::vector< std::string > rotated_sur_file_in;
@@ -190,6 +201,8 @@ int main( int argc, char * argv[] )
   cmdh5w->write_string("sur_file_in_base", sur_file_in_base);
   cmdh5w->write_string("sur_file_out_base", sur_file_out_base);
   cmdh5w->write_string("sur_file_wall", sur_file_wall);
+  cmdh5w->write_string("fixed_interface", fixed_interface);
+  cmdh5w->write_string("rotated_interface", rotated_interface);
   cmdh5w->write_string("part_file", part_file);
 
   delete cmdh5w; H5Fclose(cmd_file_id);
@@ -200,7 +213,7 @@ int main( int argc, char * argv[] )
   std::vector<double> ctrlPts;
   
   VTK_T::read_vtu_grid(geo_file, nFunc, nElem, ctrlPts, vecIEN);
-  const int fixed_nFunc = nFunc;
+  const int fixed_nFunc = nFunc, fixed_nElem = nElem;
 
   int rotated_nFunc, rotated_nElem;
   std::vector<int> rotated_vecIEN;
@@ -292,7 +305,7 @@ int main( int argc, char * argv[] )
 
 
   NBC_list[0] = new NodalBC( nFunc );
-  NBC_list[1] = new NodalBC( dir_list, nFunc, node_index_change);
+  NBC_list[1] = new NodalBC( dir_list, nFunc, node_index_change );
   NBC_list[2] = new NodalBC( dir_list, nFunc, node_index_change );
   NBC_list[3] = new NodalBC( dir_list, nFunc, node_index_change );
 
@@ -340,6 +353,9 @@ int main( int argc, char * argv[] )
 
   // Setup weakly enforced Dirichlet BC on wall if wall_model_type > 0
   ElemBC * wbc = new ElemBC_3D_wall_turbulence( weak_list, wall_model_type, IEN, elemType );
+
+  const std::vector<std::string> interface_list {fixed_interface, rotated_interface};
+  ElemBC * itf = new ElemBC_3D_sliding_interface(interface_list, fixed_nFunc, fixed_nElem, IEN, elemType);
  
   // Start partition the mesh for each cpu_rank 
 
@@ -412,7 +428,7 @@ int main( int argc, char * argv[] )
   // Finalize the code and exit
   for(auto &it_nbc : NBC_list) delete it_nbc;
 
-  delete InFBC; delete ebc; delete wbc; delete mytimer;
+  delete InFBC; delete ebc; delete wbc; delete itf; delete mytimer;
   delete mnindex; delete global_part; delete mesh; delete IEN;
 
   return EXIT_SUCCESS;

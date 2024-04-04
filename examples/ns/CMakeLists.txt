@@ -44,6 +44,7 @@ SET( perigee_preprocess_lib_src
   ${perigee_source}/Mesh/ElemBC_3D.cpp
   ${perigee_source}/Mesh/ElemBC_3D_outflow.cpp
   ${perigee_source}/Mesh/ElemBC_3D_wall_turbulence.cpp
+  ${perigee_source}/Mesh/ElemBC_3D_sliding_interface.cpp
   ${perigee_source}/Mesh/NodalBC.cpp
   ${perigee_source}/Mesh/NodalBC_3D_inflow.cpp
   ${perigee_source}/Mesh/QuadPts_Gauss_Triangle.cpp
