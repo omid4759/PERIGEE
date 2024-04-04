@@ -52,13 +52,21 @@ int main( int argc, char * argv[] )
   const std::string sur_file_in_base  = paras["sur_file_in_base"].as<std::string>();
   const std::string sur_file_wall     = paras["sur_file_wall"].as<std::string>();
   const std::string sur_file_out_base = paras["sur_file_out_base"].as<std::string>();
+
+  const int num_rotated_inlet                 = paras["num_rotated_inlet"].as<int>();
+  const int num_rotated_outlet                = paras["num_rotated_outlet"].as<int>();
+  const std::string rotated_geo_file          = paras["rotated_geo_file"].as<std::string>();
+  const std::string rotated_sur_file_in_base  = paras["rotated_sur_file_in_base"].as<std::string>();
+  const std::string rotated_sur_file_wall     = paras["rotated_sur_file_wall"].as<std::string>();
+  const std::string rotated_sur_file_out_base = paras["rotated_sur_file_out_base"].as<std::string>(); 
+
   const std::string part_file         = paras["part_file"].as<std::string>();
   const int cpu_size                  = paras["cpu_size"].as<int>();
   const int in_ncommon                = paras["in_ncommon"].as<int>();
   const bool isDualGraph              = paras["is_dualgraph"].as<bool>();
 
   // Optional:
-  const int wall_model_type               = paras["wall_model_type"].as<int>();
+  const int wall_model_type           = paras["wall_model_type"].as<int>();
   // wall_model_type: 0 no weakly enforced Dirichlet bc;
   //                  1 weakly enforced Dirichlet bc in all direction;
   //                  2 strongly enforced in wall-normal direction,
@@ -75,6 +83,10 @@ int main( int argc, char * argv[] )
   cout<<" -sur_file_in_base: "<<sur_file_in_base<<endl;
   cout<<" -sur_file_wall: "<<sur_file_wall<<endl;
   cout<<" -sur_file_out_base: "<<sur_file_out_base<<endl;
+  cout<<" -rotated_geo_file: "<<rotated_geo_file<<endl;
+  cout<<" -rotated_sur_file_in_base: "<<rotated_sur_file_in_base<<endl;
+  cout<<" -rotated_sur_file_wall: "<<rotated_sur_file_wall<<endl;
+  cout<<" -rotated_sur_file_out_base: "<<rotated_sur_file_out_base<<endl;
   cout<<" -part_file: "<<part_file<<endl;
   cout<<" -cpu_size: "<<cpu_size<<endl;
   cout<<" -in_ncommon: "<<in_ncommon<<endl;
@@ -124,6 +136,45 @@ int main( int argc, char * argv[] )
     cout<<sur_file_out[ii]<<" found. \n";
   }
 
+  // Check if the vtu geometry files exist on disk
+  SYS_T::file_check(rotated_geo_file); cout<<rotated_geo_file<<" found. \n";
+
+  SYS_T::file_check(rotated_sur_file_wall); cout<<rotated_sur_file_wall<<" found. \n";
+
+  // Generate the inlet file names and check existance
+  std::vector< std::string > rotated_sur_file_in;
+  rotated_sur_file_in.resize( num_rotated_inlet );
+
+  for(int ii=0; ii<num_rotated_inlet; ++ii)
+  {  
+    if(elemType == 501 || elemType == 601)
+      rotated_sur_file_in[ii] = SYS_T::gen_capfile_name( rotated_sur_file_in_base, ii, ".vtp" );   
+    else if(elemType == 502 || elemType == 602)
+      rotated_sur_file_in[ii] = SYS_T::gen_capfile_name( rotated_sur_file_in_base, ii, ".vtu" );
+    else
+      SYS_T::print_fatal("Error: unknown element type occurs when generating the inlet file names. \n"); 
+  
+    SYS_T::file_check(rotated_sur_file_in[ii]);
+    cout<<rotated_sur_file_in[ii]<<" found. \n";
+  }
+
+  // Generate the outlet file names and check existance
+  std::vector< std::string > rotated_sur_file_out;
+  rotated_sur_file_out.resize( num_rotated_outlet );
+
+  for(int ii=0; ii<num_rotated_outlet; ++ii)
+  {
+    if(elemType == 501 || elemType == 601)
+      rotated_sur_file_out[ii] = SYS_T::gen_capfile_name( rotated_sur_file_out_base, ii, ".vtp" ); 
+    else if(elemType == 502 || elemType == 602)
+      rotated_sur_file_out[ii] = SYS_T::gen_capfile_name( rotated_sur_file_out_base, ii, ".vtu" ); 
+    else
+      SYS_T::print_fatal("Error: unknown element type occurs when generating the outlet file names. \n");
+
+    SYS_T::file_check(rotated_sur_file_out[ii]);
+    cout<<rotated_sur_file_out[ii]<<" found. \n";
+  }
+
   // Record the problem setting into a HDF5 file: preprocessor_cmd.h5
   hid_t cmd_file_id = H5Fcreate("preprocessor_cmd.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
   HDF5_Writer * cmdh5w = new HDF5_Writer(cmd_file_id);
@@ -149,9 +200,26 @@ int main( int argc, char * argv[] )
   std::vector<double> ctrlPts;
   
   VTK_T::read_vtu_grid(geo_file, nFunc, nElem, ctrlPts, vecIEN);
-  
+  const int fixed_nFunc = nFunc;
+
+  int rotated_nFunc, rotated_nElem;
+  std::vector<int> rotated_vecIEN;
+  std::vector<double> rotated_ctrlPts;
+
+  VTK_T::read_vtu_grid(rotated_geo_file, rotated_nFunc, rotated_nElem, rotated_ctrlPts, rotated_vecIEN);
+  nFunc += rotated_nFunc;
+  nElem += rotated_nElem;
+
+  for (int &nodeid : rotated_vecIEN)
+    nodeid += fixed_nFunc;
+
+  VEC_T::insert_end(vecIEN, rotated_vecIEN);
+  VEC_T::insert_end(ctrlPts, rotated_ctrlPts);
+
   IIEN * IEN = new IEN_FEM(nElem, vecIEN);
   VEC_T::clean( vecIEN ); // clean the vector
+  VEC_T::clean( rotated_vecIEN );
+  VEC_T::clean( rotated_ctrlPts );
   
   IMesh * mesh = nullptr;
 
@@ -198,9 +266,15 @@ int main( int argc, char * argv[] )
   std::vector<std::string> weak_list {};
   for(int ii=0; ii<num_inlet; ++ii)
     dir_list.push_back( sur_file_in[ii] );
+
+  for(int ii=0; ii<num_rotated_inlet; ++ii)
+    dir_list.push_back( rotated_sur_file_in[ii] );
   
   if (wall_model_type == 0)
+  {
     dir_list.push_back( sur_file_wall );
+    dir_list.push_back( rotated_sur_file_wall );
+  }
   else if (wall_model_type == 1 || wall_model_type == 2)
     weak_list.push_back( sur_file_wall );
   else
