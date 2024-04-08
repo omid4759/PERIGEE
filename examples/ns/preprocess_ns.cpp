@@ -22,6 +22,7 @@
 #include "NBC_Partition_inflow.hpp"
 #include "EBC_Partition_outflow.hpp"
 #include "EBC_Partition_wall_turbulence.hpp"
+#include "EBC_Partition_sliding_interface.hpp"
 #include "yaml-cpp/yaml.h"
 
 int main( int argc, char * argv[] )
@@ -355,7 +356,7 @@ int main( int argc, char * argv[] )
   ElemBC * wbc = new ElemBC_3D_wall_turbulence( weak_list, wall_model_type, IEN, elemType );
 
   const std::vector<std::string> interface_list {fixed_interface, rotated_interface};
-  ElemBC * itf = new ElemBC_3D_sliding_interface(interface_list, fixed_nFunc, fixed_nElem, IEN, elemType);
+  ElemBC * itf = new ElemBC_3D_sliding_interface(interface_list, fixed_nFunc, fixed_nElem, ctrlPts, IEN, elemType);
  
   // Start partition the mesh for each cpu_rank 
 
@@ -399,6 +400,11 @@ int main( int argc, char * argv[] )
     EBC_Partition * wbcpart = new EBC_Partition_wall_turbulence(part, mnindex, wbc);
 
     wbcpart -> write_hdf5( part_file );
+
+    // Partition sliding interface and write to h5 file
+    EBC_Partition * itfpart = new EBC_Partition_sliding_interface(part, mnindex, itf);
+
+    itfpart -> write_hdf5( part_file );
 
     // Collect partition statistics
     list_nlocalnode.push_back(part->get_nlocalnode());

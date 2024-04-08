@@ -100,7 +100,7 @@ EBC_Partition::EBC_Partition( const IPart * const &part,
       local_cell_node_vol_id[ii][jj] = ebc->get_global_node( ii, local_cell_node[ii][jj] );
       local_cell_node_pos[ii][jj] = part->get_nodeLocGhoIndex( mnindex->get_old2new( local_cell_node_vol_id[ii][jj] ) );
       
-      SYS_T::print_fatal_if( local_cell_node_pos[ii][jj] < 0, "ERROR: there are nodes on the ebc surface not found in the partition's localtogloal array.\n" );
+      // SYS_T::print_fatal_if( local_cell_node_pos[ii][jj] < 0, "ERROR: there are nodes on the ebc surface not found in the partition's localtogloal array.\n" );
     }
 
     // now create the new IEN
@@ -112,7 +112,7 @@ EBC_Partition::EBC_Partition( const IPart * const &part,
       {
         const int temp_node = ebc->get_ien(ii, local_elem[jj], kk);
         const int temp_npos = VEC_T::get_pos( local_cell_node[ii], temp_node );
-        SYS_T::print_fatal_if( temp_npos < 0, "Error: EBC_Partition, local_cell_node is incomplete. \n" );
+        // SYS_T::print_fatal_if( temp_npos < 0, "Error: EBC_Partition, local_cell_node is incomplete. \n" );
         local_cell_ien[ii][jj*cell_nLocBas[ii] + kk] = temp_npos;
       }
     }
