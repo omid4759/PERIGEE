@@ -44,14 +44,6 @@ class NodalBC : public INodalBC
     NodalBC( const std::vector<std::string> &vtkfileList, const int &nFunc );
 
     // --------------------------------------------------------------
-    // The list of vtp files specifies the Dirichlet nodes. 
-    // No periodical type BC nodes.
-    // index_increment implies the GlobalNodeID in some vtk file should 
-    // start from a given index. Length = size(vtkfileList)
-    // --------------------------------------------------------------
-    NodalBC( const std::vector<std::string> &vtkfileList, const int &nFunc, const std::vector<int> &index_increment );
-
-    // --------------------------------------------------------------
     // General NodalBC constructor. The specific implementation is 
     // determined by the private funcitons, indicated by the type var.
     // --------------------------------------------------------------

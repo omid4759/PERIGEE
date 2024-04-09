@@ -55,16 +55,9 @@ int main( int argc, char * argv[] )
   const std::string sur_file_wall     = paras["sur_file_wall"].as<std::string>();
   const std::string sur_file_out_base = paras["sur_file_out_base"].as<std::string>();
 
-  const std::string fixed_interface   = paras["fixed_interface"].as<std::string>();
-
-  const int num_rotated_inlet                 = paras["num_rotated_inlet"].as<int>();
-  const int num_rotated_outlet                = paras["num_rotated_outlet"].as<int>();
-  const std::string rotated_geo_file          = paras["rotated_geo_file"].as<std::string>();
-  const std::string rotated_sur_file_in_base  = paras["rotated_sur_file_in_base"].as<std::string>();
-  const std::string rotated_sur_file_wall     = paras["rotated_sur_file_wall"].as<std::string>();
-  const std::string rotated_sur_file_out_base = paras["rotated_sur_file_out_base"].as<std::string>();
-
-  const std::string rotated_interface         = paras["rotated_interface"].as<std::string>();
+  const int num_interface_pair        = paras["num_interface_pair"].as<int>();
+  const std::string fixed_interface_base   = paras["fixed_interface_base"].as<std::string>();
+  const std::string rotated_interface_base = paras["rotated_interface_base"].as<std::string>();
 
   const std::string part_file         = paras["part_file"].as<std::string>();
   const int cpu_size                  = paras["cpu_size"].as<int>();
@@ -89,12 +82,8 @@ int main( int argc, char * argv[] )
   cout<<" -sur_file_in_base: "<<sur_file_in_base<<endl;
   cout<<" -sur_file_wall: "<<sur_file_wall<<endl;
   cout<<" -sur_file_out_base: "<<sur_file_out_base<<endl;
-  cout<<" -fixed_interface: "<<fixed_interface<<endl;
-  cout<<" -rotated_geo_file: "<<rotated_geo_file<<endl;
-  cout<<" -rotated_sur_file_in_base: "<<rotated_sur_file_in_base<<endl;
-  cout<<" -rotated_sur_file_wall: "<<rotated_sur_file_wall<<endl;
-  cout<<" -rotated_sur_file_out_base: "<<rotated_sur_file_out_base<<endl;
-  cout<<" -rotated_interface: "<<rotated_interface<<endl;
+  cout<<" -fixed_interface_base: "<<fixed_interface_base<<endl;
+  cout<<" -rotated_interface_base: "<<rotated_interface_base<<endl;
   cout<<" -part_file: "<<part_file<<endl;
   cout<<" -cpu_size: "<<cpu_size<<endl;
   cout<<" -in_ncommon: "<<in_ncommon<<endl;
@@ -109,8 +98,6 @@ int main( int argc, char * argv[] )
   SYS_T::file_check(geo_file); cout<<geo_file<<" found. \n";
 
   SYS_T::file_check(sur_file_wall); cout<<sur_file_wall<<" found. \n";
-
-  SYS_T::file_check(fixed_interface); cout<<fixed_interface<<" found. \n";
 
   // Generate the inlet file names and check existance
   std::vector< std::string > sur_file_in;
@@ -149,43 +136,31 @@ int main( int argc, char * argv[] )
   // Check if the vtu geometry files exist on disk
   SYS_T::file_check(rotated_geo_file); cout<<rotated_geo_file<<" found. \n";
 
-  SYS_T::file_check(rotated_sur_file_wall); cout<<rotated_sur_file_wall<<" found. \n";
-
-  SYS_T::file_check(rotated_interface); cout<<rotated_interface<<" found. \n";
-
-  // Generate the inlet file names and check existance
-  std::vector< std::string > rotated_sur_file_in;
-  rotated_sur_file_in.resize( num_rotated_inlet );
-
-  for(int ii=0; ii<num_rotated_inlet; ++ii)
-  {  
-    if(elemType == 501 || elemType == 601)
-      rotated_sur_file_in[ii] = SYS_T::gen_capfile_name( rotated_sur_file_in_base, ii, ".vtp" );   
-    else if(elemType == 502 || elemType == 602)
-      rotated_sur_file_in[ii] = SYS_T::gen_capfile_name( rotated_sur_file_in_base, ii, ".vtu" );
-    else
-      SYS_T::print_fatal("Error: unknown element type occurs when generating the inlet file names. \n"); 
-  
-    SYS_T::file_check(rotated_sur_file_in[ii]);
-    cout<<rotated_sur_file_in[ii]<<" found. \n";
-  }
-
-  // Generate the outlet file names and check existance
-  std::vector< std::string > rotated_sur_file_out;
-  rotated_sur_file_out.resize( num_rotated_outlet );
-
-  for(int ii=0; ii<num_rotated_outlet; ++ii)
+  std::vector< std::string > fixed_interface_file(num_interface_pair, {});
+  std::vector< std::string > rotated_interface_file(num_interface_pair, {});
+  for(int ii=0; ii<num_interface_pair; ++ii)
   {
     if(elemType == 501 || elemType == 601)
-      rotated_sur_file_out[ii] = SYS_T::gen_capfile_name( rotated_sur_file_out_base, ii, ".vtp" ); 
+    {
+      fixed_interface_file[ii] = SYS_T::gen_capfile_name( fixed_interface_base, ii, ".vtp" );
+      rotated_interface_file[ii] = SYS_T::gen_capfile_name( rotated_interface_base, ii, ".vtp" );
+    } 
     else if(elemType == 502 || elemType == 602)
-      rotated_sur_file_out[ii] = SYS_T::gen_capfile_name( rotated_sur_file_out_base, ii, ".vtu" ); 
+    {
+      fixed_interface_file[ii] = SYS_T::gen_capfile_name( fixed_interface_base, ii, ".vtu" );
+      rotated_interface_file[ii] = SYS_T::gen_capfile_name( rotated_interface_base, ii, ".vtu" );
+    }  
     else
       SYS_T::print_fatal("Error: unknown element type occurs when generating the outlet file names. \n");
 
-    SYS_T::file_check(rotated_sur_file_out[ii]);
-    cout<<rotated_sur_file_out[ii]<<" found. \n";
+    SYS_T::file_check(fixed_interface_file[ii]);
+    cout<<fixed_interface_file[ii]<<" found. \n";
+
+    SYS_T::file_check(rotated_interface_file[ii]);
+    cout<<rotated_interface_file[ii]<<" found. \n";
   }
+
+  SYS_T::file_check(rotated_interface); cout<<rotated_interface<<" found. \n";
 
   // Record the problem setting into a HDF5 file: preprocessor_cmd.h5
   hid_t cmd_file_id = H5Fcreate("preprocessor_cmd.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -202,8 +177,8 @@ int main( int argc, char * argv[] )
   cmdh5w->write_string("sur_file_in_base", sur_file_in_base);
   cmdh5w->write_string("sur_file_out_base", sur_file_out_base);
   cmdh5w->write_string("sur_file_wall", sur_file_wall);
-  cmdh5w->write_string("fixed_interface", fixed_interface);
-  cmdh5w->write_string("rotated_interface", rotated_interface);
+  cmdh5w->write_string("fixed_interface_base", fixed_interface_base);
+  cmdh5w->write_string("rotated_interface_base", rotated_interface_base);
   cmdh5w->write_string("part_file", part_file);
 
   delete cmdh5w; H5Fclose(cmd_file_id);
@@ -278,27 +253,12 @@ int main( int argc, char * argv[] )
 
   std::vector<std::string> dir_list {};
   std::vector<std::string> weak_list {};
-  std::vector<int> node_index_change {};
 
   for(int ii=0; ii<num_inlet; ++ii)
-  {
     dir_list.push_back( sur_file_in[ii] );
-    node_index_change.push_back(0);
-  }
-
-  for(int ii=0; ii<num_rotated_inlet; ++ii)
-  {
-    dir_list.push_back( rotated_sur_file_in[ii] );
-    node_index_change.push_back(fixed_nFunc);
-  }
   
   if (wall_model_type == 0)
-  {
     dir_list.push_back( sur_file_wall );
-    dir_list.push_back( rotated_sur_file_wall );
-    node_index_change.push_back(0);
-    node_index_change.push_back(fixed_nFunc);
-  }
   else if (wall_model_type == 1 || wall_model_type == 2)
     weak_list.push_back( sur_file_wall );
   else
@@ -306,9 +266,9 @@ int main( int argc, char * argv[] )
 
 
   NBC_list[0] = new NodalBC( nFunc );
-  NBC_list[1] = new NodalBC( dir_list, nFunc, node_index_change );
-  NBC_list[2] = new NodalBC( dir_list, nFunc, node_index_change );
-  NBC_list[3] = new NodalBC( dir_list, nFunc, node_index_change );
+  NBC_list[1] = new NodalBC( dir_list, nFunc );
+  NBC_list[2] = new NodalBC( dir_list, nFunc );
+  NBC_list[3] = new NodalBC( dir_list, nFunc );
 
   // Inflow BC info
   std::vector< Vector_3 > inlet_outvec( sur_file_in.size() );
@@ -355,8 +315,11 @@ int main( int argc, char * argv[] )
   // Setup weakly enforced Dirichlet BC on wall if wall_model_type > 0
   ElemBC * wbc = new ElemBC_3D_wall_turbulence( weak_list, wall_model_type, IEN, elemType );
 
-  const std::vector<std::string> interface_list {fixed_interface, rotated_interface};
-  ElemBC * itf = new ElemBC_3D_sliding_interface(interface_list, fixed_nFunc, fixed_nElem, ctrlPts, IEN, elemType);
+  std::vector<std::string> interface_list = fixed_interface_file;
+  for(int ii=0; ii<num_interface_pair; ++ii)
+    VEC_T::insert_end(interface_list, rotated_interface_file[ii]);
+  
+  ElemBC * itf = new ElemBC_3D_sliding_interface(interface_list, num_interface_pair, fixed_nFunc, fixed_nElem, ctrlPts, IEN, elemType);
  
   // Start partition the mesh for each cpu_rank 
 

@@ -28,9 +28,8 @@
 class ElemBC_3D_sliding_interface : public ElemBC_3D 
 {
   public:
-    // Input: \para vtkfileList: contains two vtk files of the interface.
-    //              The first surface is attached to the fixed volume, 
-    //              and the second one is attached the the rotated volume.
+    // Input: \para vtkfileList: contains 2 * num_interface_pair vtk files of the interface:
+    //              {fixed_0, fixed_1, ..., fixed_n, rotated_0, rotated_1, ..., rotated_n}
     //        \para num_fixed_pt: the number of nodes of the fixed volume
     //              (not only the surface).
     //        \para num_fixed_elem: the number of volume elements of the fixed
@@ -40,6 +39,7 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
     //        \para VIEN: IEN of the volume elements.
     //        \para elemtype: element type.
     ElemBC_3D_sliding_interface( const std::vector<std::string> &vtkfileList,
+        const int &num_interface_pair,
         const int &num_fixed_pt,
         const int &num_fixed_elem,
         const std::vector<double> &vol_ctrlPts,
@@ -48,33 +48,37 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
 
     virtual ~ElemBC_3D_sliding_interface();
 
-    virtual int get_ifaceID( const int &f_or_r, const int &cell_index ) const
-    {return face_id[f_or_r][cell_index];}
+    virtual int get_fixed_faceID( const int &ii, const int &cell_index ) const
+    {return fixed_face_id[ii][cell_index];}
 
-    virtual std::vector<int> get_vien_RL() const
-    {return vien_rotated_layer;}
+    virtual std::vector<int> get_rotated_faceID(const int &ii) const
+    {return rotated_face_id[ii];}
+
+    virtual std::vector<int> get_RL_vien() const
+    {return rotated_layer_vien;}
 
     virtual std::vector<int> get_RLN_GID() const
-    {return layer_nodes_GID;}
+    {return rotated_layer_global_node;}
 
     virtual std::vector<double> get_RLN_xyz() const
-    {return layer_nodes_xyz;}
+    {return rotated_layer_pt_xyz;}
 
   private:
-    // the face id of the volume element
-    // face_id[0][*]: the fixed interface
-    // face_id[1][*]: the rotated interface
-    std::vector<std::vector<int>> face_id;
+    // the face id of the volume elements from the fixed interface
+    std::vector<std::vector<int>> fixed_face_id;
+
+    // the face id of the volume elements from the rotated interface
+    std::vector<std::vector<int>> rotated_face_id;
 
     // the ien array of the "layer" of rotated volume elements, each of them has a 
     // face on the rotated interface.  
-    std::vector<int> vien_rotated_layer;
+    std::vector<std::vector<int>> rotated_layer_vien;
     
     // the GlobalNodesID of the rotated "layer" volume elements
-    std::vector<int> layer_nodes_GID;
+    std::vector<std::vector<int>> rotated_layer_global_node;
 
     // the xyz-coordinates of the nodes of the rotated "layer" volume elements
-    std::vector<double> layer_nodes_xyz;
+    std::vector<std::vector<double>> rotated_layer_pt_xyz;
 
     // ------------------------------------------------------------------------
     // Disallow default constructor
