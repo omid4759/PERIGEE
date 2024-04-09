@@ -141,18 +141,26 @@ class ElemBC
     virtual int get_faceID( const int &cell_index ) const
     {SYS_T::commPrint("Warning: get_faceID is not implemented. \n"); return -1;}
 
-    // Access the data in ElemBC_3D_sliding_interface, face id of volume element
-    virtual int get_ifaceID( const int &f_or_r, const int &cell_index ) const
-    {SYS_T::commPrint("Warning: get_ifaceID is not implemented. \n"); return -1;}
+    // Access the data in ElemBC_3D_sliding_interface, the number of interfaces (pairs)
+    virtual int get_num_interface() const
+    {SYS_T::commPrint("Warning: get_num_interface is not implemented. \n"); return -1;}
+
+    // Access the data in ElemBC_3D_sliding_interface, face id of fixed volume element
+    virtual int get_fixed_faceID( const int &ii, const int &cell_index ) const
+    {SYS_T::commPrint("Warning: get_fixed_faceID is not implemented. \n"); return -1;}
+    
+    // Access the data in ElemBC_3D_sliding_interface, face id of rotated volume element
+    virtual std::vector<int> get_rotated_faceID(const int &ii) const
+    {SYS_T::commPrint("Warning: get_rotated_faceID is not implemented. \n"); return {};}
 
     // Access the other private data in ElemBC_3D_sliding_interface
-    virtual  std::vector<int> get_vien_RL() const
-    {SYS_T::commPrint("Warning: get_vien_RL is not implemented. \n"); return {};}
+    virtual std::vector<int> get_RL_vien(const int &ii) const
+    {SYS_T::commPrint("Warning: get_RL_vien is not implemented. \n"); return {};}
 
-    virtual std::vector<int> get_RLN_GID() const
+    virtual std::vector<int> get_RLN_GID(const int &ii) const
     {SYS_T::commPrint("Warning: get_RLN_GID is not implemented. \n"); return {};}
 
-    virtual std::vector<double> get_RLN_xyz() const
+    virtual std::vector<double> get_RLN_xyz(const & ii) const
     {SYS_T::commPrint("Warning: get_RLN_xyz is not implemented. \n"); return {};}
  
     // Overwrite ElemBC_3D_wall properties from a vtp/vtu file

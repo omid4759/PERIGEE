@@ -2,10 +2,10 @@
 
 ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface( 
     const std::vector<std::string> &vtkfileList,
-    const int &num_interface_pair,
+    const int &num_interface_pair_in,
     const int &num_fixed_pt, const int &num_fixed_elem,
     const std::vector<double> &vol_ctrlPts, const IIEN * const &VIEN, const int &elemtype )
-: ElemBC_3D ( vtkfileList, elemtype ), 
+: ElemBC_3D ( vtkfileList, elemtype ), num_interface_pair{num_interface_pair_in},
   fixed_face_id{std::vector<std::vector<int>> {}},  rotated_face_id{std::vector<std::vector<int>> {}},
   rotated_layer_vien{std::vector<std::vector<int>> {}}, rotated_layer_global_node{std::vector<std::vector<int>> {}},
   rotated_layer_pt_xyz{std::vector<std::vector<double>> {}}
@@ -172,8 +172,7 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
 
 ElemBC_3D_sliding_interface::~ElemBC_3D_sliding_interface()
 {
-  const int nIP = VEC_T::get_size(fixed_face_id);
-  for(int ii=0; ii < nIP; ++ii)
+  for(int ii=0; ii < num_interface_pair; ++ii)
   {
     fixed_face_id[ii].clear();
     rotated_face_id[ii].clear();

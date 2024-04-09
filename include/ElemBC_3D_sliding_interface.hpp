@@ -39,7 +39,7 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
     //        \para VIEN: IEN of the volume elements.
     //        \para elemtype: element type.
     ElemBC_3D_sliding_interface( const std::vector<std::string> &vtkfileList,
-        const int &num_interface_pair,
+        const int &num_interface_pair_in,
         const int &num_fixed_pt,
         const int &num_fixed_elem,
         const std::vector<double> &vol_ctrlPts,
@@ -48,22 +48,28 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
 
     virtual ~ElemBC_3D_sliding_interface();
 
+    virtual int get_num_interface() const
+    {return num_interface_pair;}
+
     virtual int get_fixed_faceID( const int &ii, const int &cell_index ) const
     {return fixed_face_id[ii][cell_index];}
 
     virtual std::vector<int> get_rotated_faceID(const int &ii) const
     {return rotated_face_id[ii];}
 
-    virtual std::vector<int> get_RL_vien() const
-    {return rotated_layer_vien;}
+    virtual std::vector<int> get_RL_vien(const int &ii) const
+    {return rotated_layer_vien[ii];}
 
-    virtual std::vector<int> get_RLN_GID() const
-    {return rotated_layer_global_node;}
+    virtual std::vector<int> get_RLN_GID(const int &ii) const
+    {return rotated_layer_global_node[ii];}
 
-    virtual std::vector<double> get_RLN_xyz() const
-    {return rotated_layer_pt_xyz;}
+    virtual std::vector<double> get_RLN_xyz(const &ii) const
+    {return rotated_layer_pt_xyz[ii];}
 
   private:
+    // the number of [fixed/rotated] interfaces pairs
+    const int num_interface_pair;
+
     // the face id of the volume elements from the fixed interface
     std::vector<std::vector<int>> fixed_face_id;
 
