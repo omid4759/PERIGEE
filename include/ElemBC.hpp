@@ -160,7 +160,7 @@ class ElemBC
     virtual std::vector<int> get_RLN_GID(const int &ii) const
     {SYS_T::commPrint("Warning: get_RLN_GID is not implemented. \n"); return {};}
 
-    virtual std::vector<double> get_RLN_xyz(const & ii) const
+    virtual std::vector<double> get_RLN_xyz(const int &ii) const
     {SYS_T::commPrint("Warning: get_RLN_xyz is not implemented. \n"); return {};}
  
     // Overwrite ElemBC_3D_wall properties from a vtp/vtu file

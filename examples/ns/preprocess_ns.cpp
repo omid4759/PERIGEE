@@ -56,6 +56,7 @@ int main( int argc, char * argv[] )
   const std::string sur_file_out_base = paras["sur_file_out_base"].as<std::string>();
 
   const int num_interface_pair        = paras["num_interface_pair"].as<int>();
+  const std::string rotated_geo_file  = paras["rotated_geo_file"].as<std::string>();
   const std::string fixed_interface_base   = paras["fixed_interface_base"].as<std::string>();
   const std::string rotated_interface_base = paras["rotated_interface_base"].as<std::string>();
 
@@ -159,8 +160,6 @@ int main( int argc, char * argv[] )
     SYS_T::file_check(rotated_interface_file[ii]);
     cout<<rotated_interface_file[ii]<<" found. \n";
   }
-
-  SYS_T::file_check(rotated_interface); cout<<rotated_interface<<" found. \n";
 
   // Record the problem setting into a HDF5 file: preprocessor_cmd.h5
   hid_t cmd_file_id = H5Fcreate("preprocessor_cmd.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -316,10 +315,11 @@ int main( int argc, char * argv[] )
   ElemBC * wbc = new ElemBC_3D_wall_turbulence( weak_list, wall_model_type, IEN, elemType );
 
   std::vector<std::string> interface_list = fixed_interface_file;
-  for(int ii=0; ii<num_interface_pair; ++ii)
-    VEC_T::insert_end(interface_list, rotated_interface_file[ii]);
+  VEC_T::insert_end(interface_list, rotated_interface_file);
   
   ElemBC * itf = new ElemBC_3D_sliding_interface(interface_list, num_interface_pair, fixed_nFunc, fixed_nElem, ctrlPts, IEN, elemType);
+
+  SYS_T::commPrint("Debug1\n");
  
   // Start partition the mesh for each cpu_rank 
 

@@ -142,12 +142,12 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
   }
   else
     SYS_T::print_fatal("Error: ElemBC_3D_sliding_interface, unknown element type.\n");
-
+  
   for(int ii=0; ii<num_interface_pair; ++ii)
   {
     rotated_layer_global_node[ii] = rotated_layer_vien[ii];
-    VEC_T::sort_unique_resize(rotated_layer_global_node);
-    const int num_rotated_layer_node = VEC_T::get_size(rotated_layer_global_node);
+    VEC_T::sort_unique_resize(rotated_layer_global_node[ii]);
+    const int num_rotated_layer_node = VEC_T::get_size(rotated_layer_global_node[ii]);
 
     // Convert the GlobalNodeID in rotated_layer_vien to local indices in this ebc
     PERIGEE_OMP_PARALLEL_FOR

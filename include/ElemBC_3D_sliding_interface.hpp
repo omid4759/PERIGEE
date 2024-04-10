@@ -63,7 +63,7 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
     virtual std::vector<int> get_RLN_GID(const int &ii) const
     {return rotated_layer_global_node[ii];}
 
-    virtual std::vector<double> get_RLN_xyz(const &ii) const
+    virtual std::vector<double> get_RLN_xyz(const int &ii) const
     {return rotated_layer_pt_xyz[ii];}
 
   private:

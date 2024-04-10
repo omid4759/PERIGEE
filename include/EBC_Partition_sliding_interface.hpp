@@ -25,23 +25,26 @@ class EBC_Partition_sliding_interface : public EBC_Partition
     virtual void write_hdf5( const std::string &FileName ) const;
 
   protected:
+    // the number of pairs of the fixed/rotated interfaces
+    const int num_pair;
+
     // stores the local volume element id of the fixed interface in this part
-    std::vector<int> fixed_part_vol_ele_id;
+    std::vector<std::vector<int>> fixed_part_vol_ele_id;
 
     // stores the face id of the volume element of the fixed interface in this part
-    std::vector<int> fixed_ele_face_id;
+    std::vector<std::vector<int>> fixed_ele_face_id;
 
     // stores ien of all the volume element of the rotated layer
-    std::vector<int> rotated_layer_ien;
+    std::vector<std::vector<int>> rotated_layer_ien;
 
     // stores the face id of all the volume element of the rotated layer
-    std::vector<int> rotated_ele_face_id;
+    std::vector<std::vector<int>> rotated_ele_face_id;
 
     // stores the rotated layer nodes indices, converted by get_old2new()
-    std::vector<int> rotated_layer_nodes;
+    std::vector<std::vector<int>> rotated_layer_global_node;
 
     // stores the rotated layer nodes' coordinates
-    std::vector<double> rotated_layer_nodes_xyz;
+    std::vector<std::vector<double>> rotated_layer_pt_xyz;
 };
 
 #endif
