@@ -314,12 +314,11 @@ int main( int argc, char * argv[] )
   // Setup weakly enforced Dirichlet BC on wall if wall_model_type > 0
   ElemBC * wbc = new ElemBC_3D_wall_turbulence( weak_list, wall_model_type, IEN, elemType );
 
+  // Set up interface info
   std::vector<std::string> interface_list = fixed_interface_file;
   VEC_T::insert_end(interface_list, rotated_interface_file);
   
   ElemBC * itf = new ElemBC_3D_sliding_interface(interface_list, num_interface_pair, fixed_nFunc, fixed_nElem, ctrlPts, IEN, elemType);
-
-  SYS_T::commPrint("Debug1\n");
  
   // Start partition the mesh for each cpu_rank 
 
