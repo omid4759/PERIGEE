@@ -2,11 +2,12 @@
 
 EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * const &part,
     const Map_Node_Index * const &mnindex, const ElemBC * const &ebc)
-: EBC_Partition(part, mnindex, ebc), num_pair{ebc->get_num_interface()},
+: EBC_Partition(part, mnindex, ebc), num_pair{ebc->get_num_interface()}, num_fixed_part_ele{std::vector<int> {}},
   fixed_part_vol_ele_id{std::vector<std::vector<int>> {}}, fixed_ele_face_id{std::vector<std::vector<int>> {}},
   rotated_layer_ien{std::vector<std::vector<int>> {}}, rotated_ele_face_id{std::vector<std::vector<int>> {}},
   rotated_layer_global_node{std::vector<std::vector<int>> {}}, rotated_layer_pt_xyz{std::vector<std::vector<double>> {}}
 {
+  num_fixed_part_ele.resize(num_pair);
   fixed_part_vol_ele_id.resize(num_pair);
   fixed_ele_face_id.resize(num_pair);
   rotated_layer_ien.resize(num_pair);
@@ -16,6 +17,8 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
 
   for(int ii=0; ii<num_pair; ++ii)
   {
+    num_fixed_part_ele[ii] = num_local_cell[ii];
+
     fixed_part_vol_ele_id[ii] = std::vector<int> {};
     fixed_ele_face_id[ii] = std::vector<int> {};
     PERIGEE_OMP_PARALLEL
@@ -48,7 +51,7 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
     rotated_layer_pt_xyz[ii] = std::vector<double> {};
 
     // write the rotated layer's info only when this part has fixed interface element
-    if(ebc->get_num_cell(ii) > 0)
+    if(num_local_cell[ii] > 0)
     {
       rotated_layer_ien[ii] = ebc -> get_RL_vien(ii);
 
@@ -102,6 +105,8 @@ void EBC_Partition_sliding_interface::write_hdf5(const std::string &FileName) co
 
   h5w -> write_intScalar( g_id, "num_interface", num_pair );
 
+  h5w -> write_intVector( g_id, "num_part_fixed_cell", num_fixed_part_ele );
+
   const std::string groupbase("interfaceid_");
 
   for(int ii=0; ii<num_pair; ++ii)
@@ -110,8 +115,6 @@ void EBC_Partition_sliding_interface::write_hdf5(const std::string &FileName) co
     subgroup_name.append( std::to_string(ii) );
 
     hid_t group_id = H5Gcreate(g_id, subgroup_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-    h5w -> write_intScalar( group_id, "num_part_fixed_cell", num_local_cell[ii] );
 
     if(num_local_cell[ii] > 0)
     {

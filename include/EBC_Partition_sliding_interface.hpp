@@ -28,6 +28,9 @@ class EBC_Partition_sliding_interface : public EBC_Partition
     // the number of pairs of the fixed/rotated interfaces
     const int num_pair;
 
+    // the number of the local elements of the fixed interfaces
+    std::vector<int> num_fixed_part_ele;
+
     // stores the local volume element id of the fixed interface in this part
     std::vector<std::vector<int>> fixed_part_vol_ele_id;
 
