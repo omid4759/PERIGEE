@@ -137,8 +137,8 @@ int main( int argc, char * argv[] )
   // Check if the vtu geometry files exist on disk
   SYS_T::file_check(rotated_geo_file); cout<<rotated_geo_file<<" found. \n";
 
-  std::vector< std::string > fixed_interface_file(num_interface_pair, {});
-  std::vector< std::string > rotated_interface_file(num_interface_pair, {});
+  std::vector< std::string > fixed_interface_file(num_interface_pair);
+  std::vector< std::string > rotated_interface_file(num_interface_pair);
   for(int ii=0; ii<num_interface_pair; ++ii)
   {
     if(elemType == 501 || elemType == 601)
