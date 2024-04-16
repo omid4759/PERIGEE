@@ -13,6 +13,7 @@
 // ============================================================================
 #include "IQuadPts.hpp"
 #include "FEANode.hpp"
+#include "Math_Tools.hpp"
 
 class FEAElement
 {
@@ -281,6 +282,24 @@ class FEAElement
         const double * const &ctrl_y,
         const double * const &ctrl_z )
     {SYS_T::commPrint("Warning: buildBasis is not implemented. \n");}
+
+    // ------------------------------------------------------------------------
+    // dx_dr in parent domain
+    // ------------------------------------------------------------------------
+    virtual Vector_3 get_dx_dr( const int &quaindex ) const 
+    {
+      SYS_T::commPrint("Warning: get_dx_dr is not implemented. \n");
+      return Vector_3();
+    }
+
+    // ------------------------------------------------------------------------
+    // dx_ds in parent domain
+    // ------------------------------------------------------------------------
+    virtual Vector_3 get_dx_ds( const int &quaindex ) const 
+    {
+      SYS_T::commPrint("Warning: get_dx_ds is not implemented. \n");
+      return Vector_3();
+    }
 };
 
 #endif

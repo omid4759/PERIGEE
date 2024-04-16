@@ -40,13 +40,13 @@ void FEAElement_Triangle3_3D_der0::buildBasis( const IQuadPts * const &quad,
     R[qua*3 + 2] = qua_s;
   }
 
-  const Vector_3 dx_dr( - ctrl_x[0] + ctrl_x[1],
-    - ctrl_y[0] + ctrl_y[1],
-    - ctrl_z[0] + ctrl_z[1]);
+  dx_dr = Vector_3( - ctrl_x[0] + ctrl_x[1],
+                    - ctrl_y[0] + ctrl_y[1],
+                    - ctrl_z[0] + ctrl_z[1]);
 
-  const Vector_3 dx_ds( - ctrl_x[0] + ctrl_x[2],
-    - ctrl_y[0] + ctrl_y[2],
-    - ctrl_z[0] + ctrl_z[2]);
+  dx_ds = Vector_3( - ctrl_x[0] + ctrl_x[2],
+                    - ctrl_y[0] + ctrl_y[2],
+                    - ctrl_z[0] + ctrl_z[2]);
 
   // vec(un) = vec(dx_dr) x vec(dx_ds)
   un = Vec3::cross_product( dx_dr, dx_ds );
@@ -96,6 +96,93 @@ Vector_3 FEAElement_Triangle3_3D_der0::get_normal_out( const int &quaindex,
   // If dot product is negative, adjust the normal vector
   if(mdotn < 0) return (-1.0)*un;
   else return un;
+}
+
+bool FEAElement_Triangle3_3D_der0::search_closed_point(
+  IQuadPts * const &closest_point, const Vector_3 &target_xyz,
+  const double * const &ctrl_x, const double * const &ctrl_y, const double * const &ctrl_z )
+{
+  // initial value
+  buildBasis(closest_point, ctrl_x, ctrl_y, ctrl_z);
+
+  std::vector<double> basis = get_R(0);
+
+  Vector_3 point_xyz(0.0, 0.0, 0.0);
+  for(int ii=0; ii<3; ++ii)
+  {
+    point_xyz(0) += basis[ii] * ctrl_x[ii];
+    point_xyz(1) += basis[ii] * ctrl_y[ii];
+    point_xyz(2) += basis[ii] * ctrl_z[ii];
+  }
+
+  // initial distance
+  const double init_dist = (point_xyz - target_xyz).norm2();
+  SYS_T::commPrint("init_dist: %e\n", init_dist);
+  if (init_dist < 1e-9) return true;
+
+  double curr_dist = init_dist;
+
+  int iter_counter = 0;
+
+  while(iter_counter < 100 && curr_dist > 1e-9)
+  {
+    const double Resr = 2 * (dx_dr(0) * (point_xyz(0) - target_xyz(0))
+                         +   dx_dr(1) * (point_xyz(1) - target_xyz(1))
+                         +   dx_dr(2) * (point_xyz(2) - target_xyz(2)));
+  
+    const double Ress = 2 * (dx_ds(0) * (point_xyz(0) - target_xyz(0))
+                          +  dx_ds(1) * (point_xyz(1) - target_xyz(1))
+                          +  dx_ds(2) * (point_xyz(2) - target_xyz(2)));
+
+    const double dResr_dr = 2 * (dx_dr(0) * dx_dr(0) + dx_dr(1) * dx_dr(1) + dx_dr(2) * dx_dr(2));
+
+    const double dRess_ds = 2 * (dx_ds(0) * dx_ds(0) + dx_ds(1) * dx_ds(1) + dx_ds(2) * dx_ds(2));
+
+    const double dResr_ds = 2 * (dx_dr(0) * dx_ds(0) + dx_dr(1) * dx_ds(1) + dx_dr(2) * dx_ds(2));
+
+    const double dRess_dr = dResr_ds;
+
+    std::array<double, 4> d_mat = {dResr_dr, dResr_ds, dRess_dr, dRess_ds};
+    MATH_T::Matrix_Dense<2> D_mat(d_mat);
+
+    std::array<double, 2> Res_vec = {-Resr, -Ress};
+    std::array<double, 2> dxi = D_mat.LU_solve(Res_vec);
+
+    double xi_r = closest_point->get_qp(0, 0);
+    double xi_s = closest_point->get_qp(0, 1);
+
+    xi_r += dxi[0];
+    xi_s += dxi[1];
+
+    double xi_t = 1 - xi_r - xi_s;
+
+    // Update the closest_point
+    closest_point->set_qp(0, 0, xi_r);
+    closest_point->set_qp(0, 1, xi_s);
+    closest_point->set_qp(0, 2, xi_t);
+
+    buildBasis(closest_point, ctrl_x, ctrl_y, ctrl_z);
+
+    std::vector<double> basis = get_R(0);
+
+    Vector_3 point_xyz(0.0, 0.0, 0.0);
+    for(int ii=0; ii<3; ++ii)
+    {
+      point_xyz(0) += basis[ii] * ctrl_x[ii];
+      point_xyz(1) += basis[ii] * ctrl_y[ii];
+      point_xyz(2) += basis[ii] * ctrl_z[ii];
+    }
+
+    curr_dist = (point_xyz - target_xyz).norm2();
+    SYS_T::commPrint("iter: %d, curr_dist: %e\n", iter_counter, curr_dist);
+
+    iter_counter += 1;
+  }
+
+  if(curr_dist > 1e-9)
+    return false;
+   else
+    return true;
 }
 
 // EOF

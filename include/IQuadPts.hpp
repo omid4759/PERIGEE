@@ -115,6 +115,16 @@ class IQuadPts
       SYS_T::print_fatal("Error: IQuadPts::get_qp is not implemented.\n");
       return 0.0;
     }
+
+    virtual void set_qp(unsigned int ii, unsigned int comp, const double &value) const
+    {
+      SYS_T::print_fatal("Error: IQuadPts::set_qp is not implemented.\n");
+    }
+
+    virtual void set_qw(unsigned int ii, const double &value) const
+    {
+      SYS_T::print_fatal("Error: IQuadPts::set_qw is not implemented. \n");
+    }
 };
 
 #endif

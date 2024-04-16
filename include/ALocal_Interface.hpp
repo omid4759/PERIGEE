@@ -1,0 +1,108 @@
+#ifndef ALOCAL_INTERFACE_HPP
+#define ALOCAL_INTERFACE_HPP
+// ============================================================================
+// ALocal_Interface.hpp
+//
+// FEM-analysis-use Local subdomain's interface.
+// Our model may contains more than one interface, therefore this class is 
+// similar with ALocal_EBC, but it uses the volume elements' info.
+//
+// The volume elements attached to an interface would be from the fixed volume
+// and the rotated volume. We distribute the fixed volume elements to each
+// partition, but store the rotated volume elements' information to every
+// partition h5 file which involves the interface. 
+
+// When calculate the integral on the interface, we go through the fixed elements,
+// use the quadrature points of the fixed face, and search for the opposite points
+// on the rotated face.
+//
+// Author: Xuanming Huang
+// Date Created: Apr. 10th 2024
+// ============================================================================
+#include "HDF5_Reader.hpp"
+
+class ALocal_Interface
+{
+    public:
+        ALocal_Interface( const std::string &fileBaseName, const int &cpu_rank );
+
+        virtual ~ALocal_Interface() = default;
+
+        virtual void print_info() const;
+
+        virtual int get_num_itf() const
+        {return num_itf;}
+
+        virtual int get_num_fixed_ele(const int &ii) const
+        {return num_fixed_ele[ii];}
+
+        virtual int get_num_rotated_ele(const int &ii) const
+        {return num_rotated_ele[ii];}
+
+        virtual int get_num_rotated_node(const int &ii) const
+        {return num_rotated_node[ii];}
+
+        virtual int get_fixed_ele_id(const int &ii, const int &jj) const
+        {return fixed_vol_ele_id[ii][jj];}
+
+        virtual int get_fixed_face_id(const int &ii, const int &jj) const
+        {return fixed_ele_face_id[ii][jj];}
+
+        virtual int get_rotated_layer_ien(const int &ii, const int &jj) const
+        {return rotated_layer_ien[ii][jj];}
+
+        virtual int get_rotated_face_id(const int &ii, const int &jj) const
+        {return rotated_layer_face_id[ii][jj];}
+
+        virtual double get_init_rotated_node_xyz(const int &ii, const int &jj) const
+        {return init_rotated_node_xyz[ii][jj];}
+
+        virtual int get_rotated_node_id(const int &ii, const int &jj) const
+        {return rotated_node_id[ii][jj];}
+
+        // Get the current rotated nodes' xyz with given rotation rule and time
+        virtual Vector_3 get_curr_xyz(const int &ii, const int &nn, const double &tt) const;
+
+    protected:
+        // the number of interfaces
+        int num_itf;
+
+        // the number of fixed volume elements in this part
+        // size: num_itf
+        std::vector<int> num_fixed_ele;
+
+        // the number of rotated volume elements of each interface
+        // size: num_itf
+        std::vector<int> num_rotated_ele;
+
+        // the number of the nodes from the rotated volume elements
+        // size: num_itf
+        std::vector<int> num_rotated_node;
+
+        // stores the fixed local volume element id in this part
+        // size: num_itf x num_fixed_ele[ii]
+        std::vector<std::vector<int>> fixed_vol_ele_id;
+
+        // stores the face id of fixed volume element
+        // size: num_itf x num_fixed_ele[ii]
+        std::vector<std::vector<int>> fixed_ele_face_id;
+        
+        // stores the volume element's IEN array of the rotated "layer"
+        // size: num_itf x (nlocbas x num_rotated_ele[ii])
+        std::vector<std::vector<int>> rotated_layer_ien;
+    
+        // stores the face id of all the rotated volume element
+        // size: num_itf x num_rotated_ele[ii]
+        std::vector<std::vector<int>> rotated_layer_face_id;
+
+        // stores the initial coordinates of the nodes from the rotated volume elements
+        // size: num_itf x (3 x num_rotated_node[ii])
+        std::vector<std::vector<double>> init_rotated_node_xyz;
+
+        // the (mapped) global node id corresponding to the init_rotated_node_xyz
+        // size: num_itf x num_rotated_node[ii]
+        std::vector<std::vector<int>> rotated_node_id;
+
+        ALocal_Interface() = delete;
+};
+#endif
