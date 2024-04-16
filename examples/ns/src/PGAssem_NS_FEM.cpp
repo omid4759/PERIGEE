@@ -1132,4 +1132,66 @@ void PGAssem_NS_FEM::Weak_EssBC_G(
   delete [] row_index; row_index = nullptr;
 }
 
+void PGAssem_NS_FEM::Interface_G(
+  const double &curr_time, const double &dt,
+  const PDNSolution * const &sol,
+  IPLocAssem * const &lassem_ptr,
+  FEAElement * const &element_vs,
+  const IQuadPts * const &quad_s,
+  const ALocal_IEN * const &lien_ptr,
+  const FEANode * const &fnode_ptr,
+  const ALocal_Interface * const &itf_part )
+{
+  int * IEN_v = new int [nLocBas];
+  double * ctrl_x = new double [nLocBas];
+  double * ctrl_y = new double [nLocBas];
+  double * ctrl_z = new double [nLocBas];
+
+  const int num_itf {itf_part->get_num_itf()};
+
+  for(int itf_id{0}; itf_id<num_itf; ++itf_id)
+  {
+    const int num_fixed_elem = itf_part->get_num_fixed_ele(itf_id);
+
+    for(int ee{0}; ee<num_fixed_elem; ++ee)
+    {
+      const int local_ee_index{itf_part->get_fixed_ele_id(itf_id, ee)};
+
+      lien_ptr->get_LIEN(local_ee_index, IEN_v);
+      
+      fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_v, ctrl_x, ctrl_y, ctrl_z);
+
+      const int fixed_face_id{itf_part->get_fixed_ele_id(itf_id, ee)};
+
+      element_vs->buildBasis(fixed_face_id, quad_s, ctrl_x, ctrl_y, ctrl_z);
+
+      const int fixed_face_nqp {quad_s->get_num_quadPts()};
+
+      std::vector<double> R(nLocBas, 0.0);
+
+      for(int qua{0}; qua<fixed_face_nqp; ++qua)
+      {
+        element_vs->get_R(qua, &R[0]);
+
+        // The xyz-coordinates of the quadrature point
+        Vector_3 coor(0.0, 0.0, 0.0);
+        for(int ii{0}; ii<nLocBas; ++ii)
+        {
+          coor.x() += ctrl_x[ii] * R[ii];
+          coor.y() += ctrl_y[ii] * R[ii];
+          coor.z() += ctrl_z[ii] * R[ii];
+        }
+
+        // incompleted, search opposite point
+
+      }
+    }
+  }
+
+  delete [] IEN_v; IEN_v = nullptr;
+  delete [] ctrl_x; ctrl_x = nullptr;
+  delete [] ctrl_y; ctrl_y = nullptr;
+  delete [] ctrl_z; ctrl_z = nullptr;
+}
+
 // EOF

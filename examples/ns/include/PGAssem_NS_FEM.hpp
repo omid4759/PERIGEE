@@ -147,6 +147,16 @@ class PGAssem_NS_FEM : public IPGAssem
         const ALocal_InflowBC * const &infbc_part,
         const int &nbc_id );
 
+    virtual void Interface_G(
+        const double &curr_time, const double &dt,
+        const PDNSolution * const &sol,
+        IPLocAssem * const &lassem_ptr,
+        FEAElement * const &element_vs,
+        const IQuadPts * const &quad_s,
+        const ALocal_IEN * const &lien_ptr,
+        const FEANode * const &fnode_ptr,
+        const ALocal_Interface * const &itf_part );
+
   private:
     // Private data
     const int nLocBas, dof_sol, dof_mat, num_ebc, nlgn;
