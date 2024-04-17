@@ -64,12 +64,30 @@ class FEAElement_Triangle3_3D_der0 : public FEAElement
 
     virtual double get_detJac(const int &quaindex) const {return detJac;}
 
-    virtual Vector_3 get_dx_dr(const int &quaindex) const {return dx_dr;}
-    virtual Vector_3 get_dx_ds(const int &quaindex) const {return dx_ds;}
+    virtual Vector_3 get_dx_dr( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const;
+    
+    virtual Vector_3 get_dx_ds( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const;
 
-    virtual bool search_closed_point( IQuadPts * const &closest_point,
-      const Vector_3 &target_xyz, const double * const &ctrl_x,
-      const double * const &ctrl_y, const double * const &ctrl_z );
+    virtual Vector_3 get_d2x_drr( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const {return Vector_3(0.0, 0.0, 0.0);}
+
+    virtual Vector_3 get_d2x_dss( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const {return Vector_3(0.0, 0.0, 0.0);}
+
+    virtual Vector_3 get_d2x_drs( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const {return Vector_3(0.0, 0.0, 0.0);}
 
   private:
     const int numQuapts;
@@ -77,8 +95,6 @@ class FEAElement_Triangle3_3D_der0 : public FEAElement
     // container for R0 = 1 - r - s, R1 = r, R2 = s :
     // 0 <= ii < 3 x numQuapts
     double * R;
-
-    Vector_3 dx_dr {}, dx_ds {};
 
     // unit outward normal vector
     Vector_3 un;

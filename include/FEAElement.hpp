@@ -13,7 +13,6 @@
 // ============================================================================
 #include "IQuadPts.hpp"
 #include "FEANode.hpp"
-#include "Math_Tools.hpp"
 
 class FEAElement
 {
@@ -286,7 +285,10 @@ class FEAElement
     // ------------------------------------------------------------------------
     // dx_dr in parent domain
     // ------------------------------------------------------------------------
-    virtual Vector_3 get_dx_dr( const int &quaindex ) const 
+    virtual Vector_3 get_dx_dr( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const 
     {
       SYS_T::commPrint("Warning: get_dx_dr is not implemented. \n");
       return Vector_3();
@@ -295,9 +297,48 @@ class FEAElement
     // ------------------------------------------------------------------------
     // dx_ds in parent domain
     // ------------------------------------------------------------------------
-    virtual Vector_3 get_dx_ds( const int &quaindex ) const 
+    virtual Vector_3 get_dx_ds( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const 
     {
       SYS_T::commPrint("Warning: get_dx_ds is not implemented. \n");
+      return Vector_3();
+    }
+
+    // ------------------------------------------------------------------------
+    // d2x_drr in parent domain
+    // ------------------------------------------------------------------------
+    virtual Vector_3 get_d2x_drr( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const 
+    {
+      SYS_T::commPrint("Warning: get_d2x_drr is not implemented. \n");
+      return Vector_3();
+    }
+
+    // ------------------------------------------------------------------------
+    // d2x_dss in parent domain
+    // ------------------------------------------------------------------------
+    virtual Vector_3 get_d2x_dss( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const 
+    {
+      SYS_T::commPrint("Warning: get_d2x_dss is not implemented. \n");
+      return Vector_3();
+    }
+
+    // ------------------------------------------------------------------------
+    // d2x_drs in parent domain
+    // ------------------------------------------------------------------------
+    virtual Vector_3 get_d2x_drs( const int &quaindex,
+        const double * const &ctrl_x,
+        const double * const &ctrl_y,
+        const double * const &ctrl_z ) const 
+    {
+      SYS_T::commPrint("Warning: get_d2x_drs is not implemented. \n");
       return Vector_3();
     }
 };

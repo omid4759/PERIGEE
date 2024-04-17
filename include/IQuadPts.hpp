@@ -116,7 +116,7 @@ class IQuadPts
       return 0.0;
     }
 
-    virtual void set_qp(unsigned int ii, unsigned int comp, const double &value) const
+    virtual void set_qp(unsigned int ii, const std::vector<double> &value) const
     {
       SYS_T::print_fatal("Error: IQuadPts::set_qp is not implemented.\n");
     }

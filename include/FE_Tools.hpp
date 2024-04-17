@@ -10,6 +10,7 @@
 #include "Vector_3.hpp"
 #include "Vec_Tools.hpp"
 #include "IQuadPts.hpp"
+#include "FEAElement.hpp"
 
 namespace FE_T
 {
@@ -90,6 +91,13 @@ namespace FE_T
       const double * const &qp_z,
       const int &nqp,
       double &coeff_0, double &coeff_x, double &coeff_y, double &coeff_z );
+
+  bool search_closest_point( const Vector_3 &target_xyz,
+      FEAElement * element,
+      const double * const &electrl_x,
+      const double * const &electrl_y,
+      const double * const &electrl_z,
+      IQuadPts * const &closest_point );
 
   // ============================================================================
   // This is a 3-by-3 matrix class that can calculate LU factorization of the

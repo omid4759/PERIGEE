@@ -25,8 +25,10 @@ class QuadPts_UserDefined_Triangle : public IQuadPts
     virtual double get_qw(unsigned int ii) const
     {return qw[ii];}
 
-    virtual void set_qp(unsigned int ii, unsigned int comp, const double &value) const
-    {qp[3*ii+comp] = value;}
+    virtual void set_qp(unsigned int ii, const std::vector<double> &rs_value) const
+    {qp[3*ii]     = rs_value[0];
+     qp[3*ii + 1] = rs_value[1];
+     qp[3*ii + 2] = 1 - rs_value[0] - rs_value[1];}
 
     virtual void set_qw(unsigned int ii, const double &value) const
     {qw[ii] = value;}
