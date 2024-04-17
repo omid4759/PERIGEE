@@ -93,7 +93,7 @@ namespace FE_T
       double &coeff_0, double &coeff_x, double &coeff_y, double &coeff_z );
 
   bool search_closest_point( const Vector_3 &target_xyz,
-      FEAElement * element,
+      FEAElement * const &elements,
       const double * const &electrl_x,
       const double * const &electrl_y,
       const double * const &electrl_z,

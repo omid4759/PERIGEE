@@ -19,6 +19,7 @@
 #include "IPGAssem.hpp"
 #include "PETSc_Tools.hpp"
 #include "PDNSolution_NS.hpp"
+#include "FE_Tools.hpp"
 
 class PGAssem_NS_FEM : public IPGAssem
 {
@@ -151,11 +152,24 @@ class PGAssem_NS_FEM : public IPGAssem
         const double &curr_time, const double &dt,
         const PDNSolution * const &sol,
         IPLocAssem * const &lassem_ptr,
-        FEAElement * const &element_vs,
+        FEAElement * const &fixed_elementv,
+        FEAElement * const &rotated_elementv,
+        FEAElement * const &elements,
         const IQuadPts * const &quad_s,
+        IQuadPts * const &free_quad,
         const ALocal_IEN * const &lien_ptr,
         const FEANode * const &fnode_ptr,
         const ALocal_Interface * const &itf_part );
+
+    virtual void search_opposite_point(
+        const double &cuur_time,
+        const Vector_3 &fixed_pt,
+        const ALocal_Interface * const &itf_part,
+        const int &itf_id,
+        FEAElement * rotated_elementv,
+        FEAElement * elements,
+        int &rotated_ee,
+        IQuadPts * const &rotated_xi );
 
   private:
     // Private data

@@ -9,8 +9,7 @@ class QuadPts_UserDefined_Triangle : public IQuadPts
   public:
     QuadPts_UserDefined_Triangle( const int &in_num_pts = 1 ) : num_pts( in_num_pts )
     {
-      qp = std::vector<double> (3 * num_pts, 0.333333333333333);
-      qw = std::vector<double> (num_pts, 0.5 / num_pts);
+      reset();
     }
     
     virtual ~QuadPts_UserDefined_Triangle() = default;
@@ -25,13 +24,21 @@ class QuadPts_UserDefined_Triangle : public IQuadPts
     virtual double get_qw(unsigned int ii) const
     {return qw[ii];}
 
-    virtual void set_qp(unsigned int ii, const std::vector<double> &rs_value) const
-    {qp[3*ii]     = rs_value[0];
-     qp[3*ii + 1] = rs_value[1];
-     qp[3*ii + 2] = 1 - rs_value[0] - rs_value[1];}
+    virtual void set_qp(unsigned int ii, const std::vector<double> &rs_value)
+    {
+      qp[3*ii]     = rs_value[0];
+      qp[3*ii + 1] = rs_value[1];
+      qp[3*ii + 2] = 1 - rs_value[0] - rs_value[1];
+    }
 
-    virtual void set_qw(unsigned int ii, const double &value) const
+    virtual void set_qw(unsigned int ii, const double &value)
     {qw[ii] = value;}
+
+    virtual void reset()
+    {
+      qp = std::vector<double> (3 * num_pts, 0.333333333333333);
+      qw = std::vector<double> (num_pts, 0.5 / num_pts);
+    }
 
   private:
     const int num_pts;

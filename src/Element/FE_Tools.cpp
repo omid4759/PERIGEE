@@ -159,21 +159,21 @@ double FE_T::get_circumradius( const std::array<Vector_3, 4> &pts )
   return ( centre - pts[0] ).norm2();
 }
 
-bool search_closest_point( const Vector_3 &target_xyz,
-      FEAElement * const &element,
+bool FE_T::search_closest_point( const Vector_3 &target_xyz,
+      FEAElement * const &elements,
       const double * const &electrl_x,
       const double * const &electrl_y,
       const double * const &electrl_z,
       IQuadPts * const &closest_point )
 {
   // initial value
-  element->buildBasis(closest_point, electrl_x, electrl_y, electrl_z);
+  elements->buildBasis(closest_point, electrl_x, electrl_y, electrl_z);
 
-  int nLocBas {element->get_nLocBas()};
+  int nLocBas {elements->get_nLocBas()};
 
   std::vector<double> R(nLocBas, 0.0);
 
-  element->get_R(0, &R[0]); // only use the first point of the user-defined IQuadPts
+  elements->get_R(0, &R[0]); // only use the first point of the user-defined IQuadPts
 
   Vector_3 point_xyz(0.0, 0.0, 0.0);
 
@@ -196,11 +196,11 @@ bool search_closest_point( const Vector_3 &target_xyz,
   while(iter_counter < 50 && curr_dist > 1e-9)
   {
     // only use the first point of the user-defined IQuadPts
-    Vector_3 dx_dr = element->get_dx_dr(0, electrl_x, electrl_y, electrl_z);
-    Vector_3 dx_ds = element->get_dx_ds(0, electrl_x, electrl_y, electrl_z);
-    Vector_3 d2x_drr = element->get_d2x_drr(0, electrl_x, electrl_y, electrl_z);
-    Vector_3 d2x_dss = element->get_d2x_dss(0, electrl_x, electrl_y, electrl_z);
-    Vector_3 d2x_drs = element->get_d2x_drs(0, electrl_x, electrl_y, electrl_z);
+    Vector_3 dx_dr = elements->get_dx_dr(0, electrl_x, electrl_y, electrl_z);
+    Vector_3 dx_ds = elements->get_dx_ds(0, electrl_x, electrl_y, electrl_z);
+    Vector_3 d2x_drr = elements->get_d2x_drr(0, electrl_x, electrl_y, electrl_z);
+    Vector_3 d2x_dss = elements->get_d2x_dss(0, electrl_x, electrl_y, electrl_z);
+    Vector_3 d2x_drs = elements->get_d2x_drs(0, electrl_x, electrl_y, electrl_z);
 
     // Distance funtion: (x_opp - x_tar)^2 + (y_opp - y_tar)^2 + (z_opp - z_tar)^2,
     // x_opp = x_opp(r, s), y_opp = y_opp(r, s), z_opp = z_opp(r, s)
@@ -260,9 +260,9 @@ bool search_closest_point( const Vector_3 &target_xyz,
     closest_point->set_qp(0, std::vector<double>(xi_r, xi_s));
 
     // Update basis function and physical xyz
-    element->buildBasis(closest_point, electrl_x, electrl_y, electrl_z);
+    elements->buildBasis(closest_point, electrl_x, electrl_y, electrl_z);
 
-    element->get_R(0, &R[0]);
+    elements->get_R(0, &R[0]);
 
     point_xyz = Vector_3(0.0, 0.0, 0.0);
     for(int ii=0; ii<nLocBas; ++ii)

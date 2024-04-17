@@ -14,7 +14,7 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
   num_itf = h5r -> read_intScalar( gname.c_str(), "num_interface" );
   SYS_T::print_fatal_if(num_itf < 1, "Error, ALocal_Interface: there is no interface in this geometric model.\n");
 
-  num_fixed_ele = h5r -> read_intScalar( gname.c_str(), "num_fixed_part_cell" );
+  num_fixed_ele = h5r -> read_intVector( gname.c_str(), "num_fixed_part_cell" );
 
   std::string groupbase(gname);
   groupbase.append("/interfaceid_");
@@ -44,7 +44,7 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
 
       rotated_layer_face_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "rotated_cell_face_id" );
 
-      init_rotated_node_xyz[ii] = h5r -> read_intVector( subgroup_name.c_str(), "rotated_node_xyz" );
+      init_rotated_node_xyz[ii] = h5r -> read_doubleVector( subgroup_name.c_str(), "rotated_node_xyz" );
 
       rotated_node_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "rotated_node_map" );
     }
@@ -59,6 +59,9 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
     }
   }
 
+  const std::string mesh_info("Global_Mesh_Info");
+  nLocBas = h5r -> read_intScalar(mesh_info.c_str(), "nLocBas");
+
   delete h5r; H5Fclose( file_id );
 }
 
@@ -67,11 +70,11 @@ void ALocal_Interface::print_info() const
   SYS_T::commPrint("Interfaces: %d\n", num_itf);
 }
 
-Vector_3 ALocal_Interface::get_curr_xyz(const int &ii, const int &nn, const double &tt) const
+Vector_3 ALocal_Interface::get_curr_xyz(const int &ii, const int &node, const double &tt) const
 {
-  Vector_3 xyz = (get_init_rotated_node_xyz(ii, 3 * nn),
-                  get_init_rotated_node_xyz(ii, 3 * nn + 1),
-                  get_init_rotated_node_xyz(ii, 3 * nn + 2));
+  Vector_3 xyz (get_init_rotated_node_xyz(ii, 3 * node),
+                get_init_rotated_node_xyz(ii, 3 * node + 1),
+                get_init_rotated_node_xyz(ii, 3 * node + 2));
 
   // rotation around z-axis
   const double angular_velo = MATH_T::PI / 60;  // (rad/s)
@@ -86,6 +89,20 @@ Vector_3 ALocal_Interface::get_curr_xyz(const int &ii, const int &nn, const doub
   xyz(2) = std::sin(angle) * rr;
 
   return xyz;
+}
+
+void ALocal_Interface::get_ele_ctrlPts(const int &ii, const int &ee, const double &tt,
+  double * const volctrl_x,  double * const volctrl_y,  double * const volctrl_z) const
+{
+  for(int nn{0}; nn < nLocBas; ++nn)
+  {
+    int node = get_rotated_layer_ien(ii, nLocBas * ee + nn);
+    Vector_3 cuur_node_xyz = get_curr_xyz(ii, node, tt);
+
+    volctrl_x[nn] = cuur_node_xyz(0);
+    volctrl_y[nn] = cuur_node_xyz(1);
+    volctrl_z[nn] = cuur_node_xyz(2);
+  }
 }
 
 // EOF

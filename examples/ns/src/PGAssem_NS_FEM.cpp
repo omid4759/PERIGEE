@@ -1136,8 +1136,11 @@ void PGAssem_NS_FEM::Interface_G(
   const double &curr_time, const double &dt,
   const PDNSolution * const &sol,
   IPLocAssem * const &lassem_ptr,
-  FEAElement * const &element_vs,
+  FEAElement * const &fixed_elementv,
+  FEAElement * const &rotated_elementv,
+  FEAElement * const &elements,
   const IQuadPts * const &quad_s,
+  IQuadPts * const &free_quad,
   const ALocal_IEN * const &lien_ptr,
   const FEANode * const &fnode_ptr,
   const ALocal_Interface * const &itf_part )
@@ -1163,7 +1166,7 @@ void PGAssem_NS_FEM::Interface_G(
 
       const int fixed_face_id{itf_part->get_fixed_ele_id(itf_id, ee)};
 
-      element_vs->buildBasis(fixed_face_id, quad_s, ctrl_x, ctrl_y, ctrl_z);
+      fixed_elementv->buildBasis(fixed_face_id, quad_s, ctrl_x, ctrl_y, ctrl_z);
 
       const int fixed_face_nqp {quad_s->get_num_quadPts()};
 
@@ -1171,7 +1174,7 @@ void PGAssem_NS_FEM::Interface_G(
 
       for(int qua{0}; qua<fixed_face_nqp; ++qua)
       {
-        element_vs->get_R(qua, &R[0]);
+        fixed_elementv->get_R(qua, &R[0]);
 
         // The xyz-coordinates of the quadrature point
         Vector_3 coor(0.0, 0.0, 0.0);
@@ -1193,5 +1196,52 @@ void PGAssem_NS_FEM::Interface_G(
   delete [] ctrl_y; ctrl_y = nullptr;
   delete [] ctrl_z; ctrl_z = nullptr;
 }
+
+void PGAssem_NS_FEM::search_opposite_point(
+  const double &cuur_time,
+  const Vector_3 &fixed_pt,
+  const ALocal_Interface * const &itf_part,
+  const int &itf_id,
+  FEAElement * rotated_elementv,
+  FEAElement * elements,
+  int &rotated_ee,
+  IQuadPts * const &rotated_xi )
+  {
+    const int num_rotated_ele = itf_part->get_num_rotated_ele(itf_id);
+
+    bool is_found = false;
+
+    double * volctrl_x = new double [nLocBas];
+    double * volctrl_y = new double [nLocBas];
+    double * volctrl_z = new double [nLocBas];
+
+    const int snlocbas = elements->get_nLocBas();
+
+    std::vector<double> facectrl_x(snlocbas, 0.0);
+    std::vector<double> facectrl_y(snlocbas, 0.0);
+    std::vector<double> facectrl_z(snlocbas, 0.0);
+
+    for(int ee{0}; ee<num_rotated_ele; ++ee)
+    {
+      itf_part->get_ele_ctrlPts(itf_id, ee, cuur_time, volctrl_x, volctrl_y, volctrl_z);
+      
+      int rotated_face_id = itf_part->get_rotated_face_id(itf_id, ee);
+
+      rotated_elementv->get_face_ctrlPts(rotated_face_id,
+        volctrl_x, volctrl_y, volctrl_z,
+        facectrl_x, facectrl_y, facectrl_z);
+
+      rotated_xi->reset();
+      is_found = FE_T::search_closest_point(fixed_pt, elements,
+        &facectrl_x[0], &facectrl_y[0], &facectrl_z[0], rotated_xi);
+    }
+
+    delete [] volctrl_x; volctrl_x = nullptr;
+    delete [] volctrl_y; volctrl_y = nullptr;
+    delete [] volctrl_z; volctrl_z = nullptr;
+
+    SYS_T::print_fatal_if(is_found == false,
+      "Error, PGAssem_NS_GEM::search_opposite_point: cannot find opposite point.\n");
+  }
 
 // EOF

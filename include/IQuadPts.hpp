@@ -116,14 +116,19 @@ class IQuadPts
       return 0.0;
     }
 
-    virtual void set_qp(unsigned int ii, const std::vector<double> &value) const
+    virtual void set_qp(unsigned int ii, const std::vector<double> &value)
     {
       SYS_T::print_fatal("Error: IQuadPts::set_qp is not implemented.\n");
     }
 
-    virtual void set_qw(unsigned int ii, const double &value) const
+    virtual void set_qw(unsigned int ii, const double &value)
     {
       SYS_T::print_fatal("Error: IQuadPts::set_qw is not implemented. \n");
+    }
+
+    virtual void reset()
+    {
+      SYS_T::print_fatal("Error: IQuadPts::reset is not implemented. \n");
     }
 };
 

@@ -20,6 +20,7 @@
 // Date Created: Apr. 10th 2024
 // ============================================================================
 #include "HDF5_Reader.hpp"
+#include "Math_Tools.hpp"
 
 class ALocal_Interface
 {
@@ -61,11 +62,16 @@ class ALocal_Interface
         {return rotated_node_id[ii][jj];}
 
         // Get the current rotated nodes' xyz with given rotation rule and time
-        virtual Vector_3 get_curr_xyz(const int &ii, const int &nn, const double &tt) const;
+        virtual Vector_3 get_curr_xyz(const int &ii, const int &node, const double &tt) const;
+
+        virtual void get_ele_ctrlPts(const int &ii, const int &ee, const double &tt,
+            double * const volctrl_x,  double * const volctrl_y,  double * const volctrl_z) const;
 
     protected:
         // the number of interfaces
         int num_itf;
+
+        int nLocBas;
 
         // the number of fixed volume elements in this part
         // size: num_itf
