@@ -162,7 +162,7 @@ class PGAssem_NS_FEM : public IPGAssem
         const ALocal_Interface * const &itf_part );
 
     virtual void search_opposite_point(
-        const double &cuur_time,
+        const double &curr_time,
         const Vector_3 &fixed_pt,
         const ALocal_Interface * const &itf_part,
         const int &itf_id,

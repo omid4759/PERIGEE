@@ -14,7 +14,7 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
   num_itf = h5r -> read_intScalar( gname.c_str(), "num_interface" );
   SYS_T::print_fatal_if(num_itf < 1, "Error, ALocal_Interface: there is no interface in this geometric model.\n");
 
-  num_fixed_ele = h5r -> read_intVector( gname.c_str(), "num_fixed_part_cell" );
+  num_fixed_ele = h5r -> read_intVector( gname.c_str(), "num_part_fixed_cell" );
 
   std::string groupbase(gname);
   groupbase.append("/interfaceid_");
@@ -44,6 +44,8 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
 
       rotated_layer_face_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "rotated_cell_face_id" );
 
+      num_rotated_ele[ii] = VEC_T::get_size(rotated_layer_face_id[ii]);
+
       init_rotated_node_xyz[ii] = h5r -> read_doubleVector( subgroup_name.c_str(), "rotated_node_xyz" );
 
       rotated_node_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "rotated_node_map" );
@@ -59,7 +61,7 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
     }
   }
 
-  const std::string mesh_info("Global_Mesh_Info");
+  const std::string mesh_info("/Global_Mesh_Info");
   nLocBas = h5r -> read_intScalar(mesh_info.c_str(), "nLocBas");
 
   delete h5r; H5Fclose( file_id );

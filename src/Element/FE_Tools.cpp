@@ -187,14 +187,20 @@ bool FE_T::search_closest_point( const Vector_3 &target_xyz,
 
   // initial distance
   const double init_dist = (point_xyz - target_xyz).norm2();
-  SYS_T::commPrint("init_dist: %e\n", init_dist);
+  // SYS_T::commPrint("      init_dist: %e\n", init_dist);
   if (init_dist < 1e-9) return true;  // lucky enouugh
 
   double curr_dist = init_dist;
+  double old_dist = 2 * curr_dist;
   int iter_counter = 0;
 
-  while(iter_counter < 50 && curr_dist > 1e-9)
+  const double eps = 1.0e-6;
+
+  const double dist_tol = 1.0e-3;
+
+  while(iter_counter < 50 && std::abs(curr_dist - 0.0) > eps)
   {
+    // SYS_T::commPrint("      iter = %d\n",iter_counter);
     // only use the first point of the user-defined IQuadPts
     Vector_3 dx_dr = elements->get_dx_dr(0, electrl_x, electrl_y, electrl_z);
     Vector_3 dx_ds = elements->get_dx_ds(0, electrl_x, electrl_y, electrl_z);
@@ -250,14 +256,15 @@ bool FE_T::search_closest_point( const Vector_3 &target_xyz,
     std::array<double, 2> Res_vec = {-Res_r, -Res_s};
     std::array<double, 2> dxi = Tan_Mat.LU_solve(Res_vec);
 
+    // SYS_T::commPrint("      dr = %e, ds = %e\n", dxi[0], dxi[1]);
+
     // Update the xi value
-    double xi_r = closest_point->get_qp(0, 0);
-    double xi_s = closest_point->get_qp(0, 1);
+    std::vector<double> new_xi(2, 0.0);
+    new_xi[0] = closest_point->get_qp(0, 0) + dxi[0];
+    new_xi[1] = closest_point->get_qp(0, 1) + dxi[1];
 
-    xi_r += dxi[0];
-    xi_s += dxi[1];
-
-    closest_point->set_qp(0, std::vector<double>(xi_r, xi_s));
+    closest_point->set_qp(0, new_xi);
+    // SYS_T::commPrint("      current [r,s,t] = [%e, %e, %e]\n", closest_point->get_qp(0, 0), closest_point->get_qp(0, 1), closest_point->get_qp(0, 2));
 
     // Update basis function and physical xyz
     elements->buildBasis(closest_point, electrl_x, electrl_y, electrl_z);
@@ -273,15 +280,31 @@ bool FE_T::search_closest_point( const Vector_3 &target_xyz,
     }
 
     curr_dist = (point_xyz - target_xyz).norm2();
-    SYS_T::commPrint("iter: %d, curr_dist: %e\n", iter_counter, curr_dist);
+    // SYS_T::commPrint("      curr_dist: %e\n", curr_dist);
+    // SYS_T::commPrint("      old_dist: %e\n", old_dist);
+    if(std::abs(curr_dist - old_dist) < eps)
+    {
+      // SYS_T::commPrint("        Cannot optimize further.\n");
+      break;
+    }
 
     iter_counter += 1;
+    old_dist = curr_dist;
   }
 
-  if(curr_dist > 1e-9)
+  if( !closest_point->check_qp(0) )
+  {
+    // SYS_T::commPrint("    Wrong [r,s,t]\n");
+    return false;
+  }
+
+  if(std::abs(curr_dist - 0.0) > dist_tol)
     return false;
   else
+  {
+    SYS_T::commPrint("      result_dist: %e\n", curr_dist);
     return true;
+  }
 }
 
 namespace FE_T

@@ -130,6 +130,12 @@ class IQuadPts
     {
       SYS_T::print_fatal("Error: IQuadPts::reset is not implemented. \n");
     }
+
+    virtual bool check_qp(const int &ii)
+    {
+      SYS_T::print_fatal("Error: IQuadPts::check_qp is not implemented. \n");
+      return false;
+    }
 };
 
 #endif
