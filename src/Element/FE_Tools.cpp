@@ -191,14 +191,14 @@ bool FE_T::search_closest_point( const Vector_3 &target_xyz,
   if (init_dist < 1e-9) return true;  // lucky enouugh
 
   double curr_dist = init_dist;
-  double old_dist = 2 * curr_dist;
+  double old_dist = curr_dist;
   int iter_counter = 0;
 
   const double eps = 1.0e-6;
 
   const double dist_tol = 1.0e-3;
 
-  while(iter_counter < 50 && std::abs(curr_dist - 0.0) > eps)
+  while(iter_counter < 20)
   {
     // SYS_T::commPrint("      iter = %d\n",iter_counter);
     // only use the first point of the user-defined IQuadPts
