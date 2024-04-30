@@ -188,7 +188,8 @@ bool FE_T::search_closest_point( const Vector_3 &target_xyz,
   // initial distance
   const double init_dist = (point_xyz - target_xyz).norm2();
   // SYS_T::commPrint("      init_dist: %e\n", init_dist);
-  if (init_dist < 1e-9) return true;  // lucky enouugh
+  if (init_dist < 1e-9) return true;  // lucky enouugh 
+  if (init_dist > 1e-1) return false;
 
   double curr_dist = init_dist;
   double old_dist = curr_dist;
@@ -302,7 +303,7 @@ bool FE_T::search_closest_point( const Vector_3 &target_xyz,
     return false;
   else
   {
-    SYS_T::commPrint("      result_dist: %e\n", curr_dist);
+    // SYS_T::commPrint("      result_dist: %e\n", curr_dist);
     return true;
   }
 }

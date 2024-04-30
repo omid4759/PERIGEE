@@ -163,7 +163,7 @@ void PGAssem_NS_FEM::Assem_nonzero_estimate(
   PDNSolution * temp = new PDNSolution_NS( node_ptr, 0, false );
 
   // 0.1 is an (arbitrarily chosen) nonzero time step size feeding the NatBC_Resis_KG 
-  NatBC_Resis_KG( 0.0, 0.1, temp, temp, lassem_ptr, elements, quad_s, nbc_part, ebc_part, gbc );
+  // NatBC_Resis_KG( 0.0, 0.1, temp, temp, lassem_ptr, elements, quad_s, nbc_part, ebc_part, gbc );
 
   delete temp;
 
@@ -1159,7 +1159,7 @@ void PGAssem_NS_FEM::Interface_G(
 
     for(int ee{0}; ee<num_fixed_elem; ++ee)
     {
-      SYS_T::commPrint("  fixed_ee = %d\n", ee);
+      // SYS_T::commPrint("  fixed_ee = %d\n", ee);
       const int local_ee_index{itf_part->get_fixed_ele_id(itf_id, ee)};
 
       lien_ptr->get_LIEN(local_ee_index, IEN_v);
@@ -1187,12 +1187,25 @@ void PGAssem_NS_FEM::Interface_G(
           coor.z() += ctrl_z[ii] * R[ii];
         }
 
-        SYS_T::commPrint("    point %d:\n", qua);
+        // SYS_T::commPrint("    point %d:\n", qua);
 
         int rotated_ee {0};
         search_opposite_point(curr_time, coor, itf_part, itf_id, rotated_elementv, elements, rotated_ee, free_quad);
       }
     }
+
+    // Vector_3 vertex(1, 1, 1);
+    // int rotated_ee {0};
+    // search_opposite_point(curr_time, vertex, itf_part, itf_id, rotated_elementv, elements, rotated_ee, free_quad);
+
+    // Vector_3 mid_point_on_edge(1.5, 1, 1);
+    // search_opposite_point(curr_time, mid_point_on_edge, itf_part, itf_id, rotated_elementv, elements, rotated_ee, free_quad);
+
+    // Vector_3 interior_point(1.5, 1.25, 1);
+    // search_opposite_point(curr_time, interior_point, itf_part, itf_id, rotated_elementv, elements, rotated_ee, free_quad);
+
+    // Vector_3 misleading_point(1.0000001, 1, 1);
+    // search_opposite_point(curr_time, misleading_point, itf_part, itf_id, rotated_elementv, elements, rotated_ee, free_quad);
   }
 
   delete [] IEN_v; IEN_v = nullptr;
@@ -1244,7 +1257,7 @@ void PGAssem_NS_FEM::search_opposite_point(
       if(is_found)
       {
         rotated_ee = ee;
-        SYS_T::commPrint("  found in rotated_ee = %d.\n", rotated_ee);
+        // SYS_T::commPrint("  found in rotated_ee = %d.\n\n", rotated_ee);
         break;
       }
     }
