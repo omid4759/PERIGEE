@@ -34,6 +34,7 @@ int main( int argc, char * argv[] )
   // Clean the potentially pre-existing hdf5 files in the job folder
   SYS_T::execute("rm -rf part_p*.h5");
   SYS_T::execute("rm -rf preprocessor_cmd.h5");
+  SYS_T::execute("rm -rf *_itf.h5");
 
   // Define basic problem settins
   constexpr int dofNum = 4; // degree-of-freedom for the physical problem
