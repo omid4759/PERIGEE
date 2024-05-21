@@ -37,6 +37,10 @@ class EBC_Partition_sliding_interface : public EBC_Partition
     // stores the face id of the volume element of the fixed interface in this part
     std::vector<std::vector<int>> fixed_ele_face_id;
 
+    std::vector<std::vector<int>> fixed_layer_ien;
+    std::vector<std::vector<int>> fixed_layer_global_node;
+    std::vector<std::vector<double>> fixed_layer_pt_xyz;
+
     // stores ien of all the volume element of the rotated layer
     std::vector<std::vector<int>> rotated_layer_ien;
 

@@ -113,6 +113,10 @@ class ElemBC_3D : public ElemBC
     // Access the data in ElemBC_3D_sliding_interface, face id of fixed volume element
     virtual int get_fixed_faceID( const int &ii, const int &cell_index ) const
     {SYS_T::commPrint("Warning: get_fixed_faceID is not implemented. \n"); return -1;}
+
+    // Access the data in ElemBC_3D_sliding_interface, part tag of fixed volume element
+    virtual int get_fixed_part_tag( const int &ii, const int &cell_index ) const
+    {SYS_T::commPrint("Warning: get_fixed_part_tag is not implemented. \n"); return -1;}
     
     // Access the data in ElemBC_3D_sliding_interface, face id of rotated volume element
     virtual std::vector<int> get_rotated_faceID(const int &ii) const

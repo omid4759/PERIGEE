@@ -247,6 +247,54 @@ int main( int argc, char * argv[] )
   Map_Node_Index * mnindex = new Map_Node_Index(global_part, cpu_size, mesh->get_nFunc());
   mnindex->write_hdf5("node_mapping");
 
+  // Partition the interfaces
+  for(int ii=0; ii < num_interface_pair; ++ii)
+  {
+    int s_nFunc, s_nElem;
+    std::vector<int> s_vecIEN;
+    std::vector<double> s_ctrlPts;
+
+    VTK_T::read_grid(fixed_interface_file[ii], s_nFunc, s_nElem, s_ctrlPts, s_vecIEN);
+
+    IIEN * sIEN = new IEN_FEM(s_nElem, s_vecIEN);
+    VEC_T::clean(s_vecIEN);
+
+    IMesh * s_mesh = nullptr;
+
+    switch( elemType )
+    {
+      case 501:
+        s_mesh = new Mesh_FEM(s_nFunc, s_nElem, 3, 1);
+        break;
+      case 502:
+        s_mesh = new Mesh_FEM(s_nFunc, s_nElem, 6, 2);
+        break;
+      case 601:
+        s_mesh = new Mesh_FEM(s_nFunc, s_nElem, 4, 1);
+        break;
+      case 602:
+        s_mesh = new Mesh_FEM(s_nFunc, s_nElem, 9, 2);
+        break;      
+      default:
+        SYS_T::print_fatal("Error: elemType %d is not supported.\n", elemType);
+        break;
+    }
+    
+    std::string epart_base = "epart_", npart_base = "npart_";
+    std::string epart = SYS_T::gen_capfile_name(epart_base, ii, "_itf");
+    std::string npart = SYS_T::gen_capfile_name(npart_base, ii, "_itf");
+
+    IGlobal_Part * global_part_itf = nullptr;
+    if(cpu_size > 1)
+      global_part_itf = new Global_Part_METIS( cpu_size, in_ncommon,
+          isDualGraph, s_mesh, sIEN, epart, npart );
+    else if(cpu_size == 1)
+      global_part_itf = new Global_Part_Serial( s_mesh, epart, npart );
+    else SYS_T::print_fatal("ERROR: wrong cpu_size: %d \n", cpu_size);
+
+    delete global_part_itf; delete s_mesh; delete sIEN;
+  }
+
   // Setup Nodal i.e. Dirichlet type Boundary Conditions
   std::vector<INodalBC *> NBC_list( dofMat, nullptr );
 
@@ -262,7 +310,6 @@ int main( int argc, char * argv[] )
     weak_list.push_back( sur_file_wall );
   else
     SYS_T::print_fatal("Unknown wall model type.");
-
 
   NBC_list[0] = new NodalBC( nFunc );
   NBC_list[1] = new NodalBC( dir_list, nFunc );

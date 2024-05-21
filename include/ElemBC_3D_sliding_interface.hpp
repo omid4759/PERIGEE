@@ -24,6 +24,7 @@
 // Date Created: Apr. 4th 2024
 // ============================================================================
 #include "ElemBC_3D.hpp"
+#include "HDF5_Tools.hpp"
 
 class ElemBC_3D_sliding_interface : public ElemBC_3D 
 {
@@ -54,6 +55,18 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
     virtual int get_fixed_faceID( const int &ii, const int &cell_index ) const
     {return fixed_face_id[ii][cell_index];}
 
+    virtual int get_fixed_part_tag( const int &ii, const int &cell_index ) const
+    {return fixed_part_tag[ii][cell_index];}
+
+    virtual std::vector<int> get_FL_vien(const int &ii) const
+    {return fixed_layer_vien[ii];}
+
+    virtual std::vector<int> get_FLN_GID(const int &ii) const
+    {return fixed_layer_global_node[ii];}
+
+    virtual std::vector<double> get_FLN_xyz(const int &ii) const
+    {return fixed_layer_pt_xyz[ii];}
+
     virtual std::vector<int> get_rotated_faceID(const int &ii) const
     {return rotated_face_id[ii];}
 
@@ -72,6 +85,12 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
 
     // the face id of the volume elements from the fixed interface
     std::vector<std::vector<int>> fixed_face_id;
+
+    std::vector<std::vector<int>> fixed_part_tag;
+
+    std::vector<std::vector<int>> fixed_layer_vien;
+    std::vector<std::vector<int>> fixed_layer_global_node;
+    std::vector<std::vector<double>> fixed_layer_pt_xyz;
 
     // the face id of the volume elements from the rotated interface
     std::vector<std::vector<int>> rotated_face_id;

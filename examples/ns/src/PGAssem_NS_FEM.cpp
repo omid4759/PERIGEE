@@ -1160,11 +1160,13 @@ void PGAssem_NS_FEM::Interface_G(
     for(int ee{0}; ee<num_fixed_elem; ++ee)
     {
       // SYS_T::commPrint("  fixed_ee = %d\n", ee);
-      const int local_ee_index{itf_part->get_fixed_ele_id(itf_id, ee)};
+      // const int local_ee_index{itf_part->get_fixed_ele_id(itf_id, ee)};
 
-      lien_ptr->get_LIEN(local_ee_index, IEN_v);
+      // lien_ptr->get_LIEN(local_ee_index, IEN_v);
       
-      fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_v, ctrl_x, ctrl_y, ctrl_z);
+      // fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_v, ctrl_x, ctrl_y, ctrl_z);
+
+      itf_part->get_fixed_ele_ctrlPts(itf_id, ee, ctrl_x, ctrl_y, ctrl_z);
 
       const int fixed_face_id{itf_part->get_fixed_face_id(itf_id, ee)};
 
@@ -1242,7 +1244,7 @@ void PGAssem_NS_FEM::search_opposite_point(
     for(int ee{0}; ee<num_rotated_ele; ++ee)
     {
       // SYS_T::commPrint("    search rotated ee = %d\n", ee);
-      itf_part->get_ele_ctrlPts(itf_id, ee, curr_time, volctrl_x, volctrl_y, volctrl_z);
+      itf_part->get_rotated_ele_ctrlPts(itf_id, ee, curr_time, volctrl_x, volctrl_y, volctrl_z);
       
       int rotated_face_id = itf_part->get_rotated_face_id(itf_id, ee);
 

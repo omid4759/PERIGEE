@@ -6,7 +6,10 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
     const int &num_fixed_pt, const int &num_fixed_elem,
     const std::vector<double> &vol_ctrlPts, const IIEN * const &VIEN, const int &elemtype )
 : ElemBC_3D ( vtkfileList, elemtype ), num_interface_pair{num_interface_pair_in},
-  fixed_face_id{std::vector<std::vector<int>> {}},  rotated_face_id{std::vector<std::vector<int>> {}},
+  fixed_face_id{std::vector<std::vector<int>> {}}, fixed_part_tag{std::vector<std::vector<int>> {}},
+  fixed_layer_vien{std::vector<std::vector<int>> {}}, fixed_layer_global_node{std::vector<std::vector<int>> {}},
+  fixed_layer_pt_xyz{std::vector<std::vector<double>> {}},
+  rotated_face_id{std::vector<std::vector<int>> {}},
   rotated_layer_vien{std::vector<std::vector<int>> {}}, rotated_layer_global_node{std::vector<std::vector<int>> {}},
   rotated_layer_pt_xyz{std::vector<std::vector<double>> {}}
 {
@@ -14,17 +17,26 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
     "Error, ElemBC_3D_sliding_interface: The number of interface file is wrong!\n");
   
   fixed_face_id.resize(num_interface_pair);
+  fixed_part_tag.resize(num_interface_pair);
+  fixed_layer_vien.resize(num_interface_pair);
   rotated_face_id.resize(num_interface_pair);
   rotated_layer_vien.resize(num_interface_pair);
   for(int ii=0; ii<num_interface_pair; ++ii)
   {
     fixed_face_id[ii].resize(num_cell[ii]);
+    fixed_layer_vien[ii].resize(VIEN->get_nLocBas() * num_cell[ii]);
+
     rotated_face_id[ii].resize(num_cell[ii + num_interface_pair]);
     rotated_layer_vien[ii].resize(VIEN->get_nLocBas() * num_cell[ii + num_interface_pair]);
   }
 
+  fixed_layer_global_node.resize(num_interface_pair);
+  fixed_layer_pt_xyz.resize(num_interface_pair);
   rotated_layer_global_node.resize(num_interface_pair);
   rotated_layer_pt_xyz.resize(num_interface_pair);
+
+  const std::string filename_base = "epart_";
+  const std::string filename_tail = "_itf.h5";
 
   if(elem_type == 501 || elem_type == 502)
   {
@@ -32,6 +44,9 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
 
     for(int ii=0; ii<num_interface_pair; ++ii)
     {
+      const std::string filename = SYS_T::gen_capfile_name(filename_base, ii, filename_tail);
+      fixed_part_tag[ii] = HDF5_T::read_intVector( filename.c_str(), "/", "part" );
+
       // Find the face id of the fixed interfaces
       for(int ee=0; ee<num_cell[ii]; ++ee)
       {
@@ -49,6 +64,10 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
         tetcell->reset(tet_n[0], tet_n[1], tet_n[2], tet_n[3]);
 
         fixed_face_id[ii][ee] = tetcell->get_face_id(node_t_gi[0], node_t_gi[1], node_t_gi[2]);
+
+        // Construct the "layer" vien of the fixed interfaces
+        for(int kk=0; kk < VIEN->get_nLocBas(); ++kk)
+          fixed_layer_vien[ii][ee * VIEN->get_nLocBas() + kk] = VIEN->get_IEN(cell_gi, kk);
       }
 
       // Find the face id of the rotated interfaces
@@ -84,6 +103,9 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
 
     for(int ii=0; ii<num_interface_pair; ++ii)
     {
+      const std::string filename = SYS_T::gen_capfile_name(filename_base, ii, filename_tail);
+      fixed_part_tag[ii] = HDF5_T::read_intVector( filename.c_str(), "/", "part" );
+
       // Find the face id of the fixed interfaces
       for(int ee=0; ee<num_cell[ii]; ++ee)
       {
@@ -106,6 +128,10 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
                        hex_n[4], hex_n[5], hex_n[6], hex_n[7]);
 
         fixed_face_id[ii][ee] = hexcell->get_face_id(node_q_gi[0], node_q_gi[1], node_q_gi[2], node_q_gi[3]);
+
+        // Construct the "layer" vien of the fixed interfaces
+        for(int kk=0; kk < VIEN->get_nLocBas(); ++kk)
+          fixed_layer_vien[ii][ee * VIEN->get_nLocBas() + kk] = VIEN->get_IEN(cell_gi, kk);
       }
 
       // Find the face id of the rotated interfaces
@@ -145,6 +171,29 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
   
   for(int ii=0; ii<num_interface_pair; ++ii)
   {
+    fixed_layer_global_node[ii] = fixed_layer_vien[ii];
+    VEC_T::sort_unique_resize(fixed_layer_global_node[ii]);
+    const int num_fixed_layer_node = VEC_T::get_size(fixed_layer_global_node[ii]);
+
+    // Convert the GlobalNodeID in fixed_layer_vien to local indices in this ebc
+    PERIGEE_OMP_PARALLEL_FOR
+    for(int &nodeid : fixed_layer_vien[ii])
+    {
+      const int local_id = VEC_T::get_pos(fixed_layer_global_node[ii], nodeid);
+      nodeid = local_id;
+    }
+
+    // Store the xyz info of "layer" nodes
+    fixed_layer_pt_xyz[ii].resize(3 * num_fixed_layer_node);
+    PERIGEE_OMP_PARALLEL_FOR
+    for(int nn=0; nn<num_fixed_layer_node; ++nn)
+    {
+      const int GID = fixed_layer_global_node[ii][nn];
+      fixed_layer_pt_xyz[ii][3 * nn]     = vol_ctrlPts[3 * GID];
+      fixed_layer_pt_xyz[ii][3 * nn + 1] = vol_ctrlPts[3 * GID + 1];
+      fixed_layer_pt_xyz[ii][3 * nn + 2] = vol_ctrlPts[3 * GID + 2];
+    }
+
     rotated_layer_global_node[ii] = rotated_layer_vien[ii];
     VEC_T::sort_unique_resize(rotated_layer_global_node[ii]);
     const int num_rotated_layer_node = VEC_T::get_size(rotated_layer_global_node[ii]);
@@ -175,6 +224,10 @@ ElemBC_3D_sliding_interface::~ElemBC_3D_sliding_interface()
   for(int ii=0; ii < num_interface_pair; ++ii)
   {
     fixed_face_id[ii].clear();
+    fixed_part_tag[ii].clear();
+    fixed_layer_vien[ii].clear();
+    fixed_layer_global_node[ii].clear();
+    fixed_layer_pt_xyz[ii].clear();
     rotated_face_id[ii].clear();
     rotated_layer_vien[ii].clear();
     rotated_layer_global_node[ii].clear();
@@ -182,6 +235,10 @@ ElemBC_3D_sliding_interface::~ElemBC_3D_sliding_interface()
   }
 
   fixed_face_id.clear();
+  fixed_part_tag.clear();
+  fixed_layer_vien.clear();
+  fixed_layer_global_node.clear();
+  fixed_layer_pt_xyz.clear();
   rotated_face_id.clear();
   rotated_layer_vien.clear();
   rotated_layer_global_node.clear();

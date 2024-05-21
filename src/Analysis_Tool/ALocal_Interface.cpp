@@ -19,11 +19,16 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
   std::string groupbase(gname);
   groupbase.append("/interfaceid_");
 
+  num_fixed_node.assign(num_itf, 0);
   num_rotated_ele.assign(num_itf, 0);
   num_rotated_node.assign(num_itf, 0);
 
   fixed_vol_ele_id.resize(num_itf);
   fixed_ele_face_id.resize(num_itf);
+  fixed_layer_ien.resize(num_itf);
+  fixed_node_xyz.resize(num_itf);
+  fixed_node_id.resize(num_itf);
+
   rotated_layer_ien.resize(num_itf);
   rotated_layer_face_id.resize(num_itf);
   init_rotated_node_xyz.resize(num_itf);
@@ -31,14 +36,20 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
 
   for(int ii=0; ii<num_itf; ++ii)
   {
-    if( num_fixed_ele[ii] > 0 )
-    {
+    // if( num_fixed_ele[ii] > 0 )
+    // {
       std::string subgroup_name(groupbase);
       subgroup_name.append( std::to_string(ii) );
 
       fixed_vol_ele_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "part_fixed_cell_id" );
 
       fixed_ele_face_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "fixed_cell_face_id" );
+
+      fixed_layer_ien[ii] = h5r -> read_intVector( subgroup_name.c_str(), "fixed_cell_ien" );
+
+      fixed_node_xyz[ii] = h5r -> read_doubleVector( subgroup_name.c_str(), "fixed_node_xyz" );
+
+      fixed_node_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "fixed_node_map" );
 
       rotated_layer_ien[ii] = h5r -> read_intVector( subgroup_name.c_str(), "rotated_cell_ien" );
 
@@ -49,16 +60,16 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
       init_rotated_node_xyz[ii] = h5r -> read_doubleVector( subgroup_name.c_str(), "rotated_node_xyz" );
 
       rotated_node_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "rotated_node_map" );
-    }
-    else
-    {
-      fixed_vol_ele_id[ii].clear();
-      fixed_ele_face_id[ii].clear();
-      rotated_layer_ien[ii].clear();
-      rotated_layer_face_id[ii].clear();
-      init_rotated_node_xyz[ii].clear();
-      rotated_node_id[ii].clear();
-    }
+    // }
+    // else
+    // {
+    //   fixed_vol_ele_id[ii].clear();
+    //   fixed_ele_face_id[ii].clear();
+    //   rotated_layer_ien[ii].clear();
+    //   rotated_layer_face_id[ii].clear();
+    //   init_rotated_node_xyz[ii].clear();
+    //   rotated_node_id[ii].clear();
+    // }
   }
 
   const std::string mesh_info("/Global_Mesh_Info");
@@ -93,7 +104,20 @@ Vector_3 ALocal_Interface::get_curr_xyz(const int &ii, const int &node, const do
   return xyz;
 }
 
-void ALocal_Interface::get_ele_ctrlPts(const int &ii, const int &ee, const double &tt,
+void ALocal_Interface::get_fixed_ele_ctrlPts(const int &ii, const int &ee,
+  double * const volctrl_x,  double * const volctrl_y,  double * const volctrl_z) const
+{
+  for(int nn{0}; nn < nLocBas; ++nn)
+  {
+    int node = get_fixed_layer_ien(ii, nLocBas * ee + nn);
+
+    volctrl_x[nn] = get_fixed_node_xyz(ii, 3 * node);
+    volctrl_y[nn] = get_fixed_node_xyz(ii, 3 * node + 1);
+    volctrl_z[nn] = get_fixed_node_xyz(ii, 3 * node + 2);
+  }
+}
+
+void ALocal_Interface::get_rotated_ele_ctrlPts(const int &ii, const int &ee, const double &tt,
   double * const volctrl_x,  double * const volctrl_y,  double * const volctrl_z) const
 {
   for(int nn{0}; nn < nLocBas; ++nn)

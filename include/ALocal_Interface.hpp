@@ -49,6 +49,15 @@ class ALocal_Interface
         virtual int get_fixed_face_id(const int &ii, const int &jj) const
         {return fixed_ele_face_id[ii][jj];}
 
+        virtual int get_fixed_layer_ien(const int &ii, const int &jj) const
+        {return fixed_layer_ien[ii][jj];}
+
+        virtual double get_fixed_node_xyz(const int &ii, const int &jj) const
+        {return fixed_node_xyz[ii][jj];}
+
+        virtual int get_fixed_node_id(const int &ii, const int &jj) const
+        {return fixed_node_id[ii][jj];}
+
         virtual int get_rotated_layer_ien(const int &ii, const int &jj) const
         {return rotated_layer_ien[ii][jj];}
 
@@ -64,7 +73,10 @@ class ALocal_Interface
         // Get the current rotated nodes' xyz with given rotation rule and time
         virtual Vector_3 get_curr_xyz(const int &ii, const int &node, const double &tt) const;
 
-        virtual void get_ele_ctrlPts(const int &ii, const int &ee, const double &tt,
+        virtual void get_fixed_ele_ctrlPts(const int &ii, const int &ee,
+            double * const volctrl_x,  double * const volctrl_y,  double * const volctrl_z) const;
+
+        virtual void get_rotated_ele_ctrlPts(const int &ii, const int &ee, const double &tt,
             double * const volctrl_x,  double * const volctrl_y,  double * const volctrl_z) const;
 
     protected:
@@ -81,6 +93,10 @@ class ALocal_Interface
         // size: num_itf
         std::vector<int> num_rotated_ele;
 
+        // the number of the nodes from the fixed volume elements
+        // size: num_itf
+        std::vector<int> num_fixed_node;
+
         // the number of the nodes from the rotated volume elements
         // size: num_itf
         std::vector<int> num_rotated_node;
@@ -92,6 +108,18 @@ class ALocal_Interface
         // stores the face id of fixed volume element
         // size: num_itf x num_fixed_ele[ii]
         std::vector<std::vector<int>> fixed_ele_face_id;
+
+        // stores the volume element's IEN array of the fixed "layer"
+        // size: num_itf x (nlocbas x num_fixed_ele[ii])
+        std::vector<std::vector<int>> fixed_layer_ien;
+
+        // stores the initial coordinates of the nodes from the fixed volume elements
+        // size: num_itf x (3 x num_fixed_node[ii])
+        std::vector<std::vector<double>> fixed_node_xyz;
+
+        // the (mapped) global node id corresponding to the fixed_node_xyz
+        // size: num_itf x num_fixed_node[ii]
+        std::vector<std::vector<int>> fixed_node_id;
         
         // stores the volume element's IEN array of the rotated "layer"
         // size: num_itf x (nlocbas x num_rotated_ele[ii])
