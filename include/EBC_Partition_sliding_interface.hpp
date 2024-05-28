@@ -31,6 +31,8 @@ class EBC_Partition_sliding_interface : public EBC_Partition
     // the number of the local elements of the fixed interfaces
     std::vector<int> num_fixed_part_ele;
 
+    std::vector<int> num_tag;
+
     // stores the local volume element id of the fixed interface in this part
     std::vector<std::vector<int>> fixed_part_vol_ele_id;
 
@@ -40,18 +42,21 @@ class EBC_Partition_sliding_interface : public EBC_Partition
     std::vector<std::vector<int>> fixed_layer_ien;
     std::vector<std::vector<int>> fixed_layer_global_node;
     std::vector<std::vector<double>> fixed_layer_pt_xyz;
+    std::vector<std::vector<int>> fixed_interval_tag;
 
     // stores ien of all the volume element of the rotated layer
-    std::vector<std::vector<int>> rotated_layer_ien;
+    std::vector<std::vector<std::vector<int>>> rotated_layer_ien;
 
     // stores the face id of all the volume element of the rotated layer
-    std::vector<std::vector<int>> rotated_ele_face_id;
+    std::vector<std::vector<std::vector<int>>> rotated_ele_face_id;
 
     // stores the rotated layer nodes indices, converted by get_old2new()
     std::vector<std::vector<int>> rotated_layer_global_node;
 
     // stores the rotated layer nodes' coordinates
     std::vector<std::vector<double>> rotated_layer_pt_xyz;
+
+    std::vector<std::vector<int>> rotated_interval_tag;
 };
 
 #endif

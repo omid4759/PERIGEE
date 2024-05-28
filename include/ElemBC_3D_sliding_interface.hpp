@@ -24,6 +24,7 @@
 // Date Created: Apr. 4th 2024
 // ============================================================================
 #include "ElemBC_3D.hpp"
+#include "Interface_Element_Group.hpp"
 #include "HDF5_Tools.hpp"
 
 class ElemBC_3D_sliding_interface : public ElemBC_3D 
@@ -67,6 +68,9 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
     virtual std::vector<double> get_FLN_xyz(const int &ii) const
     {return fixed_layer_pt_xyz[ii];}
 
+    virtual std::vector<int> get_FIT(const int &ii) const
+    {return fixed_interval_tag[ii];}
+
     virtual std::vector<int> get_rotated_faceID(const int &ii) const
     {return rotated_face_id[ii];}
 
@@ -78,6 +82,9 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
 
     virtual std::vector<double> get_RLN_xyz(const int &ii) const
     {return rotated_layer_pt_xyz[ii];}
+
+    virtual std::vector<int> get_RIT(const int &ii) const
+    {return rotated_interval_tag[ii];}
 
   private:
     // the number of [fixed/rotated] interfaces pairs
@@ -92,6 +99,8 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
     std::vector<std::vector<int>> fixed_layer_global_node;
     std::vector<std::vector<double>> fixed_layer_pt_xyz;
 
+    std::vector<std::vector<int>> fixed_interval_tag;
+
     // the face id of the volume elements from the rotated interface
     std::vector<std::vector<int>> rotated_face_id;
 
@@ -104,6 +113,8 @@ class ElemBC_3D_sliding_interface : public ElemBC_3D
 
     // the xyz-coordinates of the nodes of the rotated "layer" volume elements
     std::vector<std::vector<double>> rotated_layer_pt_xyz;
+
+    std::vector<std::vector<int>> rotated_interval_tag;
 
     // ------------------------------------------------------------------------
     // Disallow default constructor

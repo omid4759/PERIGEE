@@ -8,10 +8,10 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
 : ElemBC_3D ( vtkfileList, elemtype ), num_interface_pair{num_interface_pair_in},
   fixed_face_id{std::vector<std::vector<int>> {}}, fixed_part_tag{std::vector<std::vector<int>> {}},
   fixed_layer_vien{std::vector<std::vector<int>> {}}, fixed_layer_global_node{std::vector<std::vector<int>> {}},
-  fixed_layer_pt_xyz{std::vector<std::vector<double>> {}},
+  fixed_layer_pt_xyz{std::vector<std::vector<double>> {}}, fixed_interval_tag{std::vector<std::vector<int>> {}},
   rotated_face_id{std::vector<std::vector<int>> {}},
   rotated_layer_vien{std::vector<std::vector<int>> {}}, rotated_layer_global_node{std::vector<std::vector<int>> {}},
-  rotated_layer_pt_xyz{std::vector<std::vector<double>> {}}
+  rotated_layer_pt_xyz{std::vector<std::vector<double>> {}}, rotated_interval_tag{std::vector<std::vector<int>> {}}
 {
   SYS_T::print_fatal_if(VEC_T::get_size(vtkfileList) != 2 * num_interface_pair,
     "Error, ElemBC_3D_sliding_interface: The number of interface file is wrong!\n");
@@ -32,8 +32,10 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
 
   fixed_layer_global_node.resize(num_interface_pair);
   fixed_layer_pt_xyz.resize(num_interface_pair);
+  fixed_interval_tag.resize(num_interface_pair);
   rotated_layer_global_node.resize(num_interface_pair);
   rotated_layer_pt_xyz.resize(num_interface_pair);
+  rotated_interval_tag.resize(num_interface_pair);
 
   const std::string filename_base = "epart_";
   const std::string filename_tail = "_itf.h5";
@@ -96,6 +98,27 @@ ElemBC_3D_sliding_interface::ElemBC_3D_sliding_interface(
       }
     }
     delete tetcell;
+
+    std::vector<double> intervals_0 {-0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
+    std::vector<double> intervals_12 {0.0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.27, 0.30};
+
+    Interface_Element_Group IEG_fixed_0(vtkfileList[0], get_cell_nLocBas(0), 0, intervals_0);
+    fixed_interval_tag[0] = IEG_fixed_0.get_tag();
+    Interface_Element_Group IEG_rotated_0(vtkfileList[3], get_cell_nLocBas(3), 0, intervals_0);
+    rotated_interval_tag[0] = IEG_rotated_0.get_tag();
+
+    Interface_Element_Group IEG_fixed_1(vtkfileList[1], get_cell_nLocBas(1), Vector_3(0.5, 0.0, 0.0), intervals_12);
+    fixed_interval_tag[1] = IEG_fixed_1.get_tag();
+
+    Interface_Element_Group IEG_rotated_1(vtkfileList[4], get_cell_nLocBas(4), Vector_3(0.5, 0.0, 0.0), intervals_12);
+    rotated_interval_tag[1] = IEG_rotated_1.get_tag();
+
+
+    Interface_Element_Group IEG_fixed_2(vtkfileList[2], get_cell_nLocBas(2), Vector_3(-0.5, 0.0, 0.0), intervals_12);
+    fixed_interval_tag[2] = IEG_fixed_2.get_tag();
+
+    Interface_Element_Group IEG_rotated_2(vtkfileList[5], get_cell_nLocBas(5), Vector_3(-0.5, 0.0, 0.0), intervals_12);
+    rotated_interval_tag[2] = IEG_rotated_2.get_tag();
   }
   else if(elem_type == 601 || elem_type == 602)
   {

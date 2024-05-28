@@ -167,6 +167,9 @@ class ElemBC
     virtual std::vector<double> get_FLN_xyz(const int &ii) const
     {SYS_T::commPrint("Warning: get_FLN_xyz is not implemented. \n"); return {};}
 
+    virtual std::vector<int> get_FIT(const int &ii) const
+    {SYS_T::commPrint("Warning: get_FIT is not implemented. \n"); return {};}
+
     virtual std::vector<int> get_RL_vien(const int &ii) const
     {SYS_T::commPrint("Warning: get_RL_vien is not implemented. \n"); return {};}
 
@@ -175,6 +178,9 @@ class ElemBC
 
     virtual std::vector<double> get_RLN_xyz(const int &ii) const
     {SYS_T::commPrint("Warning: get_RLN_xyz is not implemented. \n"); return {};}
+
+    virtual std::vector<int> get_RIT(const int &ii) const
+    {SYS_T::commPrint("Warning: get_RIT is not implemented. \n"); return {};}
  
     // Overwrite ElemBC_3D_wall properties from a vtp/vtu file
     virtual void overwrite_from_vtk( const std::string &wallprop_vtk,

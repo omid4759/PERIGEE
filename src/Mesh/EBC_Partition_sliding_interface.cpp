@@ -6,20 +6,26 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
   fixed_part_vol_ele_id{std::vector<std::vector<int>> {}}, fixed_ele_face_id{std::vector<std::vector<int>> {}},
   fixed_layer_ien{std::vector<std::vector<int>> {}},
   fixed_layer_global_node{std::vector<std::vector<int>> {}}, fixed_layer_pt_xyz{std::vector<std::vector<double>> {}},
-  rotated_layer_ien{std::vector<std::vector<int>> {}}, rotated_ele_face_id{std::vector<std::vector<int>> {}},
-  rotated_layer_global_node{std::vector<std::vector<int>> {}}, rotated_layer_pt_xyz{std::vector<std::vector<double>> {}}
+  fixed_interval_tag{std::vector<std::vector<int>> {}},
+  rotated_layer_ien{std::vector<std::vector<std::vector<int>>> {}}, rotated_ele_face_id{std::vector<std::vector<std::vector<int>>> {}},
+  rotated_layer_global_node{std::vector<std::vector<int>> {}}, rotated_layer_pt_xyz{std::vector<std::vector<double>> {}},
+  rotated_interval_tag{std::vector<std::vector<int>> {}}
 {
   num_fixed_part_ele.resize(num_pair);
+  num_tag.resize(num_pair);
+
   fixed_part_vol_ele_id.resize(num_pair);
   fixed_ele_face_id.resize(num_pair);
   fixed_layer_ien.resize(num_pair);
   fixed_layer_global_node.resize(num_pair);
   fixed_layer_pt_xyz.resize(num_pair);
+  fixed_interval_tag.resize(num_pair);
 
   rotated_layer_ien.resize(num_pair);
   rotated_ele_face_id.resize(num_pair);
   rotated_layer_global_node.resize(num_pair);
   rotated_layer_pt_xyz.resize(num_pair);
+  rotated_interval_tag.resize(num_pair);
 
   for(int ii=0; ii<num_pair; ++ii)
   {
@@ -56,9 +62,11 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
     fixed_ele_face_id[ii] = std::vector<int> {};
 
     const std::vector<int> total_fixed_layer_ien = ebc -> get_FL_vien(ii);
+    const std::vector<int> total_fixed_interval_tag = ebc -> get_FIT(ii);
 
     fixed_layer_ien[ii] = std::vector<int> {};    
     fixed_layer_global_node[ii] = ebc -> get_FLN_GID(ii);
+    fixed_interval_tag[ii] = std::vector<int> {};
 
     // convert the GlobalNodeID to new(mapped) global node id
     PERIGEE_OMP_PARALLEL_FOR
@@ -75,6 +83,7 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
       std::vector<int> temp_part_vol_ele_id {};
       std::vector<int> temp_ele_face_id {};
       std::vector<int> temp_layer_ien {};
+      std::vector<int> temp_interval_tag {};
 
       PERIGEE_OMP_FOR
       for(int ee=0; ee < ebc->get_num_cell(ii); ++ee)
@@ -86,6 +95,8 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
           temp_ele_face_id.push_back(ebc -> get_fixed_faceID(ii, ee));
           for(int jj=0; jj<part->get_nLocBas(); ++jj)
             temp_layer_ien.push_back(total_fixed_layer_ien[ee * part->get_nLocBas() + jj]);
+
+          temp_interval_tag.push_back(total_fixed_interval_tag[ee]);
         }
       }
 
@@ -94,6 +105,7 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
         VEC_T::insert_end(fixed_part_vol_ele_id[ii], temp_part_vol_ele_id);
         VEC_T::insert_end(fixed_ele_face_id[ii], temp_ele_face_id);
         VEC_T::insert_end(fixed_layer_ien[ii], temp_layer_ien);
+        VEC_T::insert_end(fixed_interval_tag[ii], temp_interval_tag);
       }
     }
 
@@ -107,9 +119,6 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
     // // write the rotated layer's info only when this part has fixed interface element
     // if(num_local_cell[ii] > 0)
     // {
-      rotated_layer_ien[ii] = ebc -> get_RL_vien(ii);
-
-      rotated_ele_face_id[ii] = ebc -> get_rotated_faceID(ii);
       
       rotated_layer_global_node[ii] = ebc -> get_RLN_GID(ii);
 
@@ -122,6 +131,35 @@ EBC_Partition_sliding_interface::EBC_Partition_sliding_interface(const IPart * c
       }
 
       rotated_layer_pt_xyz[ii] = ebc -> get_RLN_xyz(ii);
+
+      rotated_interval_tag[ii] = ebc -> get_RIT(ii);
+
+      std::vector<int> tag = rotated_interval_tag[ii];
+      VEC_T::sort_unique_resize(tag);
+
+      int n_tag = VEC_T::get_size(tag);
+      rotated_layer_ien[ii].resize(n_tag);
+      rotated_ele_face_id[ii].resize(n_tag);
+
+      std::vector<int> total_rotated_layer_ien = ebc -> get_RL_vien(ii);
+      std::vector<int> total_rotated_ele_face_id = ebc -> get_rotated_faceID(ii);
+
+      for(int jj=0; jj<n_tag; ++jj)
+      {
+        rotated_layer_ien[ii][jj] = std::vector<int> {};
+        rotated_ele_face_id[ii][jj] = std::vector<int> {};
+      }
+
+      for(int ee=0; ee<VEC_T::get_size(rotated_interval_tag[ii]); ++ee)
+      {
+        int ee_tag = rotated_interval_tag[ii][ee];
+        for(int jj=0; jj<part->get_nLocBas(); ++jj)
+            rotated_layer_ien[ii][ee_tag].push_back(total_rotated_layer_ien[ee * part->get_nLocBas() + jj]);
+
+        rotated_ele_face_id[ii][ee_tag].push_back(total_rotated_ele_face_id[ee]);
+      }
+
+      num_tag[ii] = n_tag;
     // }
     // else
     //   ; // do nothing
@@ -167,6 +205,8 @@ void EBC_Partition_sliding_interface::write_hdf5(const std::string &FileName) co
 
   h5w -> write_intVector( g_id, "num_part_fixed_cell", num_fixed_part_ele );
 
+  h5w -> write_intVector( g_id, "num_tag", num_tag );
+
   const std::string groupbase("interfaceid_");
 
   for(int ii=0; ii<num_pair; ++ii)
@@ -176,8 +216,6 @@ void EBC_Partition_sliding_interface::write_hdf5(const std::string &FileName) co
 
     hid_t group_id = H5Gcreate(g_id, subgroup_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    // if(num_local_cell[ii] > 0)
-    // {
       h5w -> write_intScalar( group_id, "num_fixed_node", VEC_T::get_size(fixed_layer_global_node[ii]) );
 
       h5w -> write_intVector( group_id, "part_fixed_cell_id", fixed_part_vol_ele_id[ii] );
@@ -186,24 +224,35 @@ void EBC_Partition_sliding_interface::write_hdf5(const std::string &FileName) co
 
       h5w -> write_intVector( group_id, "fixed_cell_ien", fixed_layer_ien[ii] );
 
+      h5w -> write_intVector( group_id, "fixed_cell_tag", fixed_interval_tag[ii] );
+
       h5w -> write_intVector( group_id, "fixed_node_map", fixed_layer_global_node[ii] );
 
       h5w -> write_doubleVector( group_id, "fixed_node_xyz", fixed_layer_pt_xyz[ii] );
 
-      h5w -> write_intScalar( group_id, "num_rotated_cell", VEC_T::get_size(rotated_ele_face_id[ii]) );
-
       h5w -> write_intScalar( group_id, "num_rotated_node", VEC_T::get_size(rotated_layer_global_node[ii]) );
-
-      h5w -> write_intVector( group_id, "rotated_cell_ien", rotated_layer_ien[ii] );
-
-      h5w -> write_intVector( group_id, "rotated_cell_face_id", rotated_ele_face_id[ii] );
 
       h5w -> write_intVector( group_id, "rotated_node_map", rotated_layer_global_node[ii] );
 
       h5w -> write_doubleVector( group_id, "rotated_node_xyz", rotated_layer_pt_xyz[ii] );
-    // }
-    // else
-    //   ; // stop writing if num_part_fixed_cell = 0
+
+      const std::string subgroupbase("tag_");
+
+      for(int jj=0; jj<num_tag[ii]; ++jj)
+      {
+        std::string subsubgroup_name(subgroupbase);
+        subsubgroup_name.append( std::to_string(jj) );
+
+        hid_t subgroup_id = H5Gcreate(group_id, subsubgroup_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+        h5w -> write_intScalar( subgroup_id, "num_rotated_cell", VEC_T::get_size(rotated_ele_face_id[ii][jj]) );
+
+        h5w -> write_intVector( subgroup_id, "rotated_cell_ien", rotated_layer_ien[ii][jj] );
+
+        h5w -> write_intVector( subgroup_id, "rotated_cell_face_id", rotated_ele_face_id[ii][jj] );
+
+        H5Gclose( subgroup_id );
+      }
 
     H5Gclose( group_id );
   }
