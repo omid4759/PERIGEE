@@ -168,6 +168,7 @@ class PGAssem_NS_FEM : public IPGAssem
         const int &itf_id,
         FEAElement * rotated_elementv,
         FEAElement * elements,
+        int &tag,
         int &rotated_ee,
         IQuadPts * const &rotated_xi );
 

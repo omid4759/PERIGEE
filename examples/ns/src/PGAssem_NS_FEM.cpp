@@ -1162,13 +1162,11 @@ void PGAssem_NS_FEM::Interface_G(
       // SYS_T::commPrint("  fixed_ee = %d\n", ee);
       // const int local_ee_index{itf_part->get_fixed_ele_id(itf_id, ee)};
 
-      // lien_ptr->get_LIEN(local_ee_index, IEN_v);
-      
-      // fnode_ptr->get_ctrlPts_xyz(nLocBas, IEN_v, ctrl_x, ctrl_y, ctrl_z);
-
       itf_part->get_fixed_ele_ctrlPts(itf_id, ee, ctrl_x, ctrl_y, ctrl_z);
 
-      const int fixed_face_id{itf_part->get_fixed_face_id(itf_id, ee)};
+      const int fixed_face_id {itf_part->get_fixed_face_id(itf_id, ee)};
+
+      int ele_tag {itf_part->get_fixed_ele_tag(itf_id, ee)};
 
       fixed_elementv->buildBasis(fixed_face_id, quad_s, ctrl_x, ctrl_y, ctrl_z);
 
@@ -1192,7 +1190,7 @@ void PGAssem_NS_FEM::Interface_G(
         // SYS_T::commPrint("    point %d:\n", qua);
 
         int rotated_ee {0};
-        search_opposite_point(curr_time, coor, itf_part, itf_id, rotated_elementv, elements, rotated_ee, free_quad);
+        search_opposite_point(curr_time, coor, itf_part, itf_id, rotated_elementv, elements, ele_tag, rotated_ee, free_quad);
       }
     }
 
@@ -1223,12 +1221,10 @@ void PGAssem_NS_FEM::search_opposite_point(
   const int &itf_id,
   FEAElement * rotated_elementv,
   FEAElement * elements,
+  int &tag,
   int &rotated_ee,
   IQuadPts * const &rotated_xi )
   {
-    const int num_rotated_ele = itf_part->get_num_rotated_ele(itf_id);
-    // SYS_T::commPrint("    num_rotated_ele:%d\n", num_rotated_ele);
-
     bool is_found = false;
 
     double * volctrl_x = new double [nLocBas];
@@ -1241,12 +1237,16 @@ void PGAssem_NS_FEM::search_opposite_point(
     std::vector<double> facectrl_y(snlocbas, 0.0);
     std::vector<double> facectrl_z(snlocbas, 0.0);
 
+    int rotated_tag = tag;
+    int num_rotated_ele = itf_part->get_num_rotated_ele(itf_id, rotated_tag);
+    // SYS_T::commPrint("    num_rotated_ele:%d\n", num_rotated_ele);
+
     for(int ee{0}; ee<num_rotated_ele; ++ee)
     {
       // SYS_T::commPrint("    search rotated ee = %d\n", ee);
-      itf_part->get_rotated_ele_ctrlPts(itf_id, ee, curr_time, volctrl_x, volctrl_y, volctrl_z);
+      itf_part->get_rotated_ele_ctrlPts(itf_id, rotated_tag, ee, curr_time, volctrl_x, volctrl_y, volctrl_z);
       
-      int rotated_face_id = itf_part->get_rotated_face_id(itf_id, ee);
+      int rotated_face_id = itf_part->get_rotated_face_id(itf_id, rotated_tag, ee);
 
       rotated_elementv->get_face_ctrlPts(rotated_face_id,
         volctrl_x, volctrl_y, volctrl_z,
@@ -1264,12 +1264,78 @@ void PGAssem_NS_FEM::search_opposite_point(
       }
     }
 
+    // Second try
+    if(is_found == false && tag != 0)
+    {
+      rotated_tag = tag - 1;
+
+      num_rotated_ele = itf_part->get_num_rotated_ele(itf_id, rotated_tag);
+      // SYS_T::commPrint("    num_rotated_ele:%d\n", num_rotated_ele);
+
+      for(int ee{0}; ee<num_rotated_ele; ++ee)
+      {
+        // SYS_T::commPrint("    search rotated ee = %d\n", ee);
+        itf_part->get_rotated_ele_ctrlPts(itf_id, rotated_tag, ee, curr_time, volctrl_x, volctrl_y, volctrl_z);
+        
+        int rotated_face_id = itf_part->get_rotated_face_id(itf_id, rotated_tag, ee);
+
+        rotated_elementv->get_face_ctrlPts(rotated_face_id,
+          volctrl_x, volctrl_y, volctrl_z,
+          facectrl_x, facectrl_y, facectrl_z);
+
+        rotated_xi->reset();
+        is_found = FE_T::search_closest_point(fixed_pt, elements,
+          &facectrl_x[0], &facectrl_y[0], &facectrl_z[0], rotated_xi);
+
+        if(is_found)
+        {
+          rotated_ee = ee;
+          // SYS_T::commPrint("  found in rotated_ee = %d.\n\n", rotated_ee);
+          break;
+        }
+      }
+    }
+
+    // Third try
+    if(is_found == false && tag != itf_part->get_num_tag(itf_id) - 1)
+    {
+      rotated_tag = tag + 1;
+
+      num_rotated_ele = itf_part->get_num_rotated_ele(itf_id, rotated_tag);
+      // SYS_T::commPrint("    num_rotated_ele:%d\n", num_rotated_ele);
+
+      for(int ee{0}; ee<num_rotated_ele; ++ee)
+      {
+        // SYS_T::commPrint("    search rotated ee = %d\n", ee);
+        itf_part->get_rotated_ele_ctrlPts(itf_id, rotated_tag, ee, curr_time, volctrl_x, volctrl_y, volctrl_z);
+        
+        int rotated_face_id = itf_part->get_rotated_face_id(itf_id, rotated_tag, ee);
+
+        rotated_elementv->get_face_ctrlPts(rotated_face_id,
+          volctrl_x, volctrl_y, volctrl_z,
+          facectrl_x, facectrl_y, facectrl_z);
+
+        rotated_xi->reset();
+        is_found = FE_T::search_closest_point(fixed_pt, elements,
+          &facectrl_x[0], &facectrl_y[0], &facectrl_z[0], rotated_xi);
+
+        if(is_found)
+        {
+          rotated_ee = ee;
+          // SYS_T::commPrint("  found in rotated_ee = %d.\n\n", rotated_ee);
+          break;
+        }
+      }
+    }
+
     delete [] volctrl_x; volctrl_x = nullptr;
     delete [] volctrl_y; volctrl_y = nullptr;
     delete [] volctrl_z; volctrl_z = nullptr;
 
     SYS_T::print_fatal_if(is_found == false,
       "Error, PGAssem_NS_GEM::search_opposite_point: cannot find opposite point.\n");
+
+    tag = rotated_tag;
   }
 
 // EOF

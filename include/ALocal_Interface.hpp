@@ -37,8 +37,11 @@ class ALocal_Interface
         virtual int get_num_fixed_ele(const int &ii) const
         {return num_fixed_ele[ii];}
 
-        virtual int get_num_rotated_ele(const int &ii) const
-        {return num_rotated_ele[ii];}
+        virtual int get_num_tag(const int &ii) const
+        {return num_tag[ii];}
+
+        virtual int get_num_rotated_ele(const int &ii, const int &tag) const
+        {return num_rotated_ele[ii][tag];}
 
         virtual int get_num_rotated_node(const int &ii) const
         {return num_rotated_node[ii];}
@@ -49,6 +52,9 @@ class ALocal_Interface
         virtual int get_fixed_face_id(const int &ii, const int &jj) const
         {return fixed_ele_face_id[ii][jj];}
 
+        virtual int get_fixed_ele_tag(const int &ii, const int &jj) const
+        {return fixed_ele_tag[ii][jj];}
+
         virtual int get_fixed_layer_ien(const int &ii, const int &jj) const
         {return fixed_layer_ien[ii][jj];}
 
@@ -58,11 +64,11 @@ class ALocal_Interface
         virtual int get_fixed_node_id(const int &ii, const int &jj) const
         {return fixed_node_id[ii][jj];}
 
-        virtual int get_rotated_layer_ien(const int &ii, const int &jj) const
-        {return rotated_layer_ien[ii][jj];}
+        virtual int get_rotated_layer_ien(const int &ii, const int &tag, const int &jj) const
+        {return rotated_layer_ien[ii][tag][jj];}
 
-        virtual int get_rotated_face_id(const int &ii, const int &jj) const
-        {return rotated_layer_face_id[ii][jj];}
+        virtual int get_rotated_face_id(const int &ii, const int &tag, const int &jj) const
+        {return rotated_layer_face_id[ii][tag][jj];}
 
         virtual double get_init_rotated_node_xyz(const int &ii, const int &jj) const
         {return init_rotated_node_xyz[ii][jj];}
@@ -76,7 +82,7 @@ class ALocal_Interface
         virtual void get_fixed_ele_ctrlPts(const int &ii, const int &ee,
             double * const volctrl_x,  double * const volctrl_y,  double * const volctrl_z) const;
 
-        virtual void get_rotated_ele_ctrlPts(const int &ii, const int &ee, const double &tt,
+        virtual void get_rotated_ele_ctrlPts(const int &ii, const int &tag,const int &ee, const double &tt,
             double * const volctrl_x,  double * const volctrl_y,  double * const volctrl_z) const;
 
     protected:
@@ -90,8 +96,8 @@ class ALocal_Interface
         std::vector<int> num_fixed_ele;
 
         // the number of rotated volume elements of each interface
-        // size: num_itf
-        std::vector<int> num_rotated_ele;
+        // size: num_itf x num_tag[ii]
+        std::vector<std::vector<int>> num_rotated_ele;
 
         // the number of the nodes from the fixed volume elements
         // size: num_itf
@@ -101,6 +107,10 @@ class ALocal_Interface
         // size: num_itf
         std::vector<int> num_rotated_node;
 
+        // the number of interval tag of each pair of interfaces
+        // size: num_itf
+        std::vector<int> num_tag;
+
         // stores the fixed local volume element id in this part
         // size: num_itf x num_fixed_ele[ii]
         std::vector<std::vector<int>> fixed_vol_ele_id;
@@ -108,6 +118,8 @@ class ALocal_Interface
         // stores the face id of fixed volume element
         // size: num_itf x num_fixed_ele[ii]
         std::vector<std::vector<int>> fixed_ele_face_id;
+
+        std::vector<std::vector<int>> fixed_ele_tag;
 
         // stores the volume element's IEN array of the fixed "layer"
         // size: num_itf x (nlocbas x num_fixed_ele[ii])
@@ -123,11 +135,11 @@ class ALocal_Interface
         
         // stores the volume element's IEN array of the rotated "layer"
         // size: num_itf x (nlocbas x num_rotated_ele[ii])
-        std::vector<std::vector<int>> rotated_layer_ien;
+        std::vector<std::vector<std::vector<int>>> rotated_layer_ien;
     
         // stores the face id of all the rotated volume element
         // size: num_itf x num_rotated_ele[ii]
-        std::vector<std::vector<int>> rotated_layer_face_id;
+        std::vector<std::vector<std::vector<int>>> rotated_layer_face_id;
 
         // stores the initial coordinates of the nodes from the rotated volume elements
         // size: num_itf x (3 x num_rotated_node[ii])
