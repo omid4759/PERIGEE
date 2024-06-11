@@ -17,12 +17,12 @@
 #include "NodalBC_3D_inflow.hpp"
 #include "ElemBC_3D_outflow.hpp"
 #include "ElemBC_3D_wall_turbulence.hpp"
-#include "ElemBC_3D_sliding_interface.hpp"
+#include "Interface_pair.hpp"
 #include "NBC_Partition.hpp"
 #include "NBC_Partition_inflow.hpp"
 #include "EBC_Partition_outflow.hpp"
 #include "EBC_Partition_wall_turbulence.hpp"
-#include "EBC_Partition_sliding_interface.hpp"
+#include "Interface_Partition.hpp"
 #include "yaml-cpp/yaml.h"
 
 int main( int argc, char * argv[] )
@@ -363,10 +363,20 @@ int main( int argc, char * argv[] )
   ElemBC * wbc = new ElemBC_3D_wall_turbulence( weak_list, wall_model_type, IEN, elemType );
 
   // Set up interface info
-  std::vector<std::string> interface_list = fixed_interface_file;
-  VEC_T::insert_end(interface_list, rotated_interface_file);
-  
-  ElemBC * itf = new ElemBC_3D_sliding_interface(interface_list, num_interface_pair, fixed_nFunc, fixed_nElem, ctrlPts, IEN, elemType);
+  std::vector<double> intervals_0 {-0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
+
+  Interface_pair itf_0(fixed_interface_file[0], rotated_interface_file[0], "epart_000_itf.h5",
+    fixed_nElem, fixed_nFunc, ctrlPts, IEN, elemType, intervals_0, 0);
+
+  std::vector<double> intervals_12 {0.0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.27, 0.3};
+
+  Interface_pair itf_1(fixed_interface_file[1], rotated_interface_file[1], "epart_001_itf.h5",
+    fixed_nElem, fixed_nFunc, ctrlPts, IEN, elemType, intervals_12, Vector_3(0.5, 0.0, 0.0));
+
+  Interface_pair itf_2(fixed_interface_file[2], rotated_interface_file[2], "epart_002_itf.h5",
+    fixed_nElem, fixed_nFunc, ctrlPts, IEN, elemType, intervals_12, Vector_3(-0.5, 0.0, 0.0));
+
+  std::vector<Interface_pair> interfaces {itf_0, itf_1, itf_2};
  
   // Start partition the mesh for each cpu_rank 
 
@@ -412,7 +422,7 @@ int main( int argc, char * argv[] )
     wbcpart -> write_hdf5( part_file );
 
     // Partition sliding interface and write to h5 file
-    EBC_Partition * itfpart = new EBC_Partition_sliding_interface(part, mnindex, itf);
+    Interface_Partition * itfpart = new Interface_Partition(part, mnindex, interfaces);
 
     itfpart -> write_hdf5( part_file );
 
@@ -424,7 +434,7 @@ int main( int argc, char * argv[] )
     list_ratio_g2l.push_back((double)part->get_nghostnode()/(double) part->get_nlocalnode());
 
     sum_nghostnode += part->get_nghostnode();
-    delete part; delete nbcpart; delete infpart; delete ebcpart; delete wbcpart; 
+    delete part; delete nbcpart; delete infpart; delete ebcpart; delete wbcpart; delete itfpart;
   }
 
   cout<<"\n===> Mesh Partition Quality: "<<endl;
@@ -444,7 +454,7 @@ int main( int argc, char * argv[] )
   // Finalize the code and exit
   for(auto &it_nbc : NBC_list) delete it_nbc;
 
-  delete InFBC; delete ebc; delete wbc; delete itf; delete mytimer;
+  delete InFBC; delete ebc; delete wbc; delete mytimer;
   delete mnindex; delete global_part; delete mesh; delete IEN;
 
   return EXIT_SUCCESS;

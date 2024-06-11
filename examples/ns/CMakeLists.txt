@@ -40,12 +40,11 @@ SET( perigee_preprocess_lib_src
   ${perigee_source}/Mesh/Mesh_Tet.cpp
   ${perigee_source}/Mesh/Mesh_FEM.cpp
   ${perigee_source}/Mesh/IEN_FEM.cpp
-  ${perigee_source}/Mesh/Interface_Element_Group.cpp
+  ${perigee_source}/Mesh/Interface_pair.cpp
   ${perigee_source}/Mesh/Part_FEM.cpp
   ${perigee_source}/Mesh/ElemBC_3D.cpp
   ${perigee_source}/Mesh/ElemBC_3D_outflow.cpp
   ${perigee_source}/Mesh/ElemBC_3D_wall_turbulence.cpp
-  ${perigee_source}/Mesh/ElemBC_3D_sliding_interface.cpp
   ${perigee_source}/Mesh/NodalBC.cpp
   ${perigee_source}/Mesh/NodalBC_3D_inflow.cpp
   ${perigee_source}/Mesh/QuadPts_Gauss_Triangle.cpp
@@ -56,7 +55,7 @@ SET( perigee_preprocess_lib_src
   ${perigee_source}/Mesh/EBC_Partition.cpp
   ${perigee_source}/Mesh/EBC_Partition_outflow.cpp
   ${perigee_source}/Mesh/EBC_Partition_wall_turbulence.cpp
-  ${perigee_source}/Mesh/EBC_Partition_sliding_interface.cpp
+  ${perigee_source}/Mesh/Interface_Partition.cpp
   ${perigee_source}/Mesh/Map_Node_Index.cpp
   ${perigee_source}/Mesh/Global_Part_METIS.cpp
   ${perigee_source}/Mesh/Global_Part_Serial.cpp

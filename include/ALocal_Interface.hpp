@@ -46,9 +46,6 @@ class ALocal_Interface
         virtual int get_num_rotated_node(const int &ii) const
         {return num_rotated_node[ii];}
 
-        virtual int get_fixed_ele_id(const int &ii, const int &jj) const
-        {return fixed_vol_ele_id[ii][jj];}
-
         virtual int get_fixed_face_id(const int &ii, const int &jj) const
         {return fixed_ele_face_id[ii][jj];}
 
@@ -110,10 +107,6 @@ class ALocal_Interface
         // the number of interval tag of each pair of interfaces
         // size: num_itf
         std::vector<int> num_tag;
-
-        // stores the fixed local volume element id in this part
-        // size: num_itf x num_fixed_ele[ii]
-        std::vector<std::vector<int>> fixed_vol_ele_id;
 
         // stores the face id of fixed volume element
         // size: num_itf x num_fixed_ele[ii]

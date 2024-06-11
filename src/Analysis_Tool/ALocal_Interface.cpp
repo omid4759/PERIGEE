@@ -25,7 +25,6 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
 
   num_rotated_ele.resize(num_itf);
 
-  fixed_vol_ele_id.resize(num_itf);
   fixed_ele_face_id.resize(num_itf);
   fixed_ele_tag.resize(num_itf);
   fixed_layer_ien.resize(num_itf);
@@ -41,8 +40,6 @@ ALocal_Interface::ALocal_Interface( const std::string &fileBaseName, const int &
   {
     std::string subgroup_name(groupbase);
     subgroup_name.append( std::to_string(ii) );
-
-    fixed_vol_ele_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "part_fixed_cell_id" );
 
     fixed_ele_face_id[ii] = h5r -> read_intVector( subgroup_name.c_str(), "fixed_cell_face_id" );
 
